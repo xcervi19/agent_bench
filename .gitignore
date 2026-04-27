@@ -1,10 +1,14 @@
 __pycache__/
 *.pyc
 .venv/
+.env.example
+.env.example.production
 .env
+.env.examplesmall
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 dist/
 build/
+s

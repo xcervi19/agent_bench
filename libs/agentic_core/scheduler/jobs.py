@@ -51,11 +51,25 @@ class Scheduler:
         for spec in specs:
             self.register(spec)
 
-    def register_fn(self, name: str, fn: Callable[[], None], *, interval_seconds: int) -> None:
-        """Register a local callable (for non-task periodic work like cleanup)."""
-        self._scheduler.add_job(
-            fn, IntervalTrigger(seconds=interval_seconds), id=name, name=name, replace_existing=True
+    def register_fn(
+        self,
+        name: str,
+        fn: Callable[..., None],
+        *,
+        interval_seconds: int | None = None,
+        cron: str | None = None,
+        args: list | None = None,
+    ) -> None:
+        """Register a local callable (for non-task periodic work like dispatch fan-outs)."""
+        trigger = (
+            CronTrigger.from_crontab(cron)
+            if cron
+            else IntervalTrigger(seconds=interval_seconds or 60)
         )
+        self._scheduler.add_job(
+            fn, trigger, id=name, name=name, replace_existing=True, args=args or []
+        )
+        log.info("scheduler.fn_registered", job=name)
 
     def run(self) -> None:
         log.info("scheduler.start")

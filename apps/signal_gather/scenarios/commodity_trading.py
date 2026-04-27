@@ -29,6 +29,13 @@ def _demo_profile() -> UserProfile:
         regions=["Europe"],
         themes=["supply disruption", "policy"],
         risk_appetite="medium",
+        alert_channels=["web"],
+        briefing_cadence="daily",
+        impact_threshold=0.5,
+        raw_setup_text=(
+            "I trade European power and gas. Watch supply disruptions and EU policy. "
+            "Send me morning briefings and instant alerts on high-impact events."
+        ),
     )
 
 

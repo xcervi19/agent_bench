@@ -42,6 +42,28 @@ services:
       timeout: 3s
       retries: 20
 
+  # Slim retrieval API only (Postgres + shared schema); no Redis/MinIO required. Port 8001.
+  rag_adhoc:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command:
+      - "uvicorn"
+      - "apps.rag_adhoc.app:app"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+    environment:
+      RAG_ADHOC_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-agentic}:${POSTGRES_PASSWORD:-agentic}@postgres:5432/${POSTGRES_DB:-agentic}
+      RAG_ADHOC_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      RAG_ADHOC_API_KEY: ${RAG_ADHOC_API_KEY:-}
+    env_file: .env
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres: {condition: service_healthy}
+
   api:
     build:
       context: .

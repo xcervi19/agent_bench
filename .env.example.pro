@@ -28,3 +28,8 @@ S3_BUCKET=documents
 # ─── LLM (CrewAI) ────────────────────────────────────────────────────
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-4o-mini
+
+# ─── RAG adhoc (apps/rag_adhoc, docker: postgres + rag_adhoc only) ───
+# If unset, compose can still pass ${OPENAI_API_KEY} for embeddings.
+# Set a long random string in production; clients must send X-API-Key.
+# RAG_ADHOC_API_KEY=

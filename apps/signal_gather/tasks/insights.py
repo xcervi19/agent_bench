@@ -1,4 +1,4 @@
-"""Background task: generate a personalized insight for a user query."""
+"""Generate a personalized insight for a free-form user query."""
 
 from typing import Any
 from uuid import UUID
@@ -11,20 +11,23 @@ from agentic_core.workers import task
 
 from ..agents import PersonalizedTraderCrew
 from ..models import Event, UserProfile
+from ..services import search_events_by_text
 
 
 @task("signal_gather.generate_insight")
 async def generate_insight(tenant_id: UUID, payload: dict[str, Any]) -> dict[str, Any]:
-    profile = await _load_profile(tenant_id, payload.get("user_id"))
-    evidence = await _load_recent_evidence(tenant_id, payload.get("commodity"), payload.get("region"))
+    query = payload.get("query", "")
+    commodity = payload.get("commodity")
+    region = payload.get("region")
+    user_id = payload.get("user_id")
 
-    inputs = {
-        "query": payload.get("query", ""),
-        "profile": profile,
-        "evidence": evidence,
-    }
-    result = await PersonalizedTraderCrew().run(CrewRunContext(tenant_id=tenant_id, inputs=inputs))
+    profile = await _load_profile(tenant_id, user_id)
+    evidence = await _load_evidence(tenant_id, query, commodity, region)
 
+    inputs = {"query": query, "profile": profile, "evidence": evidence}
+    result = await PersonalizedTraderCrew().run(
+        CrewRunContext(tenant_id=tenant_id, inputs=inputs)
+    )
     return {"session_id": str(result.session_id), "output": result.output}
 
 
@@ -32,12 +35,10 @@ async def _load_profile(tenant_id: UUID, user_id: Any) -> dict[str, Any]:
     if user_id is None:
         return {}
     async with session_scope() as db:
-        row = (
-            await db.execute(
-                select(UserProfile)
-                .where(UserProfile.tenant_id == tenant_id, UserProfile.user_id == user_id)
-            )
-        ).scalar_one_or_none()
+        stmt = select(UserProfile).where(
+            UserProfile.tenant_id == tenant_id, UserProfile.user_id == UUID(str(user_id))
+        )
+        row = (await db.execute(stmt)).scalar_one_or_none()
     if row is None:
         return {}
     return {
@@ -49,17 +50,22 @@ async def _load_profile(tenant_id: UUID, user_id: Any) -> dict[str, Any]:
     }
 
 
-async def _load_recent_evidence(
-    tenant_id: UUID, commodity: str | None, region: str | None, limit: int = 8
+async def _load_evidence(
+    tenant_id: UUID, query: str, commodity: str | None, region: str | None
 ) -> list[dict[str, Any]]:
-    stmt = select(Event).where(Event.tenant_id == tenant_id)
-    if commodity:
-        stmt = stmt.where(Event.commodity == commodity)
-    if region:
-        stmt = stmt.where(Event.region == region)
-    stmt = stmt.order_by(Event.created_at.desc()).limit(limit)
-
     async with session_scope() as db:
-        rows = (await db.execute(stmt)).scalars().all()
+        events = await search_events_by_text(
+            db, tenant_id, query, commodity=commodity, region=region, limit=8
+        )
+    return [_event_summary(e) for e in events]
 
-    return [{"id": str(e.id), "summary": e.summary, "commodity": e.commodity} for e in rows]
+
+def _event_summary(event: Event) -> dict[str, Any]:
+    return {
+        "id": str(event.id),
+        "summary": event.summary,
+        "commodity": event.commodity,
+        "region": event.region,
+        "category": event.category,
+        "impact_score": event.impact_score,
+    }
