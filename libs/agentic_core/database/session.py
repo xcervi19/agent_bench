@@ -26,6 +26,6 @@ async def session_scope() -> AsyncIterator[AsyncSession]:
     """Transactional session with tenant context propagated to Postgres RLS."""
     maker = get_sessionmaker()
     async with maker() as session:
-        await apply_tenant_to_session(session)
         async with session.begin():
+            await apply_tenant_to_session(session)
             yield session

@@ -10,7 +10,7 @@ from agentic_core.database import set_tenant_id
 from .config import get_rag_settings
 
 
-def adhoc_tenant(
+async def adhoc_tenant(
     x_tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
     x_api_key: Annotated[str | None, Header()] = None,
 ) -> UUID:
