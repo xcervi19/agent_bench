@@ -18,6 +18,7 @@ apps/signal_gather/         ← first application
 database/migrations/        ← Alembic
 database/seeds/             ← scenario seeders
 scripts/replay_session.py   ← debug tool
+source_ingest/              ← preprocess .txt → JSONL; ingest JSONL → Postgres + embeddings
 docker/                     ← Dockerfile + entrypoints
 docker-compose.yml
 ```
@@ -39,6 +40,94 @@ docker compose exec api python -m database.seeds.seed_scenario signal_gather_com
 ```
 
 API is available at `http://localhost:8000/docs`.
+
+## Local knowledge ingest (preprocess → JSONL → embeddings → Postgres)
+
+Two-stage pipeline under `source_ingest/`: **(1)** normalize + chunk + metadata **without any API calls**;
+**(2)** embed with OpenAI `text-embedding-3-small` (1536-dim) and insert `documents` + `events` for `rag_adhoc` search.
+
+### Step 1 — Preprocess a `.txt` book (local only)
+
+From the **repository root**, with `uv` (or your venv):
+
+```bash
+uv run python -m source_ingest.preprocess \
+  --input local_knowledge_sources/oil101.txt \
+  --output-dir artifacts/oil101_run1 \
+  --book-title "Oil 101" \
+  --author "Morgan Downey" \
+  --book-slug oil101 \
+  --category energy_education \
+  --commodity crude_oil
+```
+
+This writes:
+
+- `artifacts/oil101_run1/normalized.txt` — cleaned source text  
+- `artifacts/oil101_run1/chunks.jsonl` — one JSON object per chunk (`prefix`, `body`, `location`, `filters`, `entities_extra`)  
+- `artifacts/oil101_run1/manifest.json` — `document_id`, book meta, chunk count (needed for ingest)
+
+Tune `--max-chars` (default `1100`) and `--overlap` (default `160`) if needed.
+
+### Step 2 — Inspect artifacts
+
+Open `chunks.jsonl` in an editor or stream:
+
+```bash
+head -n 2 artifacts/oil101_run1/chunks.jsonl | python -m json.tool
+```
+
+Every line should show chapter/source context in `prefix` and the chunk body in `body`.
+
+### Step 3 — SSH tunnel to Postgres on your VPS
+
+When Postgres listens only on the server (default), open a **local port forward** from your **laptop**, then point `DATABASE_URL` at **localhost**.
+
+Example (replace user, host, key path):
+
+```bash
+ssh -i ~/.ssh/your_key -N -L 5433:127.0.0.1:5432 your-user@your-server-ip
+```
+
+- Leave this terminal open while ingesting.  
+- Remote Postgres is reached as `127.0.0.1:5432` **on the server**; your laptop sees it as **`127.0.0.1:5433`**.
+
+In **another** terminal on your laptop, export an **async** SQLAlchemy URL (match `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`):
+
+```bash
+export DATABASE_URL='postgresql+asyncpg://agentic:YOUR_PASSWORD@127.0.0.1:5433/agentic'
+export OPENAI_API_KEY='sk-...'
+```
+
+Use the **same `tenant_id`** you pass as `X-Tenant-Id` when calling `rag_adhoc` (e.g. from seeded demo data or your registered user).
+
+### Step 4 — Ingest (embed + DB write)
+
+Still from **repo root** (with `PYTHONPATH` so `apps` + `agentic_core` resolve):
+
+```bash
+export PYTHONPATH="libs:."
+uv run python -m source_ingest.ingest \
+  --artifact-dir artifacts/oil101_run1 \
+  --tenant-id '00000000-0000-0000-0000-000000000001'
+```
+
+Dry-run (calls embedding API but **does not** write rows):
+
+```bash
+uv run python -m source_ingest.ingest \
+  --artifact-dir artifacts/oil101_run1 \
+  --tenant-id '00000000-0000-0000-0000-000000000001' \
+  --dry-run
+```
+
+Re-running ingest with the same `manifest.json` **creates duplicate events** unless you delete old rows first.
+
+### Rights
+
+Only ingest material you are allowed to copy, embed, and store.
+
+---
 
 ## Signal Gather end-to-end flow
 

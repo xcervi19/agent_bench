@@ -1,0 +1,1 @@
+my connecting to VPS: ssh -i ~/.ssh/contabo_ed25519 root@79.143.179.212    
