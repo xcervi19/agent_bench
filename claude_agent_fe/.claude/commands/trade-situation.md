@@ -71,37 +71,40 @@ From the RAG context and topic, map every affected entity to its primary intelli
 
 ## Phase 3 — Search Query 
 
-FOCUSED SEARCH QUERIES — ordered by speed advantage:
-[1] site:marinetraffic.com Fujairah anchorage VLCC 2026
+FOCUSED SEARCH QUERIES — ordered by speed advantage (Brave-style: rare tokens first, quoted proper nouns, `site:` where authoritative, year last for recency):
+
+[1] site:marinetraffic.com Fujairah VLCC anchorage AIS 2026
     → AIS vessel count at Fujairah bypass terminal (real-time, before any news)
-[2] site:hellenicshippingnews.com TD15 Cape route freight rate 2026
+[2] "TD15" Cape tanker freight rate Baltic 2026
     → Baltic route TD15 surge signals rerouting volume (daily, before aggregators)
-[3] site:somo.gov.iq النفط العراقي تصدير جيهان 2026
+[3] SOMO جيهان تصدير النفط العراقي 2026
     → SOMO Iraq tender from Ceyhan in Arabic (hours before English translation)
-[4] site:aramco.com Yanbu export crude loading 2026
+[4] Yanbu crude loading "Saudi Aramco" Red Sea liftings 2026
     → Saudi Aramco Yanbu Red Sea liftings signal Petroline activation
-[5] خط الأنابيب الشرق الغرب بترولاين ينبع تشغيل 2026
+[5] "بترولاين" "خط الأنابيب الشرق الغرب" ينبع تشغيل 2026
     → Arabic: East-West Pipeline Petroline Yanbu activation (Saudi local press)
-[6] site:shana.ir تنگه هرمز نفت صادرات 2026
+[6] هرمز صادرات نفت ایران وزارت نفت 2026
     → Iran oil ministry Farsi: Hormuz/exports status (first official Iranian signal)
-[7] site:adnoc.ae Fujairah terminal exports capacity 2026
+[7] site:adnoc.ae Fujairah crude export terminal capacity 2026
     → ADNOC Fujairah bypass export ramp-up announcement
-[8] site:energy.gov strategic petroleum reserve release Hormuz 2026
+[8] site:energy.gov SPR crude release authorization DOE 2026
     → DOE official SPR release authorization (before EIA records it)
-[9] site:iraqoilreport.com Basra Ceyhan export 2026
+[9] site:iraqoilreport.com Basra Ceyhan export terminal 2026
     → Iraq Oil Report ground-level: which terminal is operational
-[10] site:mees.com Petroline East-West Pipeline capacity utilization 2026
+[10] site:mees.com "East-West Pipeline" Petroline capacity utilization 2026
      → MEES: Gulf NOC emergency pipeline ramp-up decision
-[11] Botaş Ceyhan terminal throughput increase 2026 OR Enerji Günlüğü Ceyhan
+[11] "Ceyhan" terminal throughput 2026 OR "Ceyhan" ihracat kapasitesi artırımı 2026
      → Turkish: Ceyhan capacity ramp-up (Iraq northern bypass throughput)
-[12] site:eia.gov petroleum weekly SPR drawdown barrels 2026
+[12] site:eia.gov "Weekly Petroleum Status" SPR inventory barrels 2026
      → EIA scheduled data: SPR release pace vs Hormuz gap arithmetic
+
 
 Rules for query construction:
 - Each query MUST be anchored to a specific entity name (NOC, port, pipeline, terminal)
 - Include year (`2026`) to force recency
 - Local language queries use native script (Arabic: right-to-left, Farsi, Russian, Turkish, Chinese)
-- `site:` prefix for primary sources to bypass aggregators
+- **Brave / web search shape:** put distinctive tokens first (route codes, VLCC, terminal names); wrap multi-word proper nouns in straight double quotes; avoid filler (“movement”, “situation”, “latest”) unless disambiguating
+- `site:` prefix for primary sources to bypass aggregators (omit `site:` on a follow-up pass if results are too thin)
 - Use `OR` only to combine genuine synonyms of the same entity
 
 ---

@@ -99,6 +99,33 @@ services:
       redis:    {condition: service_healthy}
       api:      {condition: service_started}
 
+  # Claude Code CLI behind FastAPI. Port 8002.
+  # Auth: mount a host directory holding `claude auth login` state to /home/app/.claude
+  # (default Claude config dir). For Pro/subscription, run `claude auth login` once
+  # on the host into ./claude_home, then it persists into the container.
+  claude_agent:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.claude_agent
+    env_file:
+      - .env
+      - /etc/claude-worker.env
+    environment:
+      CLAUDE_AGENT_WORKSPACE_DIR: /workspace/claude_agent_fe
+      CLAUDE_AGENT_LOG_LEVEL: ${CLAUDE_AGENT_LOG_LEVEL:-INFO}
+      CLAUDE_AGENT_API_KEY: ${CLAUDE_AGENT_API_KEY:-}
+      CLAUDE_AGENT_DEFAULT_MODEL: ${CLAUDE_AGENT_DEFAULT_MODEL:-}
+      CLAUDE_AGENT_ALLOW_FREEFORM_PROMPTS: ${CLAUDE_AGENT_ALLOW_FREEFORM_PROMPTS:-false}
+      RAG_BASE_URL: ${RAG_BASE_URL:-}
+      RAG_TENANT_ID: ${RAG_TENANT_ID:-}
+      RAG_API_KEY: ${RAG_API_KEY:-}
+      HOME: /home/app
+    volumes:
+      - ./claude_agent_fe:/workspace/claude_agent_fe:rw
+      - ${CLAUDE_HOME_DIR:-./claude_home}:/home/app/.claude:rw
+    ports:
+      - "8002:8002"
+
 volumes:
   postgres_data:
   minio_data:

@@ -1,0 +1,36 @@
+FROM python:3.12-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    NODE_MAJOR=20
+
+WORKDIR /app
+
+# Node.js (required by Claude Code CLI) + minimal build deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential curl ca-certificates gnupg git \
+    && curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
+    && apt-get install -y --no-install-recommends nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Claude Code CLI (provides the `claude` binary)
+RUN npm install -g @anthropic-ai/claude-code \
+    && claude --version
+
+COPY pyproject.toml README.md ./
+COPY libs ./libs
+COPY apps ./apps
+
+RUN pip install --upgrade pip && pip install -e .
+
+ENV PYTHONPATH=/app/libs:/app
+
+# Default workspace where the CLI runs (override via CLAUDE_AGENT_WORKSPACE_DIR).
+# Mount your project's `claude_agent_fe` here in compose so .claude/commands resolve.
+ENV CLAUDE_AGENT_WORKSPACE_DIR=/workspace/claude_agent_fe
+
+EXPOSE 8002
+
+CMD ["uvicorn", "apps.claude_agent.app:app", "--host", "0.0.0.0", "--port", "8002"]
