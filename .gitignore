@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .venv/
+.cursorrules
 .env.example
 .env.example.production
 .env
@@ -13,3 +14,4 @@ __pycache__/
 dist/
 build/
 artifacts/
+.DS_Store
