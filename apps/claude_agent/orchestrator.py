@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+import traceback
 import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime, timezone
@@ -156,15 +157,35 @@ async def run_newsfind_queries(
         )
 
     run_id = str(uuid.uuid4())
-    rec = RunRecorder(
-        store, topic=args, topic_id=topic_id, run_id=run_id, stage=NEWSFIND_STAGE
-    )
-    rec.write_request(_request_payload(req, settings))
-    rec.open_stream()
+    try:
+        rec = RunRecorder(
+            store, topic=args, topic_id=topic_id, run_id=run_id, stage=NEWSFIND_STAGE
+        )
+        rec.write_request(_request_payload(req, settings))
+        rec.open_stream()
+    except Exception as exc:  # noqa: BLE001 — disk/permission failure during setup
+        logger.exception(
+            "newsfind_queries setup error topic_id=%s run_id=%s state_dir=%s",
+            topic_id,
+            run_id,
+            settings.state_dir,
+        )
+        return RunResult(
+            status="failed",
+            exit_code=1,
+            error=(
+                f"setup error: {type(exc).__name__}: {exc} "
+                f"(state_dir={settings.state_dir})"
+            ),
+            stderr=traceback.format_exc(),
+            run_id=run_id,
+            topic_id=topic_id,
+        )
 
     streaming_req = req.model_copy(update={"output_format": "stream-json"})
     raw_result: dict[str, Any] | None = None
     error: str | None = None
+    error_tb: str | None = None
     started = time.monotonic()
     try:
         async for line in stream_claude(streaming_req, settings):
@@ -175,7 +196,8 @@ async def run_newsfind_queries(
             if isinstance(event, dict) and event.get("type") == "error":
                 error = str(event.get("error") or "stream error")
     except Exception as exc:  # noqa: BLE001 - record any runner failure
-        error = f"runner error: {exc}"
+        error = f"runner error: {type(exc).__name__}: {exc}"
+        error_tb = traceback.format_exc()
         logger.exception("newsfind_queries runner error")
 
     parsed = parse_business_result(raw_result)
@@ -203,6 +225,7 @@ async def run_newsfind_queries(
         stdout=json.dumps(raw_result, ensure_ascii=False) if raw_result else None,
         parsed=parsed,
         error=error,
+        stderr=error_tb,
         cached=False,
         run_id=run_id,
         topic_id=topic_id,
@@ -265,11 +288,35 @@ async def stream_newsfind_queries(
         )
 
     run_id = str(uuid.uuid4())
-    rec = RunRecorder(
-        store, topic=args, topic_id=topic_id, run_id=run_id, stage=NEWSFIND_STAGE
-    )
-    rec.write_request(_request_payload(req, settings))
-    rec.open_stream()
+    try:
+        rec = RunRecorder(
+            store, topic=args, topic_id=topic_id, run_id=run_id, stage=NEWSFIND_STAGE
+        )
+        rec.write_request(_request_payload(req, settings))
+        rec.open_stream()
+    except Exception as exc:  # noqa: BLE001 — disk/permission failure during setup
+        logger.exception(
+            "newsfind_queries stream setup error topic_id=%s run_id=%s state_dir=%s",
+            topic_id,
+            run_id,
+            settings.state_dir,
+        )
+        yield json.dumps(
+            {
+                "type": "error",
+                "stage": "setup",
+                "topic_id": topic_id,
+                "run_id": run_id,
+                "input_fingerprint": fingerprint,
+                "state_dir": settings.state_dir,
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "traceback": traceback.format_exc(),
+            }
+        )
+        yield json.dumps({"type": "end", "exit_code": 1})
+        return
+
     yield json.dumps(
         {
             "type": "run_started",
@@ -282,6 +329,7 @@ async def stream_newsfind_queries(
     streaming_req = req.model_copy(update={"output_format": "stream-json"})
     raw_result: dict[str, Any] | None = None
     error: str | None = None
+    error_tb: str | None = None
     end_event: str | None = None
     started = time.monotonic()
     try:
@@ -299,9 +347,20 @@ async def stream_newsfind_queries(
                 continue
             yield line
     except Exception as exc:  # noqa: BLE001
-        error = f"runner error: {exc}"
+        error = f"runner error: {type(exc).__name__}: {exc}"
+        error_tb = traceback.format_exc()
         logger.exception("newsfind_queries stream runner error")
-        yield json.dumps({"type": "error", "error": error})
+        yield json.dumps(
+            {
+                "type": "error",
+                "stage": "runner",
+                "topic_id": topic_id,
+                "run_id": run_id,
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "traceback": error_tb,
+            }
+        )
 
     parsed = parse_business_result(raw_result)
     duration_ms, total_cost_usd = _result_event_summary(raw_result)

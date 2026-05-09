@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+import logging
+import traceback
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
@@ -23,6 +26,8 @@ from .schemas import (
     RunRequest,
     RunResult,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def get_job_manager(request: Request) -> JobManager:
@@ -82,6 +87,14 @@ async def run_sync(
         return await run_claude(body, settings)
     except CommandNotAllowedError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
+    except Exception as e:  # noqa: BLE001 — surface unexpected errors to the client
+        logger.exception("run_sync handler error")
+        return RunResult(
+            status="failed",
+            exit_code=1,
+            error=f"server error: {type(e).__name__}: {e}",
+            stderr=traceback.format_exc(),
+        )
 
 
 @router.post("/stream")
@@ -106,7 +119,25 @@ async def run_stream(
                 async for line in stream_claude(body, settings):
                     yield f"data: {line}\n\n"
         except CommandNotAllowedError as e:
-            yield f'event: error\ndata: {{"error": "{e}"}}\n\n'
+            payload = json.dumps({
+                "type": "error",
+                "stage": "auth",
+                "error_type": type(e).__name__,
+                "error": str(e),
+            })
+            yield f"data: {payload}\n\n"
+            yield f"data: {json.dumps({'type': 'end', 'exit_code': 1})}\n\n"
+        except Exception as e:  # noqa: BLE001 — surface as SSE so curl sees the cause
+            logger.exception("stream handler error")
+            payload = json.dumps({
+                "type": "error",
+                "stage": "route",
+                "error_type": type(e).__name__,
+                "error": str(e),
+                "traceback": traceback.format_exc(),
+            })
+            yield f"data: {payload}\n\n"
+            yield f"data: {json.dumps({'type': 'end', 'exit_code': 1})}\n\n"
 
     return StreamingResponse(_gen(), media_type="text/event-stream")
 

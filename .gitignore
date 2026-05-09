@@ -16,3 +16,5 @@ build/
 artifacts/
 state/
 .DS_Store
+runs/
+!runs/.gitkeep
