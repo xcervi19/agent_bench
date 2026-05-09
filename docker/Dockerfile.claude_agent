@@ -31,6 +31,16 @@ ENV PYTHONPATH=/app/libs:/app
 # Mount your project's `claude_agent_fe` here in compose so .claude/commands resolve.
 ENV CLAUDE_AGENT_WORKSPACE_DIR=/workspace/claude_agent_fe
 
+# Create a non-root user. Anthropic CLI refuses bypassPermissions / WebSearch /
+# Bash for root, so the FastAPI service must run as a regular user.
+# Fixed UID/GID 1001 keeps host bind-mount permissions predictable.
+RUN groupadd -r -g 1001 app \
+    && useradd -r -u 1001 -g app -m -d /home/app -s /bin/bash app \
+    && mkdir -p /home/app/.claude /workspace/claude_agent_fe \
+    && chown -R app:app /home/app /workspace /app
+
+USER app
+
 EXPOSE 8002
 
 CMD ["uvicorn", "apps.claude_agent.app:app", "--host", "0.0.0.0", "--port", "8002"]
