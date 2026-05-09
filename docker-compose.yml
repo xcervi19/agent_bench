@@ -109,6 +109,7 @@ services:
       dockerfile: docker/Dockerfile.claude_agent
     env_file:
       - .env
+      - apps/claude_agent/.env
       - /etc/claude-worker.env
     environment:
       CLAUDE_AGENT_WORKSPACE_DIR: /workspace/claude_agent_fe
@@ -116,9 +117,6 @@ services:
       CLAUDE_AGENT_API_KEY: ${CLAUDE_AGENT_API_KEY:-}
       CLAUDE_AGENT_DEFAULT_MODEL: ${CLAUDE_AGENT_DEFAULT_MODEL:-}
       CLAUDE_AGENT_ALLOW_FREEFORM_PROMPTS: ${CLAUDE_AGENT_ALLOW_FREEFORM_PROMPTS:-false}
-      RAG_BASE_URL: ${RAG_BASE_URL:-}
-      RAG_TENANT_ID: ${RAG_TENANT_ID:-}
-      RAG_API_KEY: ${RAG_API_KEY:-}
       HOME: /home/app
     volumes:
       - ./claude_agent_fe:/workspace/claude_agent_fe:rw
