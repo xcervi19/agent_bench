@@ -53,6 +53,7 @@ class ClaudeAgentSettings(BaseSettings):
             "/signal-extractor",
             "/rag-search",
             "/rag-query-builder",
+            "/newsfind-queries",
         ],
         description="Allowlist of slash commands. Empty list = allow all.",
     )

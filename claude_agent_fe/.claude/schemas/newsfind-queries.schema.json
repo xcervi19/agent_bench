@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-bench/claude_agent_fe/.claude/schemas/newsfind-queries.schema.json",
+  "title": "newsfind-queries Stage 1 output",
+  "description": "Domain-agnostic intelligence blueprint emitted by /newsfind-queries. Stdout MUST be exactly one JSON object matching this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "stage",
+    "schema_version",
+    "topic_id",
+    "topic",
+    "topic_restated",
+    "domain",
+    "rag_context_refs",
+    "web_seed_refs",
+    "entities",
+    "source_landscape",
+    "hypothesis",
+    "scenarios",
+    "queries",
+    "monitoring_plan",
+    "regenerate_when",
+    "reasoning_trace",
+    "created_at",
+    "topic_fingerprint"
+  ],
+  "properties": {
+    "stage":          { "const": "queries" },
+    "schema_version": { "const": "1.0.0" },
+    "topic_id":       { "type": "string", "format": "uuid" },
+    "topic":          { "type": "string", "minLength": 1 },
+    "topic_restated": { "type": "string", "minLength": 1 },
+    "domain":         { "type": "string", "minLength": 1 },
+    "domain_secondary": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+
+    "rag_context_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source"],
+        "properties": {
+          "source":     { "type": "string" },
+          "snippet_id": { "type": "string" },
+          "used_for":   { "type": "string" }
+        }
+      }
+    },
+
+    "web_seed_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["url", "discovered_in"],
+        "properties": {
+          "url":           { "type": "string", "format": "uri" },
+          "title":         { "type": "string" },
+          "publisher":     { "type": "string" },
+          "language":      { "type": "string" },
+          "discovered_in": { "enum": ["P2", "P4"] }
+        }
+      }
+    },
+
+    "entities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actors", "infrastructure", "instruments", "regions"],
+      "properties": {
+        "actors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "tier"],
+            "properties": {
+              "name":         { "type": "string" },
+              "tier":         { "type": "integer", "minimum": 1, "maximum": 3 },
+              "role":         { "type": "string" },
+              "primary_lang": { "type": "string" }
+            }
+          }
+        },
+        "infrastructure": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "tier"],
+            "properties": {
+              "name":   { "type": "string" },
+              "tier":   { "type": "integer", "minimum": 1, "maximum": 3 },
+              "type":   { "type": "string" },
+              "region": { "type": "string" }
+            }
+          }
+        },
+        "instruments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "tier": { "type": "integer", "minimum": 1, "maximum": 3 },
+              "type": { "type": "string" }
+            }
+          }
+        },
+        "regions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "source_landscape": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["entity"],
+        "properties": {
+          "entity": { "type": "string" },
+          "primary_official": {
+            "type": "object",
+            "properties": {
+              "url":  { "type": "string" },
+              "lang": { "type": "string" }
+            },
+            "additionalProperties": false
+          },
+          "local_press": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string" },
+                "lang": { "type": "string" },
+                "url":  { "type": "string" }
+              }
+            }
+          },
+          "specialist": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string" },
+                "lang": { "type": "string" },
+                "url":  { "type": "string" }
+              }
+            }
+          },
+          "data_feed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name":    { "type": "string" },
+                "cadence": { "type": "string" },
+                "url":     { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "hypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["working_thesis", "counter_thesis", "knowledge_gaps", "invalidators"],
+      "properties": {
+        "working_thesis": { "type": "string", "minLength": 1 },
+        "counter_thesis": { "type": "string", "minLength": 1 },
+        "knowledge_gaps": { "type": "array", "items": { "type": "string" } },
+        "invalidators":   { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "scenarios": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "p", "invalidators", "covers_queries"],
+        "properties": {
+          "id":             { "type": "string" },
+          "label":          { "type": "string" },
+          "p":              { "type": "number", "minimum": 0, "maximum": 1 },
+          "invalidators":   { "type": "array", "items": { "type": "string" } },
+          "covers_queries": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+
+    "queries": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 25,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "q",
+          "language",
+          "region",
+          "source_class",
+          "intent",
+          "archetype",
+          "time_horizon",
+          "freshness",
+          "priority",
+          "covers_entity",
+          "rationale",
+          "fingerprint"
+        ],
+        "properties": {
+          "id":           { "type": "string", "pattern": "^q[0-9]{2,3}$" },
+          "q":            { "type": "string", "minLength": 1 },
+          "language":     { "type": "string", "minLength": 2, "maxLength": 8 },
+          "region":       { "type": "string" },
+          "source_class": {
+            "enum": [
+              "primary_official",
+              "specialist_outlet",
+              "local_press",
+              "data_feed",
+              "physical_data",
+              "aggregator",
+              "social_signal"
+            ]
+          },
+          "intent": {
+            "enum": ["context", "monitoring", "corroboration"]
+          },
+          "archetype": {
+            "enum": [
+              "price_signal",
+              "physical_signal",
+              "policy_signal",
+              "sentiment_signal",
+              "negative_signal",
+              "corroboration"
+            ]
+          },
+          "time_horizon": {
+            "enum": ["historical", "current_state", "forward_looking"]
+          },
+          "freshness": {
+            "enum": ["any", "24h", "7d", "30d", "scheduled"]
+          },
+          "operators": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "recommended_engine": {
+            "enum": ["google", "brave", "yandex", "baidu", "naver", "duckduckgo", "other"]
+          },
+          "expected_yield": { "enum": ["high", "medium", "low"] },
+          "priority":       { "type": "integer", "minimum": 1, "maximum": 5 },
+          "covers_entity":  { "type": "array", "items": { "type": "string" } },
+          "rationale":      { "type": "string", "minLength": 1 },
+          "fingerprint":    { "type": "string", "minLength": 8 }
+        }
+      }
+    },
+
+    "monitoring_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default_cadence", "trigger_terms", "stop_conditions"],
+      "properties": {
+        "default_cadence":       { "type": "string" },
+        "high_priority_cadence": { "type": "string" },
+        "low_priority_cadence":  { "type": "string" },
+        "trigger_terms":         { "type": "array", "items": { "type": "string" } },
+        "scheduled_events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["event"],
+            "properties": {
+              "event":      { "type": "string" },
+              "when_utc":   { "type": "string" },
+              "watch_for":  { "type": "string" }
+            }
+          }
+        },
+        "stop_conditions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "regenerate_when": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_age_days", "on_events"],
+      "properties": {
+        "max_age_days": { "type": "integer", "minimum": 1 },
+        "on_events":    { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "reasoning_trace": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "type": "object",
+        "required": ["phase", "summary"],
+        "properties": {
+          "phase":   { "enum": ["P1", "P2", "P3", "P4", "P5", "P6", "P7"] },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+
+    "created_at":        { "type": "string", "format": "date-time" },
+    "topic_fingerprint": { "type": "string", "minLength": 8 }
+  }
+}
