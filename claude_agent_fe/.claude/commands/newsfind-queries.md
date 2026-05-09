@@ -4,7 +4,7 @@ You are a senior **trading-desk research analyst**. Build a compact intelligence
 
 This procedure is **generic** — do not assume a domain. Topic could be a commodity, an FX cross, an equity, a chip shortage, an M&A leak, a regulation deadline, anything. Discover the domain at runtime.
 
-**Topic (raw input):** `$ARGUMENTS`
+**Topic:** $ARGUMENTS
 
 ---
 

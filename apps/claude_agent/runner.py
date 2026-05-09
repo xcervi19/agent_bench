@@ -76,6 +76,9 @@ def _build_command(req: RunRequest, settings: ClaudeAgentSettings) -> _BuiltComm
         permission_mode,
     ]
 
+    if output_format == "stream-json":
+        argv.append("--verbose")
+
     model = req.model or settings.default_model
     if model:
         argv.extend(["--model", model])

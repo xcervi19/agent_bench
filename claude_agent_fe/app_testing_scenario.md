@@ -1,44 +1,42 @@
-# Testing /newsfind-queries
+# Testing /newsfind-queries from local Mac via the API
 
-The new lightweight version targets ~90-150s end-to-end. Use streaming for live visibility.
+The goal: call the deployed API from your laptop and get either a clean blueprint JSON or a clear error.
 
 ---
 
-## 1. Original sync mode (slow, no progress, easy to pipe to jq)
+## Setup
 
 ```bash
-curl -s -X POST http://79.143.179.212:8002/v1/agent/run \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
-  -d '{"command":"/newsfind-queries","args":"Hormuz strait closure options to lower price","timeout_sec":900}' \
-  | jq '.parsed' > /tmp/newsfind_A.json
+export CLAUDE_AGENT_API_KEY="<your key>"
+export API="http://79.143.179.212:8002"
 ```
 
 ---
 
-## 2. Streaming mode — raw events (see everything live)
+## 1. Pre-flight — service alive and command registered
 
 ```bash
-curl -N -X POST http://79.143.179.212:8002/v1/agent/stream \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
-  -d '{"command":"/newsfind-queries","args":"Hormuz strait closure options to lower price","timeout_sec":900}'
+curl -s "$API/readyz"
+# expect: {"status":"ready","claude_version":"..."}
+
+curl -s "$API/v1/agent/info" -H "X-API-Key: $CLAUDE_AGENT_API_KEY" | jq '.allowed_commands'
+# expect: array including "/newsfind-queries"
 ```
 
-`-N` disables curl buffering — required for SSE.
+If `/newsfind-queries` is missing from the allowlist → rebuild claude_agent on the VPS so the updated `apps/claude_agent/.env` is baked in.
 
 ---
 
-## 3. Streaming mode — filtered live view (recommended)
+## 2. Streaming with filtered live view (recommended path)
 
-Shows phase markers, tool calls, and the final result line:
+See phase markers + tool calls live, then a final `✓ DONE`. Best UX for any long command.
 
 ```bash
-curl -N -X POST http://79.143.179.212:8002/v1/agent/stream \
+curl -N -X POST "$API/v1/agent/stream" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
   -d '{"command":"/newsfind-queries","args":"Hormuz strait closure options to lower price","timeout_sec":900}' \
-  | awk -W interactive '/^data: /{sub(/^data: /,""); print; fflush()}' \
+  | sed -e 's/^data: //' \
   | jq -rc --unbuffered '
       if .type=="assistant" and .message.content then
         .message.content[]
@@ -48,101 +46,135 @@ curl -N -X POST http://79.143.179.212:8002/v1/agent/stream \
         "← tool returned"
       elif .type=="result" then
         "✓ DONE in \(.duration_ms)ms, cost $\(.total_cost_usd // 0)"
+      elif .type=="end" then
+        "[stream ended, exit_code=\(.exit_code)]"
       else empty end'
 ```
 
-Expected output:
-
-```
-→ Bash: echo '{"phase":"P1","status":"start","label":"domain & frame"}'
-← tool returned
-→ Bash: echo '{"phase":"P1","status":"done"}'
-← tool returned
-→ Bash: echo '{"phase":"P2","status":"start","label":"initial state read"}'
-← tool returned
-→ Bash: source .env && curl -sS -X POST "${RAG_BASE_URL}" ...
-← tool returned
-→ WebSearch: {"query":"..."}
-← tool returned
-→ Bash: echo '{"phase":"P2","status":"done","rag_calls":1,"web_calls":1}'
-← tool returned
-→ Bash: echo '{"phase":"P3","status":"start","label":"entities & thesis"}'
-← tool returned
-→ Bash: echo '{"phase":"P4","status":"start","label":"build queries"}'
-← tool returned
-→ Bash: echo '{"phase":"P4","status":"done","queries":12}'
-← tool returned
-✓ DONE in 118000ms, cost $0.08
-```
+Notes:
+- `-N` disables curl buffering (mandatory for SSE).
+- `sed -e 's/^data: //'` strips the SSE prefix.
+- `jq --unbuffered` flushes line by line so output is live.
+- Watch for the phase echoes (`{"phase":"P1",...}`) inside Bash tool calls — that's the agent telling you where it is.
 
 ---
 
-## 4. Streaming mode + capture final JSON to a file
+## 3. Streaming + capture final JSON to file
 
-Watch live AND save the final blueprint to disk for inspection:
+Same as Section 2, but tee the raw stream to disk so you can extract the final blueprint after it finishes.
 
 ```bash
-curl -N -X POST http://79.143.179.212:8002/v1/agent/stream \
+curl -N -X POST "$API/v1/agent/stream" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
   -d '{"command":"/newsfind-queries","args":"Hormuz strait closure options to lower price","timeout_sec":900}' \
-  | awk -W interactive '/^data: /{sub(/^data: /,""); print; fflush()}' \
-  | tee /tmp/newsfind_A.stream.ndjson \
+  | sed -e 's/^data: //' \
+  | tee /tmp/newsfind.stream.ndjson \
   | jq -rc --unbuffered '
       if .type=="assistant" and .message.content then
         .message.content[] | select(.type=="tool_use") | "→ \(.name)"
-      elif .type=="result" then
-        "✓ DONE"
+      elif .type=="result" then "✓ DONE"
+      elif .type=="end"    then "[exit_code=\(.exit_code)]"
       else empty end'
 
-# After it finishes, extract the parsed JSON:
-grep '"type":"result"' /tmp/newsfind_A.stream.ndjson \
+# After the run, extract the final parsed JSON:
+grep '"type":"result"' /tmp/newsfind.stream.ndjson \
   | head -1 \
   | jq -r '.result' \
-  | jq . > /tmp/newsfind_A.json
+  | jq . > /tmp/newsfind.json
 
-cat /tmp/newsfind_A.json | jq '{stage, domain, current_state, queries: (.queries | length)}'
+# Quick sanity check of what came back:
+jq '{stage, schema_version, domain, current_state, queries_count: (.queries | length)}' /tmp/newsfind.json
 ```
 
 ---
 
-## 5. Sanity checks on the parsed output
+## 4. Sync mode — one-shot, no progress (only for short commands)
 
 ```bash
-jq '
-  .schema_version,
-  .domain,
-  .current_state,
-  (.entities.actors | length) as $actors |
-  (.queries | length) as $qs |
-  (.queries | map(.language) | unique) as $langs |
-  {actors: $actors, queries: $qs, languages: $langs}
-' /tmp/newsfind_A.json
-```
-
-Pass criteria:
-- `schema_version == "0.2.0"`
-- `domain` is a non-empty short slug
-- `current_state` is 2-3 sentences grounded in P2
-- `queries` length in `[10, 15]`
-- Both `context` and `monitoring` intents represented
-- For non-anglophone topics: ≥30% non-`en` queries
-
----
-
-## 6. Domain-agnostic check (run a non-commodity topic)
-
-```bash
-curl -N -X POST http://79.143.179.212:8002/v1/agent/stream \
+curl -s -X POST "$API/v1/agent/run" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
-  -d '{"command":"/newsfind-queries","args":"Nvidia Q2 datacenter revenue guidance risk","timeout_sec":900}' \
-  | awk -W interactive '/^data: /{sub(/^data: /,""); print; fflush()}' \
-  | tee /tmp/newsfind_B.stream.ndjson \
-  | jq -rc --unbuffered 'if .type=="assistant" and .message.content then .message.content[] | select(.type=="tool_use") | "→ \(.name)" elif .type=="result" then "✓ DONE" else empty end'
-
-grep '"type":"result"' /tmp/newsfind_B.stream.ndjson | head -1 | jq -r '.result' | jq . > /tmp/newsfind_B.json
-jq '{domain, actors: .entities.actors, queries: (.queries|length)}' /tmp/newsfind_B.json
+  -d '{"command":"/newsfind-queries","args":"Hormuz strait closure options to lower price","timeout_sec":900}' \
+  | jq '{status, exit_code, error, duration_ms, parsed}'
 ```
 
-Expected: `domain` is something like `equity_earnings` or `tech_supply_chain`; `actors` are semiconductor/datacenter names — proves no oil/gas hardcoding bled through.
+Reading the response:
+- `status: "succeeded"` + `parsed.stage == "queries"` → blueprint is in `parsed`.
+- `status: "failed"` + non-null `error` → CLI exited non-zero. Check `stderr` for clues.
+- `status: "timeout"` → command exceeded `timeout_sec`. Increase the timeout or use streaming.
+
+---
+
+## 5. Async job mode — fire and poll (good for background runs)
+
+```bash
+JOB=$(curl -s -X POST "$API/v1/agent/jobs" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
+  -d '{"command":"/newsfind-queries","args":"Hormuz strait closure options to lower price","timeout_sec":900}' \
+  | jq -r '.id')
+echo "Job: $JOB"
+
+# Poll every 10s until terminal status:
+while :; do
+  S=$(curl -s "$API/v1/agent/jobs/$JOB" -H "X-API-Key: $CLAUDE_AGENT_API_KEY" | jq -r '.status')
+  echo "$(date +%T) status=$S"
+  case "$S" in succeeded|failed|cancelled|timeout) break;; esac
+  sleep 10
+done
+
+# Get the result (parsed JSON or error message):
+curl -s "$API/v1/agent/jobs/$JOB" -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
+  | jq '{status: .status, parsed: .result.parsed, error: .result.error}'
+```
+
+---
+
+## 6. Pass criteria (sanity-check the parsed blueprint)
+
+After Section 3 leaves a file at `/tmp/newsfind.json`:
+
+```bash
+jq -e '
+  .schema_version == "0.2.0"                                      and
+  (.queries | length) >= 10 and (.queries | length) <= 15         and
+  (.entities.actors | length) >= 1                                and
+  (.queries | map(.intent)       | unique | sort) == ["context","monitoring"] and
+  (.current_state | length) > 20                                  and
+  (.working_thesis | length) > 20
+' /tmp/newsfind.json && echo "PASS" || echo "FAIL"
+```
+
+---
+
+## 7. If something looks wrong — debug on the VPS
+
+```bash
+ssh -i ~/.ssh/contabo_ed25519 root@79.143.179.212
+
+# Container logs (last 100 lines, follow live):
+docker compose logs --tail=100 -f claude_agent
+
+# Test the slash command DIRECTLY inside the container.
+# IMPORTANT: pass the slash command + topic as ONE quoted string.
+docker compose exec -w /workspace/claude_agent_fe claude_agent \
+  claude -p --output-format json --permission-mode dontAsk \
+  "/newsfind-queries Hormuz strait closure options to lower price"
+
+# Same thing but streaming, to see live tool calls:
+docker compose exec -w /workspace/claude_agent_fe claude_agent \
+  claude -p --output-format stream-json --permission-mode dontAsk \
+  "/newsfind-queries Hormuz strait closure options to lower price" \
+  | head -60
+```
+
+Common failure modes and what to check:
+
+| Symptom | Likely cause | Where to look |
+|---|---|---|
+| `Unknown command: /newsfind-queries` | wrong cwd OR command not allowlisted | confirm `info.allowed_commands`; CLI test must use `-w /workspace/claude_agent_fe` |
+| Model says "topic is missing" | slash command + topic not passed as ONE string | quote them together: `"/newsfind-queries TOPIC..."` |
+| `exit_code: 1` with empty parsed | RAG endpoint unreachable from container | check `RAG_BASE_URL` env, ping `http://rag_adhoc:8000/readyz` from inside container |
+| `status: "timeout"` | command genuinely slow, or hung | increase `timeout_sec`, check logs for what tool stalled |
+| Stream has `→ Bash` echoes but never `✓ DONE` | model is still working OR stuck mid-phase | watch logs; if no output for 60s+ on a phase, kill and retry |
