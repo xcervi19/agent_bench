@@ -35,7 +35,7 @@ class ClaudeAgentSettings(BaseSettings):
         description="Default model alias (e.g. 'sonnet', 'opus'). None = CLI default.",
     )
     default_permission_mode: str = Field(
-        default="dontAsk",
+        default="bypassPermissions",
         description="default | acceptEdits | auto | bypassPermissions | dontAsk | plan",
     )
     default_output_format: str = Field(default="json")  # text | json | stream-json

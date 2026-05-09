@@ -15,3 +15,9 @@ curl -s -X POST http://79.143.179.212:8002/v1/agent/run \
 
 
   The OAuth token must be inside the container: docker compose exec claude_agent env | grep CLAUDE_CODE_OAUTH_TOKEN should show it.
+
+
+
+cd ~/agent_bench
+docker compose build claude_agent
+docker compose up -d claude_agent
