@@ -1,6 +1,7 @@
 ssh -i ~/.ssh/contabo_ed25519 root@79.143.179.212
 
 scp -i ~/.ssh/contabo_ed25519 .env.examplesmall root@79.143.179.212:~/agent_bench/.env
+scp -i ~/.ssh/contabo_ed25519 ./apps/claude_agent/.env root@79.143.179.212:~/agent_bench/apps/claude_agent/.env
 
 ssh -i ~/.ssh/contabo_ed25519 -L 5433:127.0.0.1:5432 root@79.143.179.212
 
