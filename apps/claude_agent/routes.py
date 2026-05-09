@@ -9,6 +9,11 @@ from fastapi.responses import StreamingResponse
 
 from .config import ClaudeAgentSettings, get_settings
 from .jobs import JobManager
+from .orchestrator import (
+    is_newsfind_request,
+    run_newsfind_queries,
+    stream_newsfind_queries,
+)
 from .runner import CommandNotAllowedError, claude_version, run_claude, stream_claude
 from .schemas import (
     InfoResponse,
@@ -65,8 +70,15 @@ async def run_sync(
     body: RunRequest,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ) -> RunResult:
-    """Synchronous run. Blocks until the CLI exits or hits the timeout."""
+    """Synchronous run. Blocks until the CLI exits or hits the timeout.
+
+    For ``/newsfind-queries`` we dispatch through the artifact-aware
+    orchestrator: cache-hits short-circuit the CLI entirely; cache-misses run
+    the CLI in stream-json mode and persist a full reproducible artifact set.
+    """
     try:
+        if is_newsfind_request(body):
+            return await run_newsfind_queries(body, settings)
         return await run_claude(body, settings)
     except CommandNotAllowedError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
@@ -77,12 +89,22 @@ async def run_stream(
     body: RunRequest,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ) -> StreamingResponse:
-    """SSE stream of stream-json events from the CLI."""
+    """SSE stream of stream-json events from the CLI.
+
+    For ``/newsfind-queries`` the orchestrator records the stream into
+    ``stream.ndjson`` while it flows, and finalizes ``raw_result.json`` /
+    ``parsed.json`` / ``meta.json`` plus ``index.json`` once ``type=result``
+    arrives.
+    """
 
     async def _gen():
         try:
-            async for line in stream_claude(body, settings):
-                yield f"data: {line}\n\n"
+            if is_newsfind_request(body):
+                async for line in stream_newsfind_queries(body, settings):
+                    yield f"data: {line}\n\n"
+            else:
+                async for line in stream_claude(body, settings):
+                    yield f"data: {line}\n\n"
         except CommandNotAllowedError as e:
             yield f'event: error\ndata: {{"error": "{e}"}}\n\n'
 

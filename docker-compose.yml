@@ -117,10 +117,14 @@ services:
       CLAUDE_AGENT_API_KEY: ${CLAUDE_AGENT_API_KEY:-}
       CLAUDE_AGENT_DEFAULT_MODEL: ${CLAUDE_AGENT_DEFAULT_MODEL:-}
       CLAUDE_AGENT_ALLOW_FREEFORM_PROMPTS: ${CLAUDE_AGENT_ALLOW_FREEFORM_PROMPTS:-false}
+      CLAUDE_AGENT_STATE_DIR: ${CLAUDE_AGENT_STATE_DIR:-/state}
+      CLAUDE_AGENT_SCHEMA_VERSION: ${CLAUDE_AGENT_SCHEMA_VERSION:-0.2.0}
+      CLAUDE_AGENT_ENV_VERSION: ${CLAUDE_AGENT_ENV_VERSION:-1}
       HOME: /home/app
     volumes:
       - ./claude_agent_fe:/workspace/claude_agent_fe:rw
       - ${CLAUDE_HOME_DIR:-./claude_home}:/home/app/.claude:rw
+      - ${CLAUDE_STATE_DIR:-./state}:/state:rw
     ports:
       - "8002:8002"
 

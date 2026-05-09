@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime, timezone
 
 from .config import ClaudeAgentSettings
+from .orchestrator import is_newsfind_request, run_newsfind_queries
 from .runner import CommandNotAllowedError, run_claude
 from .schemas import Job, JobStatus, RunRequest, RunResult
 
@@ -75,7 +76,12 @@ class JobManager:
                 job.status = "running"
                 job.started_at = _now()
                 try:
-                    result = await run_claude(job.request, self._settings)
+                    if is_newsfind_request(job.request):
+                        result = await run_newsfind_queries(
+                            job.request, self._settings
+                        )
+                    else:
+                        result = await run_claude(job.request, self._settings)
                 except CommandNotAllowedError as e:
                     result = RunResult(status="failed", error=str(e))
                 except Exception as e:  # noqa: BLE001 - surface unexpected errors via API

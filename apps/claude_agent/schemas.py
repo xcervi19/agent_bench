@@ -38,6 +38,15 @@ class RunRequest(BaseModel):
         default=None,
         description="Extra env vars exposed to the CLI process (e.g. RAG_*).",
     )
+    force_refresh: bool = Field(
+        default=False,
+        description=(
+            "If true, skip the artifact cache and always invoke Claude. The "
+            "previous successful run is preserved on disk; this run gets a "
+            "new run_id and becomes 'latest'. Currently respected only for "
+            "/newsfind-queries (the only stage that caches today)."
+        ),
+    )
 
     @model_validator(mode="after")
     def _exactly_one_input(self) -> "RunRequest":
@@ -56,6 +65,11 @@ class RunResult(BaseModel):
     parsed: dict[str, Any] | None = None
     stderr: str | None = None
     error: str | None = None
+    cached: bool = False
+    run_id: str | None = None
+    topic_id: str | None = None
+    parsed_path: str | None = None
+    total_cost_usd: float | None = None
 
 
 class Job(BaseModel):

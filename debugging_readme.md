@@ -4,6 +4,71 @@ Quick recipes + war stories. Not part of the API contract.
 
 ---
 
+## Reproducible run artifacts (`/newsfind-queries`)
+
+Every `/newsfind-queries` invocation is persisted as a replayable artifact set
+under `./state/` (mounted to `/state` in the container):
+
+```
+state/news/<topic_id>/index.json
+state/news/<topic_id>/runs/<run_id>/request.json
+state/news/<topic_id>/runs/<run_id>/stream.ndjson      # raw CLI events, one per line
+state/news/<topic_id>/runs/<run_id>/raw_result.json    # full type=result wrapper
+state/news/<topic_id>/runs/<run_id>/parsed.json        # business JSON only
+state/news/<topic_id>/runs/<run_id>/meta.json
+```
+
+Caching: before calling Claude we compute an `input_fingerprint` over
+`command + args + command-file hash + schema hash + schema_version + env_version
++ model + permission_mode`. If a previous successful run for the same
+`topic_id` has the same fingerprint, the API returns the cached `parsed.json`
+**without spending tokens**.
+
+### Forcing a fresh Claude call
+
+Pick the lever that matches the reason you want fresh data:
+
+| When | Lever | Scope |
+|---|---|---|
+| External reality changed but your args didn't | `"force_refresh": true` in the request body | this single call |
+| Edited `newsfind-queries.md` prompt | (automatic — command-file hash changes) | every topic that re-runs |
+| Schema shape changed | bump `CLAUDE_AGENT_SCHEMA_VERSION` | all topics |
+| Runtime/env meaningfully changed | bump `CLAUDE_AGENT_ENV_VERSION` | all topics |
+| One topic is poisoned and you want a clean slate | `rm -rf state/news/<topic_id>/` | one topic, history wiped |
+
+`force_refresh: true` skips `find_cached(...)`, runs Claude, and **appends** a
+new run to the topic's `runs[]`. The previous run stays on disk under its old
+`run_id`; only `latest_queries_run_id` / `latest_queries_parsed_path` move
+forward. So you keep history and can compare runs offline.
+
+Example:
+
+```bash
+curl -s -X POST "$API/v1/agent/run" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
+  -d '{
+    "command": "/newsfind-queries",
+    "args": "Hormuz strait closure options to lower price",
+    "force_refresh": true,
+    "timeout_sec": 900
+  }' | jq '{run_id, cached, status, parsed_path}'
+```
+
+The streaming endpoint emits the same CLI events as before, plus:
+
+- `cache_hit` — short-circuit, followed by a synthetic `result` with `cached: true`.
+- `run_started` — first event of a fresh run (carries `run_id` + `input_fingerprint`).
+- `artifact_finalized` — emitted right before `end` once all files are flushed.
+
+Upper logic should consume only `parsed.json` (or `latest_queries_parsed_path`
+from `index.json`); the stream and raw wrapper are for debugging/replay. To
+inspect a specific historical run, read
+`state/news/<topic_id>/runs/<run_id>/parsed.json` directly — every successful
+run is preserved.
+
+---
+
 ## Standard rebuild + smoke test (VPS)
 
 ```bash
@@ -140,6 +205,64 @@ ls -la ~/agent_bench/claude_home ~/agent_bench/claude_agent_fe
 docker compose exec -w /workspace/claude_agent_fe claude_agent \
   claude -p --output-format json --permission-mode bypassPermissions \
   "/newsfind-queries Hormuz strait closure options to lower price"
+```
+
+---
+
+## RAG unavailable / empty `rag_context_refs` (VPS)
+
+**Symptom:** output contains:
+```json
+"rag_context_refs": [],
+"reasoning_trace": [
+  {
+    "phase": "P2",
+    "summary": "RAG unavailable — no .env configuration found in workspace..."
+  }
+]
+```
+
+First distinguish networking from missing env injection:
+```bash
+cd ~/agent_bench
+
+docker compose ps rag_adhoc claude_agent
+
+docker compose exec claude_agent sh -lc '
+  echo "RAG_BASE_URL=$RAG_BASE_URL"
+  echo "RAG_TENANT_ID=$RAG_TENANT_ID"
+  getent hosts rag_adhoc || true
+  curl -sv --max-time 5 http://rag_adhoc:8000/readyz
+'
+```
+
+If `readyz` returns `200 OK` but `RAG_BASE_URL` / `RAG_TENANT_ID` are blank, Docker networking is fine; Compose did not inject the env vars into `claude_agent`.
+
+Check that `docker-compose.yml` loads `apps/claude_agent/.env` for `claude_agent`, and does not override `RAG_*` with empty values:
+```yaml
+env_file:
+  - .env
+  - apps/claude_agent/.env
+  - /etc/claude-worker.env
+```
+
+Inside Docker, use the service DNS name, not `localhost`:
+```bash
+RAG_BASE_URL=http://rag_adhoc:8000/v1/search
+```
+
+Recreate and verify:
+```bash
+docker compose up -d --force-recreate claude_agent
+docker compose exec claude_agent sh -lc 'env | grep -E "^RAG_"'
+
+docker compose exec claude_agent sh -lc '
+  curl -sv --max-time 10 -X POST "$RAG_BASE_URL" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-Id: $RAG_TENANT_ID" \
+    -H "X-API-Key: $RAG_API_KEY" \
+    -d "{\"query\":\"ping\",\"limit\":1}"
+'
 ```
 
 ---

@@ -76,6 +76,33 @@ class ClaudeAgentSettings(BaseSettings):
     )
     max_concurrent_jobs: int = Field(default=4)
 
+    # Reproducible run artifacts (per /newsfind-queries run)
+    state_dir: str = Field(
+        default="/state",
+        description=(
+            "Directory where per-run artifacts (request, stream, raw_result, "
+            "parsed, meta, index) are written. In docker we mount ./state here."
+        ),
+    )
+    state_index_prefix: str = Field(
+        default="state",
+        description=(
+            "Logical prefix used in index.json's parsed_path so upper logic can "
+            "resolve the artifact relative to the project root."
+        ),
+    )
+    schema_version: str = Field(
+        default="0.2.0",
+        description="Newsfind queries business-schema version (folded into input_fingerprint).",
+    )
+    env_version: str = Field(
+        default="1",
+        description=(
+            "Bump this whenever the agent runtime/env changes in a way that "
+            "should invalidate cached newsfind-queries runs."
+        ),
+    )
+
 
 @lru_cache
 def get_settings() -> ClaudeAgentSettings:
