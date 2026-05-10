@@ -56,5 +56,5 @@ jq '{schema_version,topic_id,domain,topic,
      priorities:(.queries|group_by(.priority)|map({p:.[0].priority,n:length}))}' \
    "$RUN_DIR/parsed.json" > "$RUN_DIR/summary.json"
 
-jq -r '.queries[] | "\(.id) [p\(.priority)] [\(.language)] [\(.intent)] \(.text // .q)\n  why: \(.rationale)\n"' \
+jq -r '.queries[] | "\(.id) [p\(.priority)] [\(.language)] [\(.intent)] \(.query)\n  why: \(.rationale)\n"' \
    "$RUN_DIR/parsed.json" > "$RUN_DIR/queries.txt"

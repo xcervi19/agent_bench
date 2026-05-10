@@ -164,7 +164,7 @@ jq '{
 
 jq -r '
   .queries[]?
-  | "\(.id) [p\(.priority)] [\(.language)] [\(.intent)] \(.text // .q)\n  why: \(.rationale)\n"
+  | "\(.id) [p\(.priority)] [\(.language)] [\(.intent)] \(.query)\n  why: \(.rationale)\n"
 ' "$RUN_DIR/parsed.json" > "$RUN_DIR/queries.txt"
 
 echo
