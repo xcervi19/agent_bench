@@ -15,6 +15,10 @@ from fastapi import FastAPI
 from .config import get_settings
 from .jobs import JobManager
 from .routes import router
+from .topics.db import is_configured as topics_db_configured
+from .topics.events import EventBus
+from .topics.orchestrator import TopicSupervisor
+from .topics.routes import router as topics_router
 
 
 def _configure_logging(level: str, app_env: str) -> None:
@@ -46,13 +50,39 @@ def _configure_logging(level: str, app_env: str) -> None:
 async def _lifespan(app: FastAPI):
     settings = get_settings()
     app.state.job_manager = JobManager(settings)
+
+    # Topic pipeline (newsfind-pipeline-v1). Optional: only wires up when a
+    # database URL is configured. The /v1/topics/* router gracefully returns
+    # 503 when DB is not configured, so the rest of the API is unaffected.
+    supervisor: TopicSupervisor | None = None
+    if topics_db_configured(settings):
+        bus = EventBus()
+        supervisor = TopicSupervisor(settings, bus)
+        app.state.topic_bus = bus
+        app.state.topic_supervisor = supervisor
+        try:
+            resumed = await supervisor.resume_in_flight()
+            if resumed:
+                structlog.get_logger("claude_agent").info(
+                    "claude_agent.topics.resumed", count=resumed
+                )
+        except Exception:
+            structlog.get_logger("claude_agent").exception(
+                "claude_agent.topics.resume_failed"
+            )
+
     structlog.get_logger("claude_agent").info(
         "claude_agent.start",
         workspace_dir=settings.workspace_dir,
         claude_bin=settings.claude_bin,
         allowed_commands=settings.allowed_commands,
+        topics_enabled=topics_db_configured(settings),
     )
-    yield
+    try:
+        yield
+    finally:
+        if supervisor is not None:
+            await supervisor.shutdown()
 
 
 def build_app() -> FastAPI:
@@ -83,6 +113,7 @@ def build_app() -> FastAPI:
         return {"status": "ready", "claude_version": ver}
 
     app.include_router(router)
+    app.include_router(topics_router)
     return app
 
 

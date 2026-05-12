@@ -103,6 +103,32 @@ class ClaudeAgentSettings(BaseSettings):
         ),
     )
 
+    # Postgres-backed orchestration metadata for /v1/topics/* (newsfind pipeline v1).
+    # Empty string disables the topic API (returns 503). The same database can be
+    # shared with the agentic_core api service.
+    database_url: str = Field(
+        default="",
+        description=(
+            "asyncpg URL, e.g. postgresql+asyncpg://user:pass@postgres:5432/agentic. "
+            "Required for /v1/topics/* endpoints."
+        ),
+    )
+
+    # Concurrency cap for in-process topic orchestrator (one asyncio task per topic).
+    max_concurrent_topics: int = Field(default=8)
+
+    # Webhook delivery
+    webhook_max_retries: int = Field(default=3)
+    webhook_initial_backoff_sec: float = Field(default=2.0)
+    webhook_request_timeout_sec: float = Field(default=10.0)
+
+    # Stage-3 budgets (defaults; per-topic override via request body later).
+    search_max_queries: int = Field(default=15)
+    search_per_query_timeout_sec: int = Field(default=120)
+
+    # Stage-2 / Stage-4 markdown component vocabulary version (additive only).
+    md_components_version: str = Field(default="1")
+
 
 @lru_cache
 def get_settings() -> ClaudeAgentSettings:

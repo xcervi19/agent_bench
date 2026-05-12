@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-bench/claude_agent_fe/.claude/schemas/newsfind-report.schema.json",
+  "title": "newsfind-report output (v0.1.0)",
+  "description": "Stage 4 long-form report grounded in Stage 3 sources. Stdout MUST be exactly one JSON object matching this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "stage",
+    "schema_version",
+    "topic_id",
+    "summary_md",
+    "report_md",
+    "key_findings",
+    "scenario_updates",
+    "thesis_status",
+    "thesis_update_md",
+    "open_questions",
+    "next_queries"
+  ],
+  "properties": {
+    "stage":          { "const": "report" },
+    "schema_version": { "const": "0.1.0" },
+    "topic_id":       { "type": "string", "minLength": 1 },
+    "summary_md":     { "type": "string", "minLength": 1 },
+    "report_md":      { "type": "string", "minLength": 1 },
+    "key_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["finding", "confidence", "source_ids"],
+        "properties": {
+          "finding":     { "type": "string", "minLength": 1 },
+          "confidence":  { "type": "string", "enum": ["high", "medium", "low"] },
+          "source_ids":  { "type": "array", "items": { "type": "string" }, "minItems": 0 }
+        }
+      }
+    },
+    "scenario_updates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "label", "rationale"],
+        "properties": {
+          "id":            { "type": "string" },
+          "label":         { "type": "string" },
+          "p_before":      { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "p_after":       { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+          "rationale":     { "type": "string" },
+          "evidence_ids":  { "type": "array", "items": { "type": "string" } },
+          "verdict":       { "type": "string", "enum": ["supports", "weakens", "kills", "neutral"] }
+        }
+      }
+    },
+    "thesis_status":     { "type": "string", "enum": [
+      "supported", "weakened", "invalidated", "inconclusive"
+    ] },
+    "thesis_update_md":  { "type": "string" },
+    "open_questions":    { "type": "array", "items": { "type": "string" } },
+    "next_queries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["q", "intent"],
+        "properties": {
+          "q":         { "type": "string", "minLength": 1 },
+          "intent":    { "type": "string", "enum": ["monitoring", "context"] },
+          "rationale": { "type": "string" }
+        }
+      }
+    }
+  }
+}

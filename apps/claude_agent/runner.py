@@ -206,7 +206,19 @@ async def stream_claude(
                 break
             yield line.decode(errors="replace").rstrip("\n")
     finally:
-        rc = await proc.wait()
+d        # On normal exit the process has already terminated. On cancellation
+        # (asyncio.CancelledError thrown into ``await proc.stdout.readline()``)
+        # we must kill the subprocess so it doesn't outlive the task. ``kill``
+        # on an already-exited process is a no-op.
+        if proc.returncode is None:
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
+        try:
+            rc = await asyncio.wait_for(proc.wait(), timeout=5.0)
+        except asyncio.TimeoutError:
+            rc = -1
         yield json.dumps({"type": "end", "exit_code": rc})
 
 

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-bench/claude_agent_fe/.claude/schemas/newsfind-search.schema.json",
+  "title": "newsfind-search output (v0.1.0)",
+  "description": "Stage 3 search output: deduplicated, scored news collection. Stdout MUST be exactly one JSON object matching this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "stage",
+    "schema_version",
+    "topic_id",
+    "executed_queries",
+    "sources",
+    "drops",
+    "search_budget_used"
+  ],
+  "properties": {
+    "stage":          { "const": "search" },
+    "schema_version": { "const": "0.1.0" },
+    "topic_id":       { "type": "string", "minLength": 1 },
+    "executed_queries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "query", "results_count"],
+        "properties": {
+          "id":             { "type": "string", "pattern": "^q[0-9]{2,3}$" },
+          "query":          { "type": "string" },
+          "results_count":  { "type": "integer", "minimum": 0 },
+          "language":       { "type": "string" },
+          "region":         { "type": "string" },
+          "freshness":      { "type": "string", "enum": ["24h", "7d", "30d", "any"] },
+          "error":          { "type": "string" }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id", "url", "url_hash", "title", "publisher",
+          "language", "snippet", "query_ids",
+          "source_class", "relevance_score", "novelty_score"
+        ],
+        "properties": {
+          "id":               { "type": "string", "pattern": "^s[0-9]{2,4}$" },
+          "url":              { "type": "string", "format": "uri" },
+          "url_hash":         { "type": "string", "minLength": 8 },
+          "title":            { "type": "string" },
+          "publisher":        { "type": "string" },
+          "published_at":     { "type": ["string", "null"] },
+          "language":         { "type": "string" },
+          "snippet":          { "type": "string" },
+          "query_ids":        { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "source_class":     { "type": "string", "enum": [
+            "primary_official", "specialist_outlet", "aggregator",
+            "data_feed", "blog_or_newsletter", "social", "unknown"
+          ] },
+          "relevance_score":  { "type": "number", "minimum": 0, "maximum": 1 },
+          "novelty_score":    { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "drops": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deduped", "low_relevance", "off_topic"],
+      "properties": {
+        "deduped":        { "type": "integer", "minimum": 0 },
+        "low_relevance":  { "type": "integer", "minimum": 0 },
+        "off_topic":      { "type": "integer", "minimum": 0 }
+      }
+    },
+    "search_budget_used": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["queries_executed"],
+      "properties": {
+        "queries_executed":  { "type": "integer", "minimum": 0 },
+        "web_searches":      { "type": "integer", "minimum": 0 },
+        "web_fetches":       { "type": "integer", "minimum": 0 },
+        "haiku_score_calls": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}
