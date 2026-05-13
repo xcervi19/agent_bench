@@ -83,6 +83,9 @@ def build_app() -> FastAPI:
         return {"status": "ready", "claude_version": ver}
 
     app.include_router(router)
+    if settings.database_url:
+        from .topics.routes import router as topics_router
+        app.include_router(topics_router)
     return app
 
 

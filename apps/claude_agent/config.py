@@ -54,6 +54,8 @@ class ClaudeAgentSettings(BaseSettings):
             "/rag-search",
             "/rag-query-builder",
             "/newsfind-queries",
+            "/newsfind-plan",
+            "/newsfind-deliver",
         ],
         description="Allowlist of slash commands. Empty list = allow all.",
     )
@@ -100,6 +102,13 @@ class ClaudeAgentSettings(BaseSettings):
         description=(
             "Bump this whenever the agent runtime/env changes in a way that "
             "should invalidate cached newsfind-queries runs."
+        ),
+    )
+
+    database_url: str = Field(
+        default="",
+        description=(
+            "asyncpg URL for /v1/topics/* state. Empty disables those endpoints."
         ),
     )
 
