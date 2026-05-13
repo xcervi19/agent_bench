@@ -137,7 +137,16 @@ async def _run_slash(
                 if block.get("type") == "tool_use":
                     await emit(topic_id, "tool_use", {
                         "tool": block.get("name"),
-                        "input_preview": str(block.get("input"))[:200],
+                        "tool_use_id": block.get("id"),
+                        "input_preview": str(block.get("input"))[:400],
+                    })
+        elif kind == "user":
+            for block in event.get("message", {}).get("content", []) or []:
+                if block.get("type") == "tool_result":
+                    await emit(topic_id, "tool_result", {
+                        "tool_use_id": block.get("tool_use_id"),
+                        "is_error": bool(block.get("is_error")),
+                        "output_preview": _result_preview(block.get("content")),
                     })
         elif kind == "result":
             if event.get("subtype") == "success":
@@ -176,3 +185,17 @@ def _try_loads(s: str | None) -> Any:
         return json.loads(s)
     except (JSONDecodeError, TypeError):
         return None
+
+
+def _result_preview(content: Any) -> str:
+    if isinstance(content, str):
+        return content[:600]
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                parts.append(str(block.get("text", "")))
+            else:
+                parts.append(str(block))
+        return " ".join(parts)[:600]
+    return str(content)[:600]

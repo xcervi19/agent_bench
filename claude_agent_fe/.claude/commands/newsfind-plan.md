@@ -66,12 +66,27 @@ Echo `{"phase":"P1","status":"done"}`.
 
 ## Phase 2 — initial state read (parallel)
 
-Read `.env` for `RAG_BASE_URL`, `RAG_TENANT_ID`, `RAG_API_KEY`. In one assistant turn, fire two tool calls in parallel:
+The runtime has already injected `RAG_BASE_URL`, `RAG_TENANT_ID`, `RAG_API_KEY` into your process environment. **Do not** try to read `.env` — use the env vars directly. Verify once:
 
-* 1 × RAG `curl -s -H "X-Tenant-Id: $RAG_TENANT_ID" -H "X-API-Key: $RAG_API_KEY" "$RAG_BASE_URL?q=<topic>&top_k=8"`
-* 1 × WebSearch with the raw topic
+```bash
+printenv RAG_BASE_URL RAG_TENANT_ID RAG_API_KEY | head -3
+```
 
-Use the results to populate `rag_context_refs[]` (each `{source, source_id, score?}`) and `web_seed_refs[]` (each `{url, title, language}`). If either tool fails, leave its refs array empty.
+If any of those three values is missing, treat RAG as unavailable, set `rag_context_refs: []`, and add a one-line note to `current_state` ("RAG unavailable: env vars missing"). Do not retry from a `.env` file.
+
+In one assistant turn, fire two tool calls in parallel:
+
+* 1 × RAG via `Bash`:
+  ```bash
+  curl -sS -X POST "$RAG_BASE_URL" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-Id: $RAG_TENANT_ID" \
+    -H "X-API-Key: $RAG_API_KEY" \
+    -d "{\"query\":\"<one synthesized question covering topic fundamentals + key actors + market mechanics>\",\"limit\":5}"
+  ```
+* 1 × `WebSearch` with the raw topic.
+
+If the RAG call returns non-2xx or empty JSON, leave `rag_context_refs: []` and note it in `current_state` exactly as: "RAG returned no results". Populate `rag_context_refs[]` with `{source, source_id, score?}` only from rows the server actually returned.
 
 Echo `{"phase":"P2","status":"done"}`.
 
