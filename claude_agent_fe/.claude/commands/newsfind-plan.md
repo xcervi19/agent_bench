@@ -8,11 +8,13 @@ You are a senior trading-desk research analyst. In ONE session you will plan a q
 {"topic": "<the user's topic string>", "run_id": "<uuid>"}
 ```
 
-You will write three files into this directory: `parsed.json`, `intro.json`, `intro.md`. Then you will print **exactly one JSON object on stdout** as the result (no markdown, no extra text).
+You will write four files into this directory: `parsed.json`, `intro.json`, `intro.md`, and `summary.json`. The orchestrator reads `summary.json` directly from disk; your final assistant message is ignored.
 
 ---
 
-## Required final stdout
+## Required `summary.json` (final artifact)
+
+After all other artifacts are written, write `summary.json` to the same run directory:
 
 ```json
 {
@@ -159,9 +161,9 @@ Write `intro.json`:
 
 Write `intro.md` as the human-readable version: an `<EntityChips>` for the actors, a `<Highlights>` block for the highlights, sections "Understanding / Current state / Working thesis / Approach / What happens next". Markdown only, no code fences inside.
 
-Echo `{"phase":"P4","status":"done"}`.
+Finally, write `summary.json` in the same run dir using the schema from "Required `summary.json`" above. The orchestrator reads this file to emit `intro.ready`.
 
-Then print the **final summary JSON** (see "Required final stdout" above) as the entire stdout body. No prose, no markdown, no code fences.
+Echo `{"phase":"P4","status":"done"}`.
 
 ---
 
@@ -171,4 +173,4 @@ Then print the **final summary JSON** (see "Required final stdout" above) as the
 * If RAG fails, `rag_context_refs: []` and note it in `current_state`. Never crash.
 * If WebSearch fails, `web_seed_refs: []` and continue.
 * `intro.md` MUST NOT invent facts beyond what `parsed.json` contains — it only restructures.
-* Final stdout is ONE JSON object. Anything else breaks the orchestrator.
+* The run is complete when `summary.json` exists on disk. Your final assistant message is ignored.

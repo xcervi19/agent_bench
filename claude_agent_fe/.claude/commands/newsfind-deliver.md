@@ -12,11 +12,13 @@ You are a senior trading-desk research analyst. In ONE session you will execute 
 }
 ```
 
-You will write three files into the deliver run dir: `news.json`, `report.json`, `report.md`. Then print **exactly one JSON object** on stdout.
+You will write four files into the deliver run dir: `news.json`, `report.json`, `report.md`, and `summary.json`. The orchestrator reads `summary.json` directly from disk; your final assistant message is ignored.
 
 ---
 
-## Required final stdout
+## Required `summary.json` (final artifact)
+
+After all other artifacts are written, write `summary.json` to the same run directory:
 
 ```json
 {
@@ -26,6 +28,8 @@ You will write three files into the deliver run dir: `news.json`, `report.json`,
   "key_findings_count": 6
 }
 ```
+
+These fields drive the `report.ready` event the frontend renders when the report is complete.
 
 ---
 
@@ -131,9 +135,9 @@ Write `report.json` with all the synthesis fields (`schema_version: "0.1.0"`, `t
 
 Write `report.md` = the value of `report_md` (markdown body suitable for direct rendering).
 
-Echo `{"phase":"P5","status":"done"}`.
+Finally, write `summary.json` in the same run dir using the schema from "Required `summary.json`" above. The orchestrator reads this file to emit `report.ready`.
 
-Then print the final summary JSON described under "Required final stdout".
+Echo `{"phase":"P5","status":"done"}`.
 
 ---
 
@@ -142,4 +146,4 @@ Then print the final summary JSON described under "Required final stdout".
 * `news.json#sources` IDs are `s01`, `s02`, … No gaps.
 * Every factual claim in `report_md` / `summary_md` / `key_findings` is followed by inline citations referencing `news.json#sources[].id`.
 * Never fabricate sources. Never invent custom markdown components beyond `<NewsCard source-id="..."/>`.
-* Final stdout is ONE JSON object. No code fences, no prose.
+* The run is complete when `summary.json` exists on disk. Your final assistant message is ignored.

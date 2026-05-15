@@ -122,10 +122,10 @@ async def _run_slash(
 ) -> dict[str, Any] | None:
     await emit(topic_id, "stage.started", {"stage": leg})
     req = RunRequest(command=command, args=args, output_format="stream-json")
-    final_text: str | None = None
     error: str | None = None
     cost: float | None = None
     duration_ms: int | None = None
+    success = False
 
     async for line in stream_claude(req, settings):
         event = _try_loads(line)
@@ -150,20 +150,23 @@ async def _run_slash(
                     })
         elif kind == "result":
             if event.get("subtype") == "success":
-                final_text = event.get("result")
                 cost = event.get("total_cost_usd")
                 duration_ms = event.get("duration_ms")
+                success = True
             else:
                 error = f"result subtype={event.get('subtype')}"
         elif kind == "error":
             error = str(event.get("error") or "stream error")
 
-    if error is None and final_text is None:
+    if error is None and not success:
         error = "agent produced no result event"
 
-    summary = _try_loads(final_text) if final_text else None
-    if error is None and not isinstance(summary, dict):
-        error = "agent result was not a JSON object"
+    summary: dict[str, Any] | None = None
+    if error is None:
+        try:
+            summary = _read_summary(Path(args))
+        except (FileNotFoundError, ValueError, JSONDecodeError, OSError) as exc:
+            error = f"summary.json invalid: {exc}"
 
     if error is not None:
         await emit(topic_id, "error", {"stage": leg, "error": error})
@@ -176,6 +179,16 @@ async def _run_slash(
         "total_cost_usd": cost,
     })
     return summary
+
+
+def _read_summary(run_dir: Path) -> dict[str, Any]:
+    path = run_dir / "summary.json"
+    if not path.exists():
+        raise FileNotFoundError(f"{path} not written")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"{path} is not a JSON object")
+    return data
 
 
 def _try_loads(s: str | None) -> Any:

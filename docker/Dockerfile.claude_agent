@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Node.js (required by Claude Code CLI) + minimal build deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential curl ca-certificates gnupg git \
+        build-essential curl ca-certificates gnupg git jq \
     && curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
