@@ -121,7 +121,12 @@ async def _run_slash(
     settings: ClaudeAgentSettings,
 ) -> dict[str, Any] | None:
     await emit(topic_id, "stage.started", {"stage": leg})
-    req = RunRequest(command=command, args=args, output_format="stream-json")
+    req = RunRequest(
+        command=command,
+        args=args,
+        output_format="stream-json",
+        timeout_sec=settings.max_timeout_sec,
+    )
     error: str | None = None
     cost: float | None = None
     duration_ms: int | None = None
