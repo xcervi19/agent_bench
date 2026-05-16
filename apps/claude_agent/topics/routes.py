@@ -12,7 +12,7 @@ from sqlalchemy import select
 
 from ..config import ClaudeAgentSettings, get_settings
 from .db import session_scope
-from .models import Topic, TopicEvent, TopicWebhook
+from .models import Topic, TopicEvent, TopicRefreshDelta, TopicSubscription, TopicWebhook
 from .pipeline import (
     STATE_PLANNED,
     STATE_PLANNING,
@@ -25,6 +25,7 @@ from .pipeline import (
     set_state,
     topic_id_hash,
 )
+from .refresh import build_short_term_queries, list_deltas, run_refresh
 
 
 class CreateTopicBody(BaseModel):
@@ -34,6 +35,14 @@ class CreateTopicBody(BaseModel):
 class WebhookBody(BaseModel):
     url: HttpUrl
     secret: str | None = None
+
+
+class MonitorBody(BaseModel):
+    max_age_hours: int = Field(default=48, ge=1, le=720)
+    short_term_queries: list[dict[str, Any]] | None = Field(
+        default=None,
+        description="Optional override. If omitted, queries are auto-built from parsed.json + report.json.",
+    )
 
 
 def _require_api_key(
@@ -134,6 +143,197 @@ async def subscribe(topic_id: uuid.UUID, body: WebhookBody) -> dict[str, Any]:
         s.add(sub)
         await s.flush()
         return {"subscription_id": sub.id}
+
+
+# ---- v2: continuous monitoring ---------------------------------------------
+
+
+@router.post("/{topic_id}/monitor", status_code=status.HTTP_201_CREATED)
+async def start_monitoring(
+    topic_id: uuid.UUID,
+    body: MonitorBody,
+    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
+) -> dict[str, Any]:
+    """Enable continuous monitoring on a reported topic.
+
+    Generates the persistent short_term_queries plan from parsed.json + report.json
+    (unless caller supplies their own). Idempotent: a second call re-activates and
+    refreshes the query plan but does not duplicate subscriptions.
+    """
+    async with session_scope() as s:
+        row = await s.get(Topic, topic_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="topic not found")
+        if row.state != STATE_REPORTED:
+            raise HTTPException(
+                status_code=409,
+                detail=f"cannot monitor from state={row.state}; topic must be 'reported'",
+            )
+        plan_run_id = row.plan_run_id
+        deliver_run_id = row.deliver_run_id
+        topic_hash = row.topic_id_hash
+
+    if body.short_term_queries is not None:
+        queries = body.short_term_queries
+    else:
+        queries = _build_queries_from_disk(settings, topic_hash, plan_run_id, deliver_run_id)
+
+    async with session_scope() as s:
+        existing = (await s.execute(
+            select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
+        )).scalar_one_or_none()
+        if existing is None:
+            sub = TopicSubscription(
+                topic_id=topic_id,
+                status="active",
+                short_term_queries=queries,
+                max_age_hours=body.max_age_hours,
+            )
+            s.add(sub)
+            await s.flush()
+            sub_id = sub.id
+            created = True
+        else:
+            existing.status = "active"
+            existing.short_term_queries = queries
+            existing.max_age_hours = body.max_age_hours
+            sub_id = existing.id
+            created = False
+
+    await emit(topic_id, "monitor.started" if created else "monitor.updated", {
+        "subscription_id": sub_id,
+        "queries_count": len(queries),
+        "max_age_hours": body.max_age_hours,
+    })
+    return {
+        "subscription_id": sub_id,
+        "status": "active",
+        "queries_count": len(queries),
+        "max_age_hours": body.max_age_hours,
+        "short_term_queries": queries,
+    }
+
+
+@router.get("/{topic_id}/monitor")
+async def get_monitoring(topic_id: uuid.UUID) -> dict[str, Any]:
+    async with session_scope() as s:
+        sub = (await s.execute(
+            select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
+        )).scalar_one_or_none()
+        if sub is None:
+            raise HTTPException(status_code=404, detail="no monitoring subscription")
+        return {
+            "subscription_id": sub.id,
+            "status": sub.status,
+            "max_age_hours": sub.max_age_hours,
+            "refresh_count": sub.refresh_count,
+            "refresh_locked": sub.refresh_locked,
+            "last_refresh_at": (
+                sub.last_refresh_at.astimezone(timezone.utc).isoformat()
+                if sub.last_refresh_at is not None
+                else None
+            ),
+            "last_refresh_run_id": sub.last_refresh_run_id,
+            "short_term_queries": sub.short_term_queries,
+        }
+
+
+@router.delete("/{topic_id}/monitor", status_code=status.HTTP_200_OK)
+async def stop_monitoring(topic_id: uuid.UUID) -> dict[str, Any]:
+    async with session_scope() as s:
+        sub = (await s.execute(
+            select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
+        )).scalar_one_or_none()
+        if sub is None:
+            raise HTTPException(status_code=404, detail="no monitoring subscription")
+        sub.status = "paused"
+    await emit(topic_id, "monitor.stopped", {})
+    return {"status": "paused"}
+
+
+@router.post("/{topic_id}/refresh", status_code=status.HTTP_202_ACCEPTED)
+async def trigger_refresh(
+    topic_id: uuid.UUID,
+    background: BackgroundTasks,
+    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
+) -> dict[str, Any]:
+    """Trigger one refresh cycle. Idempotent if a refresh is already running.
+
+    Returns 202 with `{accepted, subscription_id, queued}` immediately; watch
+    SSE for `refresh.started` / `refresh.completed` events.
+    """
+    async with session_scope() as s:
+        sub = (await s.execute(
+            select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
+        )).scalar_one_or_none()
+        if sub is None:
+            raise HTTPException(status_code=404, detail="no monitoring subscription; POST /monitor first")
+        if sub.status != "active":
+            raise HTTPException(status_code=409, detail=f"subscription is {sub.status}")
+        if sub.refresh_locked:
+            return {"accepted": True, "subscription_id": sub.id, "queued": False, "reason": "refresh already running"}
+        subscription_id = sub.id
+
+    background.add_task(run_refresh, topic_id, subscription_id, settings)
+    return {"accepted": True, "subscription_id": subscription_id, "queued": True}
+
+
+@router.get("/{topic_id}/deltas")
+async def get_deltas(topic_id: uuid.UUID, limit: int = 50) -> dict[str, Any]:
+    items = await list_deltas(topic_id, limit=limit)
+    return {"deltas": items, "count": len(items)}
+
+
+@router.get("/{topic_id}/deltas/{seq}")
+async def get_delta(
+    topic_id: uuid.UUID,
+    seq: int,
+    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
+):
+    async with session_scope() as s:
+        row = (await s.execute(
+            select(TopicRefreshDelta).where(
+                TopicRefreshDelta.topic_id == topic_id,
+                TopicRefreshDelta.seq == seq,
+            )
+        )).scalar_one_or_none()
+        if row is None:
+            raise HTTPException(status_code=404, detail="delta not found")
+        topic_row = await s.get(Topic, topic_id)
+    delta_path = (
+        Path(settings.state_dir) / "news" / topic_row.topic_id_hash / "runs" / row.run_id / "delta.json"
+    )
+    if not delta_path.exists():
+        raise HTTPException(status_code=404, detail="delta artifact not on disk")
+    return FileResponse(str(delta_path), media_type="application/json")
+
+
+def _build_queries_from_disk(
+    settings: ClaudeAgentSettings,
+    topic_hash: str,
+    plan_run_id: str | None,
+    deliver_run_id: str | None,
+) -> list[dict[str, Any]]:
+    if not plan_run_id:
+        raise HTTPException(status_code=409, detail="topic has no plan_run_id")
+    parsed_path = Path(settings.state_dir) / "news" / topic_hash / "runs" / plan_run_id / "parsed.json"
+    if not parsed_path.exists():
+        raise HTTPException(status_code=409, detail="parsed.json missing on disk")
+    try:
+        parsed = json.loads(parsed_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        raise HTTPException(status_code=500, detail=f"parsed.json unreadable: {exc}") from exc
+    report: dict[str, Any] | None = None
+    if deliver_run_id:
+        report_path = (
+            Path(settings.state_dir) / "news" / topic_hash / "runs" / deliver_run_id / "report.json"
+        )
+        if report_path.exists():
+            try:
+                report = json.loads(report_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                report = None
+    return build_short_term_queries(parsed, report)
 
 
 @router.get("/{topic_id}/events")

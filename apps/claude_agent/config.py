@@ -56,6 +56,7 @@ class ClaudeAgentSettings(BaseSettings):
             "/newsfind-queries",
             "/newsfind-plan",
             "/newsfind-deliver",
+            "/newsfind-refresh",
         ],
         description="Allowlist of slash commands. Empty list = allow all.",
     )

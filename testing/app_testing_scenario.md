@@ -212,6 +212,101 @@ ssh -i ~/.ssh/contabo_ed25519 root@79.143.179.212 \
 
 ---
 
+## 7. Continuous monitoring (v2)
+
+Once a topic reaches `reported`, you can **subscribe to monitoring** so each `POST /refresh` reruns a persistent **short-term query plan** that focuses on what's new since the last cycle. An external scheduler (cron, GitHub Actions, etc.) is expected to call `/refresh` on whatever cadence you want — the server does not poll on its own.
+
+### 7.1 Start monitoring
+
+The plan is auto-built from `parsed.queries` + `report.next_queries` + `monitoring_plan.trigger_terms`, with a "latest YYYY-MM" recency hint appended:
+
+```bash
+curl -fsS -X POST "$API/v1/topics/$TOPIC_ID/monitor" \
+  -H "Content-Type: application/json" \
+  -d '{"max_age_hours": 48}' | jq .
+```
+
+Expected: `{"subscription_id":1,"status":"active","queries_count":10..12,"short_term_queries":[...]}`.
+
+To override the auto-generated plan, pass your own `short_term_queries` array:
+
+```bash
+curl -fsS -X POST "$API/v1/topics/$TOPIC_ID/monitor" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "max_age_hours": 24,
+    "short_term_queries": [
+      {"id":"st01","query":"Hormuz ceasefire signed today","language":"en","priority":1},
+      {"id":"st02","query":"Iran nuclear deal latest 2026-05","language":"en","priority":1}
+    ]
+  }' | jq .
+```
+
+Inspect the persisted plan at any time:
+
+```bash
+curl -fsS "$API/v1/topics/$TOPIC_ID/monitor" | jq .
+```
+
+### 7.2 Trigger a refresh
+
+```bash
+curl -fsS -X POST "$API/v1/topics/$TOPIC_ID/refresh" | jq .
+```
+
+Returns `{"accepted":true,"subscription_id":N,"queued":true}` immediately. If a refresh is already running for this topic the API responds with `queued: false` (idempotent — no double-runs).
+
+Watch the SSE stream for new event types:
+
+```bash
+curl -N "$API/v1/topics/$TOPIC_ID/events?from_seq=<last_seq>" | grep '^data: ' | sed 's/^data: //' | jq -r '
+  if .event_type=="refresh.started" then "\n▶ REFRESH started seq=\(.payload.refresh_seq) queries=\(.payload.queries)"
+  elif .event_type=="refresh.completed" then "\n✓ REFRESH done — new=\(.payload.new_sources_count) cost=$\(.payload.total_cost_usd)"
+  elif .event_type=="refresh.failed" then "\n✗ REFRESH FAILED: \(.payload.error)"
+  elif .event_type=="tool_use" then "  ▶ \(.payload.tool): \(.payload.input_preview | tostring | .[0:80])"
+  else "  · \(.event_type)" end'
+```
+
+Typical refresh: 1–3 minutes, **$0.20–0.40** (much cheaper than a full deliver).
+
+### 7.3 List refresh deltas
+
+```bash
+curl -fsS "$API/v1/topics/$TOPIC_ID/deltas" \
+  | jq '.deltas[] | {seq, status, new_sources_count, queries_executed, total_cost_usd, summary_md, created_at}'
+```
+
+Fetch the full `delta.json` artifact for a specific cycle:
+
+```bash
+curl -fsS "$API/v1/topics/$TOPIC_ID/deltas/1" | jq .
+```
+
+### 7.4 Stop monitoring
+
+```bash
+curl -fsS -X DELETE "$API/v1/topics/$TOPIC_ID/monitor" | jq .
+```
+
+Sets `status: "paused"`. Subsequent `POST /refresh` calls return 409. Re-`POST /monitor` to reactivate.
+
+### 7.5 External scheduler example (cron on your laptop)
+
+```bash
+# every hour, hit refresh for one topic
+0 * * * * curl -fsS -X POST "http://79.143.179.212:8002/v1/topics/<TOPIC_ID>/refresh" >/dev/null
+```
+
+For multiple topics, loop over them in a small script. The server enforces a per-topic lock so concurrent triggers on the same topic are safe.
+
+### 7.6 Concurrency model
+
+- **Per-topic lock**: only one refresh runs at a time per topic (DB-enforced via `refresh_locked` flag).
+- **Global throttle**: `max_concurrent_jobs=4` caps total Claude subprocesses. Fine for 3–6 active topics monitored concurrently.
+- Refreshes run via `BackgroundTasks`, so the HTTP response returns in <100 ms — the scheduler never blocks.
+
+---
+
 ## What needs testing before frontend
 
 - [ ] **`GET /v1/topics` (list endpoint)** — does not exist yet; needed by the FE to show all topics. Needs to be added to `apps/claude_agent/topics/routes.py`.
@@ -220,4 +315,11 @@ ssh -i ~/.ssh/contabo_ed25519 root@79.143.179.212 \
 - [ ] **Cancel mid-run** — start a topic, cancel it during planning, verify state becomes `cancelled` and the Claude subprocess exits.
 - [ ] **Webhook delivery** — register a webhook with `POST /v1/topics/{id}/subscribe {url, secret}` and verify `intro.ready` + `report.ready` payloads arrive signed with HMAC.
 - [ ] **Artifact endpoints after failure** — if a topic ends in `failed`, confirm artifact endpoints return 404 (not 500).
-- [ ] **v2 continuous monitoring** — not yet implemented; needs scheduler, `/newsfind-refresh` slash command, `topic_subscriptions` + `topic_refresh_deltas` tables, and new API endpoints (`GET /v1/topics/{id}/deltas`, etc.). Spec is in `AGENT.md`.
+- [x] **v2 continuous monitoring** — implemented in migration `0004_newsfind_monitoring`, `apps/claude_agent/topics/refresh.py`, and the `/newsfind-refresh` slash command. Test plan:
+  - [ ] `POST /monitor` on a reported topic → auto-builds short_term_queries from disk.
+  - [ ] `POST /refresh` → SSE shows `refresh.started` → `tool_use` × N → `refresh.completed` with `new_sources_count`.
+  - [ ] Second `POST /refresh` within ~5 s while still running → returns `queued: false`.
+  - [ ] After two refreshes, `GET /deltas` returns two rows with monotonically increasing `seq`.
+  - [ ] `GET /deltas/{seq}` returns the per-run `delta.json` artifact.
+  - [ ] `DELETE /monitor` → subsequent `POST /refresh` returns 409.
+  - [ ] Same `url_hash` from prior deliver/refresh never appears in a later `news.json` (cross-run dedup verified).
