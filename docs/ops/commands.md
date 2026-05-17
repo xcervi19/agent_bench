@@ -140,3 +140,33 @@ docker compose exec api python scripts/replay_session.py \
   --session-id <uuid> \
   --tenant-id 00000000-0000-0000-0000-000000000001
 ```
+
+
+# SSH to VPS
+ssh -i ~/.ssh/contabo_ed25519 root@79.143.179.212
+cd ~/agent_bench
+
+# Pull latest code (includes migration 0004)
+git pull origin main
+
+# Apply migrations inside the running api container
+docker compose exec api alembic upgrade head
+
+# Verify current state
+docker compose exec api alembic current
+
+# Verify all topic* tables exist
+docker compose exec postgres psql -U agentic -d agentic -c '\dt topic*'
+
+# Rebuild claude_agent (includes new /newsfind-refresh command)
+docker compose build claude_agent
+docker compose up -d claude_agent
+
+# Verify claude_agent is healthy
+docker compose logs -f claude_agent
+# (wait for "claude_agent.start" log entry, then Ctrl+C)
+
+# Smoke test — check allowed_commands includes /newsfind-refresh
+curl -s http://127.0.0.1:8002/v1/agent/info \
+  -H "X-API-Key: $CLAUDE_AGENT_API_KEY" | jq '.allowed_commands | contains(["/newsfind-refresh"])'
+# expect: true
