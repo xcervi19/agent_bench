@@ -31,10 +31,6 @@ The system is built to analyze how the topic affects markets directly, which mar
 **4. Interval news garthering on topic**
 For an actively monitored topic, the system automatically scans the internet utilizing optimized search strategies to discover high-value, relevant news from primary sources. The user defines the time interval, and the system continuously hunts for critical information matching the topic's context.
 
-
-The system follows this transformation chain:  
-**Raw Information → Structured Events → Market Signals → Personalized Trader Insights**
-
 ### 2. Why We Are Building signalgather
 
 - Commodity markets are highly volatile and news-driven. Traders and analysts spend too much time manually scanning news, reports, and data sources.
