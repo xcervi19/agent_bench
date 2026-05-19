@@ -1,4 +1,14 @@
 # Operational Commands
+## How run testing:
+
+# Terminal 1: Full pipeline
+source testing/.env.testing
+scripts/test_full_pipeline.sh "Hormuz strait closure options to lower price"
+# → prints TOPIC_ID at the end
+
+# Terminal 2: Refresh for latest news (use TOPIC_ID from above)
+source testing/.env.testing
+scripts/test_refresh_cycle.sh <TOPIC_ID>
 
 ## SSH & SCP (VPS)
 

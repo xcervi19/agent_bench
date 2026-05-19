@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 .cursorrules
 .env.example
+.env.testing
 .env.example.production
 .env
 .env.local

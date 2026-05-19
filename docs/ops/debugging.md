@@ -296,3 +296,7 @@ Expected (after a successful run):
   "languages": ["ar", "en", "fa", "zh"]
 }
 ```
+
+how get from server queries for topic:
+curl -fsS "$API/v1/topics/$TOPIC_ID/news" \
+  | jq '.sources[] | {id, title, publisher, published_at, relevance_score, source_class}'
