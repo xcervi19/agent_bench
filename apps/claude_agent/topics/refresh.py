@@ -28,7 +28,7 @@ from sqlalchemy import desc, select, update
 
 from ..config import ClaudeAgentSettings
 from ..schemas import RunRequest
-from ..runner import stream_claude
+from ..runner import CommandNotAllowedError, stream_claude
 from .db import session_scope
 from .models import Topic, TopicRefreshDelta, TopicSubscription
 from .pipeline import emit, run_dir
@@ -224,9 +224,16 @@ async def run_refresh(topic_id: uuid.UUID, subscription_id: int, settings: Claud
             "queries": len(short_term_queries),
         })
 
-        cost, duration_ms, error, summary = await _run_refresh_slash(
-            topic_id, refresh_dir, settings
-        )
+        try:
+            cost, duration_ms, error, summary = await _run_refresh_slash(
+                topic_id, refresh_dir, settings
+            )
+        except CommandNotAllowedError as exc:
+            logger.error("refresh command not allowed: %s", exc)
+            cost, duration_ms, error, summary = None, None, f"command_not_allowed: {exc}", None
+        except Exception as exc:
+            logger.exception("unexpected error in _run_refresh_slash")
+            cost, duration_ms, error, summary = None, None, f"unexpected: {exc}", None
 
         new_count = 0
         queries_executed = 0
