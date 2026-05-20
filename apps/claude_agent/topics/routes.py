@@ -354,6 +354,16 @@ async def events(topic_id: uuid.UUID, request: Request, from_seq: int = 0):
                     .order_by(TopicEvent.seq.asc())
                 )).scalars().all()
                 terminal = row.state in (STATE_REPORTED, STATE_FAILED, STATE_CANCELLED)
+                # Don't terminate during an active refresh — events are still flowing
+                if terminal:
+                    sub = (await s.execute(
+                        select(TopicSubscription).where(
+                            TopicSubscription.topic_id == topic_id,
+                            TopicSubscription.refresh_locked.is_(True),
+                        )
+                    )).scalar_one_or_none()
+                    if sub is not None:
+                        terminal = False
             for ev in rows:
                 yield _sse(ev.seq, ev.event_type, {
                     "seq": ev.seq,
@@ -433,3 +443,55 @@ async def get_report_md(topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSett
     row = await _load_topic(topic_id)
     return FileResponse(str(_artifact(settings, row.topic_id_hash, row.deliver_run_id, "report.md")),
                         media_type="text/markdown; charset=utf-8")
+
+
+@router.get("/{topic_id}/deltas/{seq}/news")
+async def get_delta_news(
+    topic_id: uuid.UUID,
+    seq: int,
+    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
+):
+    """Serve news.json (searched sources + dedup stats) from a refresh run."""
+    async with session_scope() as s:
+        delta = (await s.execute(
+            select(TopicRefreshDelta).where(
+                TopicRefreshDelta.topic_id == topic_id,
+                TopicRefreshDelta.seq == seq,
+            )
+        )).scalar_one_or_none()
+        if delta is None:
+            raise HTTPException(status_code=404, detail="delta not found")
+        topic_row = await s.get(Topic, topic_id)
+    news_path = (
+        Path(settings.state_dir) / "news" / topic_row.topic_id_hash
+        / "runs" / delta.run_id / "news.json"
+    )
+    if not news_path.exists():
+        raise HTTPException(status_code=404, detail="news.json not produced yet")
+    return FileResponse(str(news_path), media_type="application/json")
+
+
+@router.get("/{topic_id}/deltas/{seq}/report")
+async def get_delta_report(
+    topic_id: uuid.UUID,
+    seq: int,
+    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
+):
+    """Serve report.md from a refresh run."""
+    async with session_scope() as s:
+        delta = (await s.execute(
+            select(TopicRefreshDelta).where(
+                TopicRefreshDelta.topic_id == topic_id,
+                TopicRefreshDelta.seq == seq,
+            )
+        )).scalar_one_or_none()
+        if delta is None:
+            raise HTTPException(status_code=404, detail="delta not found")
+        topic_row = await s.get(Topic, topic_id)
+    report_path = (
+        Path(settings.state_dir) / "news" / topic_row.topic_id_hash
+        / "runs" / delta.run_id / "report.md"
+    )
+    if not report_path.exists():
+        raise HTTPException(status_code=404, detail="report.md not produced yet")
+    return FileResponse(str(report_path), media_type="text/markdown; charset=utf-8")

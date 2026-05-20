@@ -2,14 +2,15 @@
 # scripts/test_refresh_cycle.sh — Run refresh on a reported topic to get latest news
 #
 # Sources testing/.env.testing for API/VPS config.
-# Optionally starts monitoring if not yet active.
-# Prints delta summary: new sources, cost, timing.
+# SSE-streams live progress (tool calls, search results, phase changes).
+# After completion, fetches news.json for the actual queries + sources found.
 #
 # Usage:
 #   scripts/test_refresh_cycle.sh <TOPIC_ID>                    # single refresh
 #   scripts/test_refresh_cycle.sh <TOPIC_ID> --monitor          # start monitoring first
 #   scripts/test_refresh_cycle.sh <TOPIC_ID> --max-age 24       # override max_age_hours
 #   scripts/test_refresh_cycle.sh <TOPIC_ID> --repeat 3         # run N refresh cycles
+#   scripts/test_refresh_cycle.sh <TOPIC_ID> --timeout 600      # custom timeout (default 900)
 
 set -euo pipefail
 
@@ -26,13 +27,13 @@ else
 fi
 
 # ── Parse args ──────────────────────────────────────────────
-TOPIC_ID="${1:?Usage: $0 <TOPIC_ID> [--monitor] [--max-age N] [--repeat N]}"
+TOPIC_ID="${1:?Usage: $0 <TOPIC_ID> [--monitor] [--max-age N] [--repeat N] [--timeout N]}"
 shift
 
 START_MONITOR=false
 MAX_AGE_HOURS="${REFRESH_MAX_AGE_HOURS:-48}"
 REPEAT=1
-TIMEOUT_SEC="${TIMEOUT_SEC:-300}"
+TIMEOUT_SEC="${TIMEOUT_SEC:-900}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -62,6 +63,7 @@ echo "  API:         $API"
 echo "  TOPIC_ID:    $TOPIC_ID"
 echo "  MAX_AGE:     ${MAX_AGE_HOURS}h"
 echo "  REPEAT:      $REPEAT"
+echo "  TIMEOUT:     ${TIMEOUT_SEC}s"
 echo "  RUN_DIR:     $RUN_DIR"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo
@@ -77,16 +79,15 @@ echo
 
 # ── Verify topic exists and is reported ─────────────────────
 echo "◆ Checking topic state..."
-TOPIC_STATE=$(curl -fsS "$API/v1/topics/$TOPIC_ID" \
-  -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
-  | tee "$RUN_DIR/topic.json" \
-  | jq -r '.state')
+TOPIC_JSON=$(curl -fsS "$API/v1/topics/$TOPIC_ID" \
+  -H "X-API-Key: $CLAUDE_AGENT_API_KEY")
+echo "$TOPIC_JSON" > "$RUN_DIR/topic.json"
 
-TOPIC_NAME=$(jq -r '.topic' "$RUN_DIR/topic.json")
+TOPIC_STATE=$(echo "$TOPIC_JSON" | jq -r '.state')
+TOPIC_NAME=$(echo "$TOPIC_JSON" | jq -r '.topic')
 
 if [ "$TOPIC_STATE" != "reported" ]; then
   echo "  ✗ Topic state is '$TOPIC_STATE' — must be 'reported' to refresh." >&2
-  echo "  Run the full pipeline first: scripts/test_full_pipeline.sh" >&2
   exit 1
 fi
 echo "  ✓ Topic: $TOPIC_NAME"
@@ -97,7 +98,6 @@ echo
 # START MONITORING (if needed or requested)
 # ═══════════════════════════════════════════════════════════
 
-# Check if monitoring is already active
 MONITOR_STATUS=$(curl -sS "$API/v1/topics/$TOPIC_ID/monitor" \
   -H "X-API-Key: $CLAUDE_AGENT_API_KEY" 2>/dev/null \
   | jq -r '.status // "none"' 2>/dev/null || echo "none")
@@ -113,11 +113,6 @@ if [ "$MONITOR_STATUS" = "none" ] || [ "$START_MONITOR" = "true" ]; then
   if [ "$HTTP_CODE" -ge 400 ]; then
     echo "  ✗ POST /monitor failed (HTTP $HTTP_CODE):"
     jq -r '.detail // .' "$RUN_DIR/monitor.json" 2>/dev/null || cat "$RUN_DIR/monitor.json"
-    echo
-    echo "  Possible causes:"
-    echo "    • parsed.json missing on VPS (plan artifacts not on disk)"
-    echo "    • Topic has no plan_run_id"
-    echo "  Debug: curl -sS \"$API/v1/topics/$TOPIC_ID\" -H \"X-API-Key: $CLAUDE_AGENT_API_KEY\" | jq '{plan_run_id, deliver_run_id, state}'"
     exit 1
   fi
 
@@ -126,11 +121,10 @@ if [ "$MONITOR_STATUS" = "none" ] || [ "$START_MONITOR" = "true" ]; then
   echo "  ✓ Monitoring active — $QUERIES_COUNT short-term queries"
   echo
 
-  # Print query plan
   echo "  ┌─── SHORT-TERM QUERIES ──────────────────────"
   echo "$MONITOR_RESP" | jq -r '
     .short_term_queries[]
-    | "  │ [\(.id)] [\(.language)] p\(.priority) \(.query)"
+    | "  │ [\(.id)] p\(.priority) \(.query)"
   ' 2>/dev/null || echo "  │ (could not parse queries)"
   echo "  └─────────────────────────────────────────────"
   echo
@@ -157,7 +151,7 @@ for CYCLE in $(seq 1 "$REPEAT"); do
   echo
 
   # ── Get current event seq (to filter SSE) ────────────────
-  LAST_SEQ=$(jq -r '.last_event_seq // 0' "$RUN_DIR/topic.json")
+  LAST_SEQ=$(echo "$TOPIC_JSON" | jq -r '.last_event_seq // 0')
 
   # ── Trigger refresh ──────────────────────────────────────
   echo "  ▶ Triggering refresh..."
@@ -176,110 +170,258 @@ for CYCLE in $(seq 1 "$REPEAT"); do
     exit 0
   fi
   echo "  ✓ Refresh queued"
+  echo
 
-  # ── Tail SSE for this refresh ────────────────────────────
+  # ── Stream SSE with live progress ────────────────────────
+  # The SSE endpoint stays open during active refresh (even for reported topics).
+  # We display tool_use events in real time, and stop on refresh.completed/failed.
   REFRESH_EVENTS="$RUN_DIR/refresh_${CYCLE}_events.ndjson"
-  touch "$REFRESH_EVENTS"
+  : > "$REFRESH_EVENTS"
 
-  curl -N -sS "$API/v1/topics/$TOPIC_ID/events?from_seq=$LAST_SEQ" \
-    -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
-    | sed -n 's/^data: //p' \
-    | tee "$REFRESH_EVENTS" \
-    | jq -rc --unbuffered '
-        if   .event_type=="refresh.started"   then "  ▶ Refresh started (queries=\(.payload.queries))"
-        elif .event_type=="tool_use"          then "    🔧 \(.payload.tool): \((.payload.input_preview // "")[0:80])"
-        elif .event_type=="tool_result"       then "    ◀ result [err=\(.payload.is_error)]"
-        elif .event_type=="refresh.completed" then "\n  ✓ Refresh done (new=\(.payload.new_sources_count), \(.payload.duration_ms)ms, $\(.payload.total_cost_usd))"
-        elif .event_type=="refresh.failed"    then "\n  ✗ FAILED: \(.payload.error)"
-        elif .event_type=="refresh.skipped"   then "  ⏸ Skipped: \(.payload.reason)"
-        else empty end
-    ' &
-  TAIL_PID=$!
+  echo "  ┌─── LIVE PROGRESS ───────────────────────────"
 
-  # ── Wait for refresh to complete ─────────────────────────
-  WAITED=0
+  # Stream SSE, filter data lines, and display progress
+  # The while-read loop runs in the current shell so we can break on terminal events.
+  set +e
+  (curl -N -sS --max-time "$TIMEOUT_SEC" \
+    "$API/v1/topics/$TOPIC_ID/events?from_seq=$LAST_SEQ" \
+    -H "X-API-Key: $CLAUDE_AGENT_API_KEY" 2>/dev/null \
+    || true) \
+  | sed -un 's/^data: //p' \
+  | while IFS= read -r line; do
+      echo "$line" >> "$REFRESH_EVENTS"
+      EVENT_TYPE=$(echo "$line" | jq -r '.event_type // empty' 2>/dev/null) || continue
+
+      case "$EVENT_TYPE" in
+        refresh.started)
+          Q=$(echo "$line" | jq -r '.payload.queries // "?"' 2>/dev/null)
+          RUN_ID=$(echo "$line" | jq -r '.payload.run_id // "?"' 2>/dev/null)
+          echo "  │ ▶ Refresh started — $Q queries  [run: ${RUN_ID:0:8}]"
+          ;;
+
+        tool_use)
+          TOOL=$(echo "$line" | jq -r '.payload.tool // "?"' 2>/dev/null)
+          PREVIEW=$(echo "$line" | jq -r '.payload.input_preview // ""' 2>/dev/null)
+
+          case "$TOOL" in
+            WebSearch|web_search)
+              # Extract query from preview: {'query': 'xxx'} or {"query": "xxx"}
+              QUERY=$(echo "$PREVIEW" | sed -n "s/.*['\"]query['\"]:[[:space:]]*['\"]\\([^'\"]*\\)['\"].*/\\1/p" | head -1)
+              [ -z "$QUERY" ] && QUERY="${PREVIEW:0:80}"
+              echo "  │ 🔍 $QUERY"
+              ;;
+            WebFetch|web_fetch)
+              URL=$(echo "$PREVIEW" | sed -n "s/.*['\"]url['\"]:[[:space:]]*['\"]\\([^'\"]*\\)['\"].*/\\1/p" | head -1)
+              [ -z "$URL" ] && URL="${PREVIEW:0:80}"
+              echo "  │ 📄 Fetch: ${URL:0:80}"
+              ;;
+            Read|read)
+              FILE=$(echo "$PREVIEW" | sed -n "s/.*['\"]file_path['\"]:[[:space:]]*['\"]\\([^'\"]*\\)['\"].*/\\1/p" | head -1)
+              [ -z "$FILE" ] && FILE="${PREVIEW:0:60}"
+              echo "  │ 📁 Read: ${FILE##*/}"
+              ;;
+            Write|write)
+              FILE=$(echo "$PREVIEW" | sed -n "s/.*['\"]file_path['\"]:[[:space:]]*['\"]\\([^'\"]*\\)['\"].*/\\1/p" | head -1)
+              [ -z "$FILE" ] && FILE="${PREVIEW:0:60}"
+              echo "  │ ✏️  Write: ${FILE##*/}"
+              ;;
+            Bash|bash)
+              echo "  │ 💻 Bash: ${PREVIEW:0:80}"
+              ;;
+            *)
+              echo "  │ 🔧 $TOOL"
+              ;;
+          esac
+          ;;
+
+        tool_result)
+          IS_ERR=$(echo "$line" | jq -r '.payload.is_error // false' 2>/dev/null)
+          if [ "$IS_ERR" = "true" ]; then
+            PREVIEW=$(echo "$line" | jq -r '.payload.output_preview // "" | .[0:100]' 2>/dev/null)
+            echo "  │  ⚠️  Tool error: $PREVIEW"
+          fi
+          # Successful results: stay quiet to reduce noise
+          ;;
+
+        refresh.completed)
+          NEW=$(echo "$line" | jq -r '.payload.new_sources_count // 0' 2>/dev/null)
+          DUR=$(echo "$line" | jq -r '.payload.duration_ms // 0' 2>/dev/null)
+          COST=$(echo "$line" | jq -r '.payload.total_cost_usd // 0' 2>/dev/null)
+          DUR_S=$((DUR / 1000))
+          echo "  │"
+          echo "  │ ✅ Completed — ${NEW} new sources, ${DUR_S}s, \$${COST}"
+          # Signal done — the pipe will close when curl exits
+          break
+          ;;
+
+        refresh.failed)
+          ERR=$(echo "$line" | jq -r '.payload.error // "unknown"' 2>/dev/null)
+          echo "  │"
+          echo "  │ ❌ FAILED: $ERR"
+          break
+          ;;
+
+        refresh.skipped)
+          REASON=$(echo "$line" | jq -r '.payload.reason // "unknown"' 2>/dev/null)
+          echo "  │ ⏸  Skipped: $REASON"
+          break
+          ;;
+      esac
+    done
+  set -e
+
+  echo "  └─────────────────────────────────────────────"
+  echo
+
+  # ── Determine final status ──────────────────────────────
+  # Check events file for terminal event; fall back to polling if SSE timed out
   COMPLETED=false
-  while [ "$WAITED" -lt "$TIMEOUT_SEC" ]; do
-    if grep -q '"event_type":"refresh.completed"' "$REFRESH_EVENTS" 2>/dev/null; then
-      COMPLETED=true
-      break
-    fi
-    if grep -q '"event_type":"refresh.failed"' "$REFRESH_EVENTS" 2>/dev/null; then
-      echo
-      echo "  ✗ Refresh failed"
-      grep '"event_type":"refresh.failed"' "$REFRESH_EVENTS" | jq -r '.payload.error' 2>/dev/null
-      kill "$TAIL_PID" 2>/dev/null || true
-      break
-    fi
-    sleep 2
-    WAITED=$((WAITED + 2))
-  done
+  FAILED=false
 
-  # Give SSE a moment to flush, then kill tail
-  sleep 2
-  kill "$TAIL_PID" 2>/dev/null || true
-  wait "$TAIL_PID" 2>/dev/null || true
+  if grep -q '"refresh.completed"' "$REFRESH_EVENTS" 2>/dev/null; then
+    COMPLETED=true
+  elif grep -q '"refresh.failed"' "$REFRESH_EVENTS" 2>/dev/null; then
+    FAILED=true
+  else
+    # SSE didn't deliver terminal event — poll deltas
+    echo "  ⏳ SSE ended without terminal event, polling deltas..."
+    POLL_WAITED=0
+    POLL_TIMEOUT=120
+    while [ "$POLL_WAITED" -lt "$POLL_TIMEOUT" ]; do
+      LATEST_STATUS=$(curl -sS "$API/v1/topics/$TOPIC_ID/deltas?limit=1" \
+        -H "X-API-Key: $CLAUDE_AGENT_API_KEY" 2>/dev/null \
+        | jq -r '.deltas[0].status // "none"' 2>/dev/null || echo "none")
+      if [ "$LATEST_STATUS" = "completed" ]; then
+        COMPLETED=true
+        echo "  ✓ Completed (via polling)"
+        break
+      elif [ "$LATEST_STATUS" = "failed" ]; then
+        FAILED=true
+        echo "  ✗ Failed (via polling)"
+        break
+      fi
+      sleep 5
+      POLL_WAITED=$((POLL_WAITED + 5))
+      printf "\r  ⏳ Polling... %ds" "$POLL_WAITED"
+    done
+    echo
+  fi
 
   CYCLE_END=$(date +%s)
   CYCLE_DURATION=$((CYCLE_END - CYCLE_START))
 
   if [ "$COMPLETED" != "true" ]; then
-    if [ "$WAITED" -ge "$TIMEOUT_SEC" ]; then
-      echo "  ✗ Timeout after ${TIMEOUT_SEC}s"
+    echo "  ✗ Refresh did not complete after ${CYCLE_DURATION}s"
+    if [ "$FAILED" = "true" ]; then
+      curl -sS "$API/v1/topics/$TOPIC_ID/deltas?limit=1" \
+        -H "X-API-Key: $CLAUDE_AGENT_API_KEY" 2>/dev/null \
+        | jq -r '.deltas[0] | "  Error: \(.error // "unknown")"' 2>/dev/null
     fi
     if [ "$REPEAT" -gt 1 ] && [ "$CYCLE" -lt "$REPEAT" ]; then
-      echo "  Continuing to next cycle..."
       continue
     fi
     exit 1
   fi
 
-  # ── Get deltas ───────────────────────────────────────────
-  echo
+  # ═══════════════════════════════════════════════════════════
+  # RESULTS
+  # ═══════════════════════════════════════════════════════════
+
   DELTAS=$(curl -fsS "$API/v1/topics/$TOPIC_ID/deltas?limit=5" \
     -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
     | tee "$RUN_DIR/refresh_${CYCLE}_deltas.json")
 
-  # ── Print delta summary ────────────────────────────────
-  echo "  ┌─── REFRESH RESULT ──────────────────────────"
+  LATEST_SEQ=$(echo "$DELTAS" | jq -r '.deltas[0].seq')
+
+  # ── Delta summary ───────────────────────────────────────
+  echo "  ┌─── RESULT ──────────────────────────────────"
   echo "$DELTAS" | jq -r '
     .deltas[0] |
-    "  │ Seq:            \(.seq)",
-    "  │ Status:         \(.status)",
-    "  │ New sources:    \(.new_sources_count)",
-    "  │ Queries run:    \(.queries_executed)",
-    "  │ Duration:       \(.duration_ms)ms",
-    "  │ Cost:           $\(.total_cost_usd)",
-    "  │ Created:        \(.created_at)"
-  ' 2>/dev/null || echo "  │ (could not parse deltas)"
+    "  │ Seq:          \(.seq)",
+    "  │ New sources:  \(.new_sources_count)",
+    "  │ Queries:      \(.queries_executed)",
+    "  │ Duration:     \(.duration_ms / 1000 | floor)s",
+    "  │ Cost:         $\(.total_cost_usd | tostring | .[0:8])"
+  ' 2>/dev/null || echo "  │ (could not parse)"
   echo "  └─────────────────────────────────────────────"
   echo
 
-  # ── Print summary markdown ─────────────────────────────
+  # ── Summary text ─────────────────────────────────────────
   SUMMARY_MD=$(echo "$DELTAS" | jq -r '.deltas[0].summary_md // empty' 2>/dev/null)
   if [ -n "$SUMMARY_MD" ]; then
     echo "  ┌─── SUMMARY ──────────────────────────────────"
-    echo "$SUMMARY_MD" | head -20 | sed 's/^/  │ /'
+    echo "$SUMMARY_MD" | fold -s -w 78 | head -20 | sed 's/^/  │ /'
     echo "  └─────────────────────────────────────────────"
     echo
   fi
 
-  # ── Get delta artifact (new sources detail) ──────────────
-  LATEST_SEQ=$(echo "$DELTAS" | jq -r '.deltas[0].seq')
+  # ── Key changes from delta.json ──────────────────────────
   if [ -n "$LATEST_SEQ" ] && [ "$LATEST_SEQ" != "null" ]; then
     curl -fsS "$API/v1/topics/$TOPIC_ID/deltas/$LATEST_SEQ" \
       -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
-      | jq . > "$RUN_DIR/refresh_${CYCLE}_delta_detail.json" 2>/dev/null || true
+      > "$RUN_DIR/refresh_${CYCLE}_delta.json" 2>/dev/null || true
 
-    if [ -f "$RUN_DIR/refresh_${CYCLE}_delta_detail.json" ]; then
-      echo "  ┌─── NEW SOURCES ──────────────────────────────"
+    if [ -f "$RUN_DIR/refresh_${CYCLE}_delta.json" ]; then
+      KC=$(jq -r '.key_changes // [] | length' "$RUN_DIR/refresh_${CYCLE}_delta.json" 2>/dev/null || echo "0")
+      if [ "$KC" -gt 0 ]; then
+        echo "  ┌─── KEY CHANGES ──────────────────────────────"
+        jq -r '.key_changes[] | "  │ [\(.confidence)] \(.finding | .[0:72]) [\(.source_ids | join(","))]"' \
+          "$RUN_DIR/refresh_${CYCLE}_delta.json" 2>/dev/null
+        echo "  └─────────────────────────────────────────────"
+        echo
+      fi
+    fi
+  fi
+
+  # ── News sources from news.json ──────────────────────────
+  if [ -n "$LATEST_SEQ" ] && [ "$LATEST_SEQ" != "null" ]; then
+    curl -fsS "$API/v1/topics/$TOPIC_ID/deltas/$LATEST_SEQ/news" \
+      -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
+      > "$RUN_DIR/refresh_${CYCLE}_news.json" 2>/dev/null || true
+
+    if [ -f "$RUN_DIR/refresh_${CYCLE}_news.json" ] && [ -s "$RUN_DIR/refresh_${CYCLE}_news.json" ]; then
+      # Queries executed
+      echo "  ┌─── QUERIES EXECUTED ─────────────────────────"
       jq -r '
-        (.new_sources // .sources // [])[:5][]
-        | "  │ \(.published_at // "no date") — \(.title // "untitled" | .[0:60])"
-      ' "$RUN_DIR/refresh_${CYCLE}_delta_detail.json" 2>/dev/null || echo "  │ (no new sources)"
+        .executed_queries // [] | .[]
+        | "  │ [\(.id)] \(.query | .[0:60]) → \(.results_count // 0) hits"
+      ' "$RUN_DIR/refresh_${CYCLE}_news.json" 2>/dev/null || echo "  │ (no query data)"
+      echo "  └─────────────────────────────────────────────"
+      echo
+
+      # Dedup stats
+      echo "  ┌─── FILTERS ─────────────────────────────────"
+      jq -r '
+        .drops // {} |
+        "  │ Already seen:    \(.already_seen // 0)",
+        "  │ Too old:         \(.too_old // 0)",
+        "  │ Low relevance:   \(.low_relevance // 0)",
+        "  │ Intra-batch dup: \(.intra_batch_dup // 0)"
+      ' "$RUN_DIR/refresh_${CYCLE}_news.json" 2>/dev/null || echo "  │ (no filter stats)"
+      echo "  └─────────────────────────────────────────────"
+      echo
+
+      # Sources
+      SRC_COUNT=$(jq '.sources | length' "$RUN_DIR/refresh_${CYCLE}_news.json" 2>/dev/null || echo "0")
+      echo "  ┌─── SOURCES ($SRC_COUNT) ───────────────────────────"
+      jq -r '
+        .sources[:10][] |
+        "  │ [\(.id)] rel=\(.relevance_score)  \(.source_class // "?")",
+        "  │   \(.title // "untitled" | .[0:70])",
+        "  │   \(.url | .[0:78])",
+        "  │   \(.published_at // "no date")  queries: \(.query_ids | join(","))",
+        "  │"
+      ' "$RUN_DIR/refresh_${CYCLE}_news.json" 2>/dev/null || echo "  │ (no sources)"
       echo "  └─────────────────────────────────────────────"
       echo
     fi
+  fi
+
+  # ── Refresh report.md ────────────────────────────────────
+  if [ -n "$LATEST_SEQ" ] && [ "$LATEST_SEQ" != "null" ]; then
+    curl -fsS "$API/v1/topics/$TOPIC_ID/deltas/$LATEST_SEQ/report" \
+      -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
+      > "$RUN_DIR/refresh_${CYCLE}_report.md" 2>/dev/null || true
   fi
 
   echo "  Cycle $CYCLE completed in ${CYCLE_DURATION}s"
@@ -293,7 +435,7 @@ for CYCLE in $(seq 1 "$REPEAT"); do
 done
 
 # ═══════════════════════════════════════════════════════════
-# HISTORY: All refresh deltas for this topic
+# HISTORY
 # ═══════════════════════════════════════════════════════════
 echo
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -305,11 +447,11 @@ ALL_DELTAS=$(curl -fsS "$API/v1/topics/$TOPIC_ID/deltas?limit=20" \
 
 echo "$ALL_DELTAS" | jq -r '
   .deltas[] |
-  "  #\(.seq)  \(.status)  new=\(.new_sources_count)  queries=\(.queries_executed)  \(.duration_ms)ms  $\(.total_cost_usd)  \(.created_at)"
-' 2>/dev/null || echo "  (no refresh history)"
+  "  #\(.seq)  \(.status)  new=\(.new_sources_count)  q=\(.queries_executed)  \(if .duration_ms then (.duration_ms / 1000 | floor | tostring) + "s" else "-" end)  $\(.total_cost_usd // 0 | tostring | .[0:7])  \(.created_at | .[0:19])"
+' 2>/dev/null || echo "  (no history)"
 
 TOTAL_NEW=$(echo "$ALL_DELTAS" | jq '[.deltas[] | .new_sources_count // 0] | add // 0' 2>/dev/null || echo "0")
-TOTAL_COST=$(echo "$ALL_DELTAS" | jq '[.deltas[] | .total_cost_usd // 0] | add // 0' 2>/dev/null || echo "0")
+TOTAL_COST=$(echo "$ALL_DELTAS" | jq '[.deltas[] | .total_cost_usd // 0] | add // 0 | tostring | .[0:7]' 2>/dev/null || echo "0")
 TOTAL_REFRESHES=$(echo "$ALL_DELTAS" | jq '.deltas | length' 2>/dev/null || echo "0")
 
 echo
@@ -328,9 +470,9 @@ echo
 
 # ── Next steps ────────────────────────────────────────────
 echo "  ┌─── NEXT STEPS ──────────────────────────────"
-echo "  │ Run again:          $0 $TOPIC_ID"
-echo "  │ Run 3 cycles:       $0 $TOPIC_ID --repeat 3"
-echo "  │ Stop monitoring:    curl -X DELETE \"$API/v1/topics/$TOPIC_ID/monitor\" -H \"X-API-Key: $CLAUDE_AGENT_API_KEY\""
-echo "  │ Full report:        cat testing/runs/*__pipeline__*/03_report.md"
+echo "  │ Run again:       $0 $TOPIC_ID"
+echo "  │ Run 3 cycles:    $0 $TOPIC_ID --repeat 3"
+echo "  │ View sources:    jq '.sources[]' $RUN_DIR/refresh_1_news.json"
+echo "  │ View report:     cat $RUN_DIR/refresh_1_report.md"
 echo "  └─────────────────────────────────────────────"
 echo
