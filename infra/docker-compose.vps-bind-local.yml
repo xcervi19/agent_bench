@@ -1,0 +1,26 @@
+# VPS overlay: bind service ports to localhost only (Caddy on host terminates TLS).
+# !override replaces base compose port lists (merge would otherwise duplicate binds).
+# Usage on server:
+#   docker compose -f docker-compose.yml -f infra/docker-compose.vps-bind-local.yml up -d \
+#     postgres redis minio api rag_adhoc claude_agent
+
+services:
+  postgres:
+    ports: !override
+      - "127.0.0.1:5432:5432"
+  redis:
+    ports: !override
+      - "127.0.0.1:6379:6379"
+  minio:
+    ports: !override
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+  rag_adhoc:
+    ports: !override
+      - "127.0.0.1:8001:8000"
+  api:
+    ports: !override
+      - "127.0.0.1:8000:8000"
+  claude_agent:
+    ports: !override
+      - "127.0.0.1:8002:8002"

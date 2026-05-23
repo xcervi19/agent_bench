@@ -20,3 +20,4 @@ state/
 runs/
 !runs/.gitkeep
 .cursor/
+oil_gas_knowledge/

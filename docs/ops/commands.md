@@ -10,6 +10,28 @@ scripts/test_full_pipeline.sh "Hormuz strait closure options to lower price"
 source testing/.env.testing
 scripts/test_refresh_cycle.sh <TOPIC_ID>
 
+## VPS overview
+
+Server inventory, DNS map, Caddy, and multi-env plan: **`docs/ops/vps.md`**.
+
+HTTPS endpoints:
+
+| Env | API | Agent | RAG |
+|-----|-----|-------|-----|
+| prod | `https://app.particletico.com` | `https://agent.particletico.com` | `https://rag.particletico.com` |
+| test1 | `https://test1.particletico.com` | `https://agent-test1.particletico.com` | `https://rag-test1.particletico.com` |
+| test2 | `https://test2.particletico.com` | `https://agent-test2.particletico.com` | `https://rag-test2.particletico.com` |
+
+```bash
+scripts/vps_deploy_caddy.sh              # reload Caddy
+scripts/vps_setup_test_slot.sh test1 main   # new/refresh test1 stack
+scripts/vps_setup_test_slot.sh test2 main   # new/refresh test2 stack
+```
+
+Full ticket doc: `docs/specs/done/setup_caddy_reverse_proxy_12.md` (#12).
+
+---
+
 ## SSH & SCP (VPS)
 
 ```bash
@@ -180,3 +202,24 @@ docker compose logs -f claude_agent
 curl -s http://127.0.0.1:8002/v1/agent/info \
   -H "X-API-Key: $CLAUDE_AGENT_API_KEY" | jq '.allowed_commands | contains(["/newsfind-refresh"])'
 # expect: true
+
+
+Chunk only (no .env needed):
+
+
+cd /Users/karel.cervicek/Documents/projects/agent_bench
+uv run python -m source_ingest.from_collected \
+  --sources-dir artifacts/oil_rag_sources \
+  --chunks-dir artifacts/chunks \
+  --skip-slug oil101
+
+
+  cd /Users/karel.cervicek/Documents/projects/agent_bench
+export PYTHONPATH="libs:."
+source .env   # if vars are export lines there
+uv run python -m source_ingest.from_collected \
+  --sources-dir artifacts/oil_rag_sources \
+  --chunks-dir artifacts/chunks \
+  --skip-slug oil101 \
+  --ingest \
+  --tenant-id 'PASTE-YOUR-TENANT-UUID'

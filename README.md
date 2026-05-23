@@ -19,6 +19,7 @@ database/migrations/        ← Alembic
 database/seeds/             ← scenario seeders
 scripts/replay_session.py   ← debug tool
 source_ingest/              ← preprocess .txt → JSONL; ingest JSONL → Postgres + embeddings
+oil_rag_collector/          ← download curated oil/WTI RAG sources (PDF/HTML/API)
 docker/                     ← Dockerfile + entrypoints
 docker-compose.yml
 ```
@@ -40,6 +41,28 @@ docker compose exec api python -m database.seeds.seed_scenario signal_gather_com
 ```
 
 API is available at `http://localhost:8000/docs`.
+
+## Oil / WTI RAG source collector
+
+Download Tier 1–2 public sources (IEA, EIA, OPEC, CME PDFs, UNCTAD, terminals, geopolitics) into `artifacts/oil_rag_sources/`:
+
+```bash
+export EIA_API_KEY=your_key   # https://www.eia.gov/opendata/
+uv run python -m oil_rag_collector -o artifacts/oil_rag_sources --max-tier 2
+```
+
+See `oil_rag_collector/README.md` and `docs/knowledge/oil_rag_source_strategy.md`.
+
+### Batch chunk all collected sources (PDF/HTML/JSON → chunks)
+
+```bash
+uv run python -m source_ingest.from_collected \
+  --sources-dir artifacts/oil_rag_sources \
+  --chunks-dir artifacts/chunks \
+  --skip-slug oil101
+```
+
+Skips `oil101` by default and any slug that already has `artifacts/chunks/<slug>/manifest.json`. Use `--force` to rebuild. Then ingest (see below) or add `--ingest --tenant-id '<uuid>'` with `DATABASE_URL` and `OPENAI_API_KEY` set.
 
 ## Local knowledge ingest (preprocess → JSONL → embeddings → Postgres)
 

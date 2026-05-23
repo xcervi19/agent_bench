@@ -1,0 +1,50 @@
+# Host Caddy on VPS — proxies to Docker stacks on 127.0.0.1.
+# Deploy: scripts/vps_deploy_caddy.sh (or copy to /etc/caddy/Caddyfile && systemctl reload caddy)
+
+{
+	email admin@particletico.com
+}
+
+# Apex → production app
+particletico.com, www.particletico.com {
+	redir https://app.particletico.com{uri} permanent
+}
+
+# Production (~/agent_bench, branch main)
+app.particletico.com {
+	reverse_proxy 127.0.0.1:8000
+}
+
+agent.particletico.com {
+	reverse_proxy 127.0.0.1:8002
+}
+
+rag.particletico.com {
+	reverse_proxy 127.0.0.1:8001
+}
+
+# Test slot 1 (~/agent_bench_test1, COMPOSE_PROJECT_NAME=test1)
+test1.particletico.com {
+	reverse_proxy 127.0.0.1:8100
+}
+
+agent-test1.particletico.com {
+	reverse_proxy 127.0.0.1:8102
+}
+
+rag-test1.particletico.com {
+	reverse_proxy 127.0.0.1:8101
+}
+
+# Test slot 2 (~/agent_bench_test2, COMPOSE_PROJECT_NAME=test2)
+test2.particletico.com {
+	reverse_proxy 127.0.0.1:8200
+}
+
+agent-test2.particletico.com {
+	reverse_proxy 127.0.0.1:8202
+}
+
+rag-test2.particletico.com {
+	reverse_proxy 127.0.0.1:8201
+}

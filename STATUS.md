@@ -38,6 +38,7 @@ _Update this file as work progresses. The agent reads it every session to unders
 
 | What | Date | Spec |
 |---|---|---|
+| **#10 RAG main corpus (highest ROI)** — download, chunk, ingest (66 docs / 3090 events) | May 22, 2026 | `docs/specs/done/rag_main_corpus_highest_roi_10.md` |
 | Reproducible run artifacts + token-aware cache for `/newsfind-queries` | May 9–10, 2026 | `docs/specs/done/reproducible_artifacts_and_cache.md` |
 | News pipeline v1 deployment to VPS (topic orchestrator + event stream) | May 2026 | `docs/specs/done/deployment_newsfind_pipeline_v1.md` |
 | Non-root container user migration (UID 1001) | May 2026 | `docs/ops/debugging.md` |

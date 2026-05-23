@@ -26,6 +26,7 @@ dependencies = [
     "prometheus-client>=0.20",
     "feedparser>=6.0",
     "openai>=1.40",
+    "pypdf>=5.0",
 ]
 
 [project.optional-dependencies]

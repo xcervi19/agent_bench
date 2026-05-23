@@ -3,25 +3,10 @@
 from __future__ import annotations
 
 import argparse
-import json
-import re
-import sys
 from pathlib import Path
-from uuid import uuid4
 
-from .chunk_builder import (
-    build_embedding_prefix,
-    iter_paragraph_spans,
-    pack_into_chunks,
-)
-from .schemas import BookMeta, ChunkArtifact, ChunkFilters, ChunkLocation, IngestManifest
-
-
-def normalize_raw_text(raw: str) -> str:
-    raw = raw.replace("\r\n", "\n").replace("\r", "\n")
-    raw = re.sub(r"[ \t]+\n", "\n", raw)
-    raw = re.sub(r"\n{3,}", "\n\n", raw)
-    return raw.strip()
+from .preprocess_core import write_preprocess_artifacts
+from .schemas import BookMeta, ChunkFilters
 
 
 def main() -> None:
@@ -42,22 +27,10 @@ def main() -> None:
     args = ap.parse_args()
 
     raw = args.input.read_text(encoding="utf-8", errors="replace")
-    normalized = normalize_raw_text(raw)
 
     out_dir: Path = args.output_dir
     if not out_dir.is_absolute():
         out_dir = repo_root / out_dir
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    norm_path = out_dir / "normalized.txt"
-    norm_path.write_text(normalized + "\n", encoding="utf-8")
-
-    paragraphs = list(iter_paragraph_spans(normalized))
-    packed = pack_into_chunks(
-        paragraphs,
-        max_chars=args.max_chars,
-        overlap_chars=args.overlap,
-    )
 
     book = BookMeta(
         title=args.book_title,
@@ -68,55 +41,18 @@ def main() -> None:
     )
     filters = ChunkFilters(category=args.category[:64], commodity=args.commodity, region=args.region)
 
-    chunks_path = out_dir / "chunks.jsonl"
-    total = len(packed)
-    document_id = uuid4()
-
-    with chunks_path.open("w", encoding="utf-8") as f:
-        for idx, pk in enumerate(packed):
-            prefix = build_embedding_prefix(
-                book_title=book.title,
-                author=book.author,
-                part=pk.part,
-                chapter_raw=pk.chapter_raw,
-            )
-            loc = ChunkLocation(
-                part=pk.part,
-                chapter_number=None,
-                chapter_title=pk.chapter_raw,
-                page_start=pk.page_start,
-                page_end=pk.page_end,
-            )
-            art = ChunkArtifact(
-                chunk_index=idx,
-                chunk_total=total,
-                content_zone=pk.content_zone,
-                book=book,
-                location=loc,
-                filters=filters,
-                prefix=prefix,
-                body=pk.body,
-                entities_extra={
-                    "ingest_pipeline": "source_ingest.preprocess",
-                    "source_file": str(args.input.resolve()),
-                },
-            )
-            f.write(art.model_dump_json() + "\n")
-
-    manifest = IngestManifest(
-        source_path=str(args.input.resolve()),
-        output_dir=str(out_dir.resolve()),
-        document_id=document_id,
+    document_id, total = write_preprocess_artifacts(
+        raw_text=raw,
+        output_dir=out_dir,
         book=book,
         filters=filters,
-        chunk_count=total,
-    )
-    (out_dir / "manifest.json").write_text(
-        manifest.model_dump_json(indent=2),
-        encoding="utf-8",
+        source_path=str(args.input.resolve()),
+        pipeline="source_ingest.preprocess",
+        max_chars=args.max_chars,
+        overlap_chars=args.overlap,
     )
 
-    print(f"Wrote {total} chunks → {chunks_path}")
+    print(f"Wrote {total} chunks → {out_dir / 'chunks.jsonl'}")
     print(f"Manifest → {out_dir / 'manifest.json'}")
     print(f"document_id for ingest: {document_id}")
 
