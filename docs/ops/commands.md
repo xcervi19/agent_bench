@@ -14,21 +14,25 @@ scripts/test_refresh_cycle.sh <TOPIC_ID>
 
 Server inventory, DNS map, Caddy, and multi-env plan: **`docs/ops/vps.md`**.
 
-HTTPS endpoints:
+Product scope: **`docs/product/README.md`**.
 
-| Env | API | Agent | RAG |
-|-----|-----|-------|-----|
-| prod | `https://app.particletico.com` | `https://agent.particletico.com` | `https://rag.particletico.com` |
-| test1 | `https://test1.particletico.com` | `https://agent-test1.particletico.com` | `https://rag-test1.particletico.com` |
-| test2 | `https://test2.particletico.com` | `https://agent-test2.particletico.com` | `https://rag-test2.particletico.com` |
+**Public HTTPS (agent only — RAG/DB internal):**
+
+| Env | Agent (topics API) | Notes |
+|-----|-------------------|--------|
+| prod | `https://agent.particletico.com` | + optional `https://app.particletico.com` (signal_gather) |
+| test1 | `https://agent-test1.particletico.com` | minimal stack, DB `agentic_test1` |
+| test2 | `https://agent-test2.particletico.com` | minimal stack, DB `agentic_test2` |
+
+Shared Claude login: `~/agent_bench/claude_home` on VPS (one subscription).
 
 ```bash
-scripts/vps_deploy_caddy.sh              # reload Caddy
-scripts/vps_setup_test_slot.sh test1 main   # new/refresh test1 stack
-scripts/vps_setup_test_slot.sh test2 main   # new/refresh test2 stack
+scripts/vps_deploy_caddy.sh                    # reload Caddy
+scripts/vps_setup_test_slot.sh test1 main      # refresh test1 (postgres+rag+agent)
+scripts/vps_setup_test_slot.sh test2 main      # refresh test2
 ```
 
-Full ticket doc: `docs/specs/done/setup_caddy_reverse_proxy_12.md` (#12).
+Tickets: #12 `docs/specs/done/setup_caddy_reverse_proxy_12.md`, #13 `docs/specs/done/multi_env_pre_frontend_13.md`.
 
 ---
 

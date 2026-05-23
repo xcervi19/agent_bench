@@ -25,16 +25,13 @@ All **A** records point to `79.143.179.212`:
 
 | Hostname | Purpose | Backend (localhost) |
 |----------|---------|---------------------|
-| `particletico.com`, `www` | Redirect → `app` | — |
-| `app.particletico.com` | Production API (`signal_gather`) | `127.0.0.1:8000` |
-| `agent.particletico.com` | Production `claude_agent` | `127.0.0.1:8002` |
-| `rag.particletico.com` | Production `rag_adhoc` | `127.0.0.1:8001` |
-| `test1.particletico.com` | Test slot 1 (`~/agent_bench_test1`, DB `agentic_test1`) | `127.0.0.1:8100` |
+| `particletico.com`, `www` | Redirect → `agent` | — |
+| `app.particletico.com` | Production API (`signal_gather`, optional) | `127.0.0.1:8000` |
+| `agent.particletico.com` | Production **product API** (topics) | `127.0.0.1:8002` |
 | `agent-test1.particletico.com` | Test slot 1 agent | `127.0.0.1:8102` |
-| `rag-test1.particletico.com` | Test slot 1 RAG | `127.0.0.1:8101` |
-| `test2.particletico.com` | Test slot 2 (`~/agent_bench_test2`, DB `agentic_test2`) | `127.0.0.1:8200` |
 | `agent-test2.particletico.com` | Test slot 2 agent | `127.0.0.1:8202` |
-| `rag-test2.particletico.com` | Test slot 2 RAG | `127.0.0.1:8201` |
+
+**Internal only** (127.0.0.1, no public hostname): RAG `8001/8101/8201`, Postgres `5432/5433/5434`, test signal_gather API `8100/8200`.
 
 TLS: Let’s Encrypt via **Caddy** on the host (`/etc/caddy/Caddyfile`, source in `infra/caddy/Caddyfile`).
 
@@ -111,22 +108,22 @@ export DATABASE_URL='postgresql+asyncpg://agentic:YOUR_PASSWORD@127.0.0.1:5433/a
 
 ## Test environments
 
-Each slot = git worktree + `COMPOSE_PROJECT_NAME` + isolated DB/volumes:
+Each slot = git worktree + isolated DB/RAG/state + **shared** `~/agent_bench/claude_home`:
 
-| Slot | Directory | Compose project | Branch (default) | Postgres DB | API / RAG / Agent |
-|------|-----------|-----------------|------------------|-------------|-------------------|
-| prod | `~/agent_bench` | `agent_bench` | `main` | `agentic` | 8000 / 8001 / 8002 |
-| test1 | `~/agent_bench_test1` | `test1` | `main` | `agentic_test1` | 8100 / 8101 / 8102 |
-| test2 | `~/agent_bench_test2` | `test2` | `main` | `agentic_test2` | 8200 / 8201 / 8202 |
+| Slot | Directory | Compose | Postgres DB | Public URL | Local agent / RAG |
+|------|-----------|---------|-------------|------------|-------------------|
+| prod | `~/agent_bench` | `agent_bench` | `agentic` | `agent.particletico.com` | 8002 / 8001 |
+| test1 | `~/agent_bench_test1` | `test1` | `agentic_test1` | `agent-test1.particletico.com` | 8102 / 8101 |
+| test2 | `~/agent_bench_test2` | `test2` | `agentic_test2` | `agent-test2.particletico.com` | 8202 / 8201 |
 
-Create or refresh a slot from laptop:
+Test slots run **minimal stack** only: `postgres`, `rag_adhoc`, `claude_agent` (`infra/docker-compose.slot-minimal.yml`).
 
 ```bash
 scripts/vps_setup_test_slot.sh test1 main
 scripts/vps_setup_test_slot.sh test2 feature/my-branch
 ```
 
-Uses `infra/docker-compose.test1.yml` / `test2.yml` for ports and separate `claude_home_*` / `state_*` dirs.
+Stagger heavy topic **deliver** runs across slots — one Claude subscription shared by all agents.
 
 ## Deploy checklist
 
@@ -138,4 +135,6 @@ Uses `infra/docker-compose.test1.yml` / `test2.yml` for ports and separate `clau
 
 See also `docs/ops/commands.md` for day-to-day commands.
 
-Ticket write-up: `docs/specs/done/setup_caddy_reverse_proxy_12.md` (#12).
+Ticket write-up: `docs/specs/done/setup_caddy_reverse_proxy_12.md` (#12), `docs/specs/done/multi_env_pre_frontend_13.md` (#13).
+
+Product scope: `docs/product/README.md`.

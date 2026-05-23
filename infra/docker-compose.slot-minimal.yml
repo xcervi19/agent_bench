@@ -1,0 +1,13 @@
+# Minimal Newsfind stack: postgres + rag_adhoc + claude_agent (no signal_gather api/worker).
+# Use with test slot overlays, e.g.:
+#   COMPOSE_PROJECT_NAME=test1 docker compose \
+#     -f docker-compose.yml \
+#     -f infra/docker-compose.test1.yml \
+#     -f infra/docker-compose.slot-minimal.yml \
+#     up -d postgres rag_adhoc claude_agent
+
+services:
+  claude_agent:
+    depends_on: !override
+      postgres:
+        condition: service_healthy

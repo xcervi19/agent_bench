@@ -1,11 +1,6 @@
 # Caddy reverse proxy (VPS)
 
-Host Caddy terminates TLS and forwards to Docker stacks bound on `127.0.0.1`.
-
-| File | Purpose |
-|------|---------|
-| `Caddyfile` | Source config (deploy to `/etc/caddy/Caddyfile`) |
-| `../docker-compose.vps-bind-local.yml` | Bind app ports to localhost only |
+Host Caddy terminates TLS. **Public:** agent APIs only. RAG/Postgres bind to `127.0.0.1`.
 
 Deploy from repo root:
 
@@ -13,4 +8,4 @@ Deploy from repo root:
 scripts/vps_deploy_caddy.sh
 ```
 
-After editing `Caddyfile` for a new test slot, redeploy and ensure the test stack is running on the matching port.
+See `docs/ops/vps.md` and `docs/specs/done/multi_env_pre_frontend_13.md`.

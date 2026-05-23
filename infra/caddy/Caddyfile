@@ -1,16 +1,15 @@
-# Host Caddy on VPS — proxies to Docker stacks on 127.0.0.1.
-# Deploy: scripts/vps_deploy_caddy.sh (or copy to /etc/caddy/Caddyfile && systemctl reload caddy)
+# Host Caddy on VPS — public agent APIs only; RAG/DB stay on 127.0.0.1.
+# Deploy: scripts/vps_deploy_caddy.sh
 
 {
 	email admin@particletico.com
 }
 
-# Apex → production app
 particletico.com, www.particletico.com {
-	redir https://app.particletico.com{uri} permanent
+	redir https://agent.particletico.com{uri} permanent
 }
 
-# Production (~/agent_bench, branch main)
+# Production (~/agent_bench)
 app.particletico.com {
 	reverse_proxy 127.0.0.1:8000
 }
@@ -19,32 +18,14 @@ agent.particletico.com {
 	reverse_proxy 127.0.0.1:8002
 }
 
-rag.particletico.com {
-	reverse_proxy 127.0.0.1:8001
-}
-
-# Test slot 1 (~/agent_bench_test1, COMPOSE_PROJECT_NAME=test1)
-test1.particletico.com {
-	reverse_proxy 127.0.0.1:8100
-}
-
+# Test slots — frontend / testers hit agent only
 agent-test1.particletico.com {
 	reverse_proxy 127.0.0.1:8102
-}
-
-rag-test1.particletico.com {
-	reverse_proxy 127.0.0.1:8101
-}
-
-# Test slot 2 (~/agent_bench_test2, COMPOSE_PROJECT_NAME=test2)
-test2.particletico.com {
-	reverse_proxy 127.0.0.1:8200
 }
 
 agent-test2.particletico.com {
 	reverse_proxy 127.0.0.1:8202
 }
 
-rag-test2.particletico.com {
-	reverse_proxy 127.0.0.1:8201
-}
+# Internal only (localhost; no Caddy vhost):
+#   rag 8001/8101/8201, postgres 5432/5433/5434, test API 8100/8200
