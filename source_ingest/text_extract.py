@@ -73,15 +73,33 @@ def pdf_to_text(path: Path) -> str:
     return text
 
 
+def detect_kind(raw_bytes: bytes, suffix: str) -> str:
+    head = raw_bytes[:16].lstrip()
+    if head.startswith(b"%PDF"):
+        return "pdf"
+    if head.startswith((b"<!", b"<html", b"<HTML")):
+        return "html"
+    if suffix == ".json" or head.startswith((b"{", b"[")):
+        return "json"
+    if suffix == ".html":
+        return "html"
+    if suffix == ".pdf":
+        return "pdf"
+    if suffix == ".txt":
+        return "txt"
+    raise ValueError(f"unknown content kind for {suffix}")
+
+
 def extract_text(path: Path) -> str:
     suffix = path.suffix.lower()
     raw_bytes = path.read_bytes()
-    if suffix == ".pdf":
+    kind = detect_kind(raw_bytes, suffix)
+    if kind == "pdf":
         return pdf_to_text(path)
-    if suffix == ".html":
+    if kind == "html":
         return html_to_text(raw_bytes.decode("utf-8", errors="replace"))
-    if suffix == ".json":
+    if kind == "json":
         return json_to_text(raw_bytes.decode("utf-8", errors="replace"), path)
-    if suffix == ".txt":
+    if kind == "txt":
         return raw_bytes.decode("utf-8", errors="replace")
     raise ValueError(f"unsupported file type: {path}")

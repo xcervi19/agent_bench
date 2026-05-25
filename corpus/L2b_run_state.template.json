@@ -1,0 +1,16 @@
+{
+  "policy_version": "1",
+  "reproducible": false,
+  "operator": "",
+  "model": "",
+  "run_started": "",
+  "current_batch": {
+    "start": "",
+    "end": "",
+    "status": "pending",
+    "note": "Copy to L2b_run_state.json and set start/end before each session"
+  },
+  "completed": [],
+  "last_completed": null,
+  "last_updated": null
+}

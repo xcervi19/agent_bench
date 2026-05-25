@@ -21,3 +21,12 @@ runs/
 !runs/.gitkeep
 .cursor/
 oil_gas_knowledge/
+corpus/L1_raw/
+corpus/L2_text/
+corpus/L2b_clean/
+corpus/L2b_provenance/
+corpus/L2b_run_state.json
+corpus/L2b_manifest.json
+corpus/L3_chunks/
+corpus/manifest.json
+corpus/L2_manifest.json
