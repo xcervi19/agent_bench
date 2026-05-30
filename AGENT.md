@@ -42,8 +42,9 @@ agent_bench/
 │   ├── architecture/           ← stable system design docs
 │   ├── ops/                    ← commands, debugging, DB queries
 │   └── specs/
-│       ├── active/             ← features in progress
-│       └── done/               ← completed + archived specs
+│       ├── *.md                ← planned / in-flight tasks (numbered specs)
+│       ├── done/               ← shipped specs — persistent capability context
+│       └── business_requirements/
 ├── docker-compose.yml
 ├── .env                        ← top-level (postgres creds, shared)
 └── apps/claude_agent/.env      ← claude_agent service config
@@ -80,14 +81,119 @@ curl -N -X POST "$API/v1/agent/stream" \
 
 | What | Where |
 |---|---|
+| **This file** — repo map + SDLC rules | `AGENT.md` |
 | Current work, bugs, blockers | `STATUS.md` |
+| Long-term vision + domain language | `docs/specs/business_requirements/business_requirements.md` |
+| Shipped product surface (V1) | `docs/product/README.md` |
 | Platform architecture | `docs/architecture/framework.md` |
-| Signal Gather product brief | `docs/architecture/signal_gather.md` |
+| Implemented capabilities (ground truth) | `docs/specs/done/*.md` |
+| Planned / in-flight tasks | `docs/specs/*.md` (not under `done/`) |
+| Full doc index | `.cursor/skills/technical-architect/doc-map.md` |
 | VPS deploy + SSH commands | `docs/ops/commands.md` |
 | Debug cheat sheet + war stories | `docs/ops/debugging.md` |
 | DB debug queries | `docs/ops/db_commands.md` |
-| News pipeline v2 spec (in progress) | `docs/specs/active/news_pipeline_v2.md` |
-| Testing scenarios | `testing/README.md` |
+| Testing scenarios + eval harness | `testing/README.md` |
+
+---
+
+## Development Process (SDLC)
+
+This repo uses **documentation as persistent context** for humans and agents. Code shows what runs today; specs record what was agreed, built, and how to use it. The goal is that any agent session can reconstruct full application context without re-deriving history from git or chat.
+
+### Documentation layers
+
+| Layer | Path | Lifetime | Agent role |
+|---|---|---|---|
+| **Entry point** | `AGENT.md` | Stable | Read first — repo map, SDLC, read order |
+| **Session state** | `STATUS.md` | Ephemeral | Read second — what's in progress, bugs, blockers |
+| **Business intent** | `docs/specs/business_requirements/` | Stable | Why we build; domain terms (topic, signal, V1 pipeline) |
+| **Product truth** | `docs/product/README.md` | Updated on ship | What users get today vs. future apps |
+| **Architecture** | `docs/architecture/` | Stable, revised on design change | System design, stack, principles |
+| **Prepared tasks** | `docs/specs/*.md` | Moves to `done/` on ship | Spec for work not yet (or not fully) delivered |
+| **Shipped context** | `docs/specs/done/` | Permanent archive | Ground truth for each delivered capability |
+| **Validation** | `testing/` | Updated with features | How to verify behavior; eval vectors and results |
+| **Operations** | `docs/ops/` | Living playbooks | Deploy, debug, DB — war stories and commands |
+
+**Context rule:** Prefer `docs/specs/done/` over re-reading code for "what was built and how to use it." Prefer `STATUS.md` over guessing what's active. If docs and code disagree, note the drift; code wins for runtime, done specs win for agreed delivery.
+
+### Spec lifecycle
+
+Each feature or task is tracked as a **numbered spec** (e.g. `#11`, `#15`).
+
+```
+planned → in progress → done
+docs/specs/<name>_<n>.md          docs/specs/done/<name>_<n>.md
+```
+
+| Stage | Location | Status field | Also update |
+|---|---|---|---|
+| **Planned** | `docs/specs/<name>_<n>.md` | `Status: planned` | — |
+| **In progress** | same file | `Status: in progress` | `STATUS.md` → In Progress |
+| **Done** | move to `docs/specs/done/` | `Status: done (YYYY-MM-DD)` | `STATUS.md` → Recently Completed; related docs below |
+
+**Starting work:** Pick or create a spec under `docs/specs/`. Add an In Progress entry to `STATUS.md` with spec path, what's done, what's missing, next step.
+
+**Finishing work:** Complete the [done spec contract](#done-spec-contract), move the file to `docs/specs/done/`, update `STATUS.md`, and touch any operational docs the feature needs (see [close-out checklist](#close-out-checklist)).
+
+Do not leave shipped work only in chat or commit messages — the done spec is the durable record.
+
+### Done spec contract
+
+Every spec in `docs/specs/done/` must give an agent enough context to use and extend the feature without archaeology. Include:
+
+| Section | Purpose |
+|---|---|
+| **Status + date** | When it shipped |
+| **Depends on** | Linked prior specs (#10, #12, …) |
+| **Goal / Problem** | Why this existed |
+| **Solution / What was delivered** | What changed — components, endpoints, commands |
+| **Artifacts** | Concrete paths (scripts, configs, tables, commands) |
+| **Usage** | Copy-paste commands or API examples |
+| **Acceptance criteria** | Checklist — all checked when done |
+| **Related** | Links to architecture, testing, sibling specs |
+
+Optional but valuable: output layouts, schemas, known gaps, env vars.
+
+**Example:** `docs/specs/done/rag_full_stable_evaluation_11.md`
+
+### Agent read order
+
+Use this order at the start of a session or before substantial work:
+
+1. `AGENT.md` — repo map and SDLC (this file)
+2. `STATUS.md` — current work, bugs, recent completions
+3. Active spec — `docs/specs/*.md` referenced from STATUS (not under `done/`)
+4. Relevant `docs/specs/done/*.md` — dependencies and patterns for the area
+5. `docs/product/README.md` + `docs/architecture/framework.md` — product and platform constraints
+6. `testing/README.md` — if the task touches behavior or quality
+7. Target code under `apps/`, `libs/` — when docs are missing or suspected stale
+
+For planning and sequencing, use the **technical-architect** skill (`.cursor/skills/technical-architect/SKILL.md`).
+
+### Close-out checklist
+
+When marking a spec **done**, the agent (or developer) should:
+
+- [ ] Move spec to `docs/specs/done/<name>_<n>.md` and set status + date
+- [ ] Fill all sections of the [done spec contract](#done-spec-contract)
+- [ ] Add row to `STATUS.md` → Recently Completed (with date + spec path)
+- [ ] Remove or shrink the In Progress entry in `STATUS.md`
+- [ ] Update `testing/README.md` or `testing/vectors.json` if behavior is testable
+- [ ] Update `docs/product/README.md` if user-facing surface changed
+- [ ] Update `docs/ops/commands.md` or `docs/ops/debugging.md` if ops/debug workflow changed
+- [ ] Add cross-links from related done specs (`Related` section both ways when useful)
+
+### Context handling principles
+
+1. **One capability, one done spec** — persistent context lives in `done/`, not scattered notes.
+2. **STATUS is a pointer, not a spec** — keep it short; detail belongs in the spec file.
+3. **Specs before large code** — multi-file features get a prepared task spec first; implementation follows the spec.
+4. **Don't re-spec done work** — read `docs/specs/done/`; only reopen with an explicit change request.
+5. **Link, don't duplicate** — architecture stays in `docs/architecture/`; done specs link to it.
+6. **Test artifacts are context** — `testing/results/<env>/` samples help agents see real output shape.
+7. **Number specs** — use ticket numbers in filenames (`*_11.md`) for ordering and cross-reference.
+
+---
 
 ## Tech Stack
 

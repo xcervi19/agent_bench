@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "vectors": [
+    {
+      "id": "V001_hormuz",
+      "topic": "Hormuz strait closure options to lower price",
+      "pipeline": "full_with_refresh",
+      "auto_proceed": true,
+      "timeout_sec": 900,
+      "refresh_cycles": 1,
+      "refresh_max_age_hours": 48,
+      "refresh_timeout_sec": 600,
+      "thresholds": {
+        "plan": {
+          "min_queries": 8,
+          "max_queries": 25,
+          "min_rag_refs": 0
+        },
+        "deliver": {
+          "min_sources": 5,
+          "min_findings": 2,
+          "min_scenarios": 1,
+          "report_min_lines": 20
+        }
+      }
+    }
+  ]
+}

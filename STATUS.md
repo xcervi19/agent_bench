@@ -6,16 +6,23 @@ _Update this file as work progresses. The agent reads it every session to unders
 
 ## In Progress
 
-### News Pipeline v2 — Subscribe & Refresh
-- **Spec:** `docs/specs/active/news_pipeline_v2.md`
-- **What's done:** API design, DB schema design, slash command spec (`/newsfind-refresh`)
-- **What's missing:**
-  - `apps/claude_agent/topics/scheduler.py` — background polling loop
-  - `apps/claude_agent/topics/refresh.py` — single refresh cycle orchestration
-  - `POST /v1/topics/{id}/subscribe` + `DELETE` + `GET /deltas` endpoints in `routes.py`
-  - Alembic migration: `topic_subscriptions` + `topic_refresh_deltas` tables
-  - `/newsfind-refresh` slash command in `claude_agent_fe/.claude/commands/`
-- **Next step:** implement `scheduler.py` + `refresh.py`, then wire routes
+### Backend V1 pilot-ready (#17)
+- **Spec:** `docs/specs/active/pilot_ops_v1_17.md`
+- **What's done:** Core API loop on prod (plan → deliver → refresh); eval harness #11; monitor/refresh v2 shipped
+- **What's missing:** Demo docs on HTTPS, thin QA gate, manual smoke tests, `GET /v1/topics`
+- **Next step:** Fix `testing/app_testing_scenario.md`; add `scripts/qa_check_run.sh` + wire into vector runner
+
+### Newsfind QA automation (guardrails) (#15)
+- **Spec:** `docs/specs/active/newsfind_qa_automation_15.md`
+- **What's done:** QA scope defined (schema checks, threshold gates, event invariants, runner integration)
+- **What's missing:** `scripts/qa_check_run.sh`, `testing/qa_rules.json`, `qa_report.json` output, CI integration
+- **Next step:** Implement thin gate first in #17 (`qa_check_run.sh` + vector runner hook), then expand full #15 ruleset
+
+### SignalGather frontend V1 — topic intelligence UI (#16)
+- **Spec:** `docs/specs/signalgather_frontend_v1_16.md`
+- **What's done:** Task spec from business requirements + event-driven UX principles
+- **What's missing:** App scaffold, topic list/workspace, SSE client, artifact views, monitor/delta UI, deploy to test1
+- **Next step:** Blocked on #17 subtask `GET /v1/topics`; then resolve open decisions (repo path, hosting URL, auth) and implement phase 16a
 
 ---
 
@@ -38,6 +45,8 @@ _Update this file as work progresses. The agent reads it every session to unders
 
 | What | Date | Spec |
 |---|---|---|
+| **#11 RAG full stable evaluation** — vector runner, recovery, `evaluation.json` | May 27, 2026 | `docs/specs/done/rag_full_stable_evaluation_11.md` |
+| **News Pipeline v2 — monitor & refresh** — `/monitor`, `/refresh`, `/deltas`, `/newsfind-refresh` | May 2026 | `apps/claude_agent/topics/refresh.py`, `testing/app_testing_scenario.md` §7 |
 | **#10 RAG main corpus (highest ROI)** — download, chunk, ingest (66 docs / 3090 events) | May 22, 2026 | `docs/specs/done/rag_main_corpus_highest_roi_10.md` |
 | Reproducible run artifacts + token-aware cache for `/newsfind-queries` | May 9–10, 2026 | `docs/specs/done/reproducible_artifacts_and_cache.md` |
 | News pipeline v1 deployment to VPS (topic orchestrator + event stream) | May 2026 | `docs/specs/done/deployment_newsfind_pipeline_v1.md` |

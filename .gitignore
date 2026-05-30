@@ -19,6 +19,9 @@ state/
 .DS_Store
 runs/
 !runs/.gitkeep
+testing/results/
+testing/.env.test1
+testing/.env.test2
 .cursor/
 oil_gas_knowledge/
 corpus/L1_raw/
