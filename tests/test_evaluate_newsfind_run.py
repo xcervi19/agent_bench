@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 
@@ -9,6 +10,7 @@ SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "evaluate_newsfi
 SPEC = importlib.util.spec_from_file_location("evaluate_newsfind_run", SCRIPT_PATH)
 assert SPEC and SPEC.loader
 evaluator = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = evaluator
 SPEC.loader.exec_module(evaluator)
 
 
