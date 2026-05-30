@@ -106,7 +106,7 @@ Outputs a table comparing timing, cost, plan quality, delivery quality, and even
 | **B — Application verification** | Did the app work? PASS/FAIL | [Application verification](#application-verification-lane-b) |
 | **A — Business output evaluation** | Is the output valuable for the user? | [Business output evaluation](#business-output-evaluation-lane-a) |
 
-Planning: `docs/specs/active/00_testing_vs_evaluation.md` · Tickets: **#15** (B), **#18** (A)
+Tickets: **#15** (B), **#18** (A)
 
 ---
 

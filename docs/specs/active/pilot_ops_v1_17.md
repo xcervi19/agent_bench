@@ -56,7 +56,6 @@ This is **pilot readiness** (operations and API surface), not the full **busines
 
 ## Related
 
-- `docs/specs/active/00_testing_vs_evaluation.md` — Lane A vs B
 - `docs/specs/done/rag_full_stable_evaluation_11.md` — harness (#11)
 - `docs/specs/active/newsfind_application_verification_15.md` — full verification (#15)
 - `docs/specs/active/business_output_evaluation_18.md` — business judgment (#18)

@@ -27,7 +27,7 @@ _Update this file as work progresses. The agent reads it every session to unders
 - **What's missing:** `scripts/qa_check_run.sh`, `testing/qa_rules.json`, `qa_report.json`, CI integration
 - **Next step:** Thin gate in #17 first, then expand full #15 ruleset
 
-**Planning anchor:** `docs/specs/active/00_testing_vs_evaluation.md`
+**Execution rule:** Agents execute only `docs/specs/active/*_<n>.md` tickets. Move completed tickets to `docs/specs/done/`.
 
 ### SignalGather frontend V1 — topic intelligence UI (#16)
 - **Spec:** `docs/specs/signalgather_frontend_v1_16.md`

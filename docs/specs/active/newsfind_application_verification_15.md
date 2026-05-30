@@ -3,13 +3,19 @@
 **Status:** active (queued)  
 **Depends on:** #11 (stable run harness), #13 (multi-env)  
 **Lane:** B — *Did the application work correctly? Did we break known behavior?*  
-**See also:** `docs/specs/active/00_testing_vs_evaluation.md`
+**Related tickets:** #11 (harness), #17 (pilot ops), #18 (business evaluation)
 
 ## Goal
 
 **Automated PASS/FAIL** after a run (or on CI): confirm the pipeline completed, artifacts are valid, events are healthy, and known operational failures are absent. **No manual diff** required for baseline safety before demo or deploy.
 
 This is **classic application testing** — regression and verification — not judgment of whether the report is insightful for traders.
+
+## Execution policy (ticket-level)
+
+- Trigger automatically on branch/PR updates and in deploy pipelines.
+- Acts as merge/deploy gate (PASS required).
+- Must be non-billable: no paid inference API calls, no token-spending external AI calls in unit/integration/CI checks.
 
 ## Core question (one sentence)
 

@@ -42,7 +42,7 @@ agent_bench/
 │   ├── architecture/           ← stable system design docs
 │   ├── ops/                    ← commands, debugging, DB queries
 │   └── specs/
-│       ├── *.md                ← planned / in-flight tasks (numbered specs)
+│       ├── active/             ← executable ticket specs (numbered)
 │       ├── done/               ← shipped specs — persistent capability context
 │       └── business_requirements/
 ├── docker-compose.yml
@@ -87,7 +87,7 @@ curl -N -X POST "$API/v1/agent/stream" \
 | Shipped product surface (V1) | `docs/product/README.md` |
 | Platform architecture | `docs/architecture/framework.md` |
 | Implemented capabilities (ground truth) | `docs/specs/done/*.md` |
-| Planned / in-flight tasks | `docs/specs/*.md` (not under `done/`) |
+| Planned / in-flight executable tasks | `docs/specs/active/*.md` |
 | Full doc index | `.cursor/skills/technical-architect/doc-map.md` |
 | VPS deploy + SSH commands | `docs/ops/commands.md` |
 | Debug cheat sheet + war stories | `docs/ops/debugging.md` |
@@ -109,7 +109,7 @@ This repo uses **documentation as persistent context** for humans and agents. Co
 | **Business intent** | `docs/specs/business_requirements/` | Stable | Why we build; domain terms (topic, signal, V1 pipeline) |
 | **Product truth** | `docs/product/README.md` | Updated on ship | What users get today vs. future apps |
 | **Architecture** | `docs/architecture/` | Stable, revised on design change | System design, stack, principles |
-| **Prepared tasks** | `docs/specs/*.md` | Moves to `done/` on ship | Spec for work not yet (or not fully) delivered |
+| **Prepared tasks** | `docs/specs/active/*.md` | Moves to `done/` on ship | Executable specs for work not yet (or not fully) delivered |
 | **Shipped context** | `docs/specs/done/` | Permanent archive | Ground truth for each delivered capability |
 | **Validation** | `testing/` | Updated with features | How to verify behavior; eval vectors and results |
 | **Operations** | `docs/ops/` | Living playbooks | Deploy, debug, DB — war stories and commands |
@@ -118,20 +118,27 @@ This repo uses **documentation as persistent context** for humans and agents. Co
 
 ### Spec lifecycle
 
-Each feature or task is tracked as a **numbered spec** (e.g. `#11`, `#15`).
+Each feature or task is tracked as a **numbered spec ticket** (e.g. `#11`, `#15`).
 
 ```
 planned → in progress → done
-docs/specs/<name>_<n>.md          docs/specs/done/<name>_<n>.md
+docs/specs/active/<name>_<n>.md   docs/specs/done/<name>_<n>.md
 ```
 
 | Stage | Location | Status field | Also update |
 |---|---|---|---|
-| **Planned** | `docs/specs/<name>_<n>.md` | `Status: planned` | — |
+| **Planned** | `docs/specs/active/<name>_<n>.md` | `Status: planned` | — |
 | **In progress** | same file | `Status: in progress` | `STATUS.md` → In Progress |
 | **Done** | move to `docs/specs/done/` | `Status: done (YYYY-MM-DD)` | `STATUS.md` → Recently Completed; related docs below |
 
-**Starting work:** Pick or create a spec under `docs/specs/`. Add an In Progress entry to `STATUS.md` with spec path, what's done, what's missing, next step.
+**Starting work:** Pick or create a spec under `docs/specs/active/`. Add an In Progress entry to `STATUS.md` with spec path, what's done, what's missing, next step.
+
+### Ticket execution contract (agent behavior)
+
+- Execute tickets only from `docs/specs/active/`.
+- A file is executable only if it matches `*_<number>.md` (for example `newsfind_application_verification_15.md`).
+- Keep coordination rules inside executable tickets; do not create non-ticket planning anchors for execution flow.
+- When a ticket's acceptance criteria are satisfied, move it to `docs/specs/done/` and update `STATUS.md`.
 
 **Finishing work:** Complete the [done spec contract](#done-spec-contract), move the file to `docs/specs/done/`, update `STATUS.md`, and touch any operational docs the feature needs (see [close-out checklist](#close-out-checklist)).
 
@@ -162,7 +169,7 @@ Use this order at the start of a session or before substantial work:
 
 1. `AGENT.md` — repo map and SDLC (this file)
 2. `STATUS.md` — current work, bugs, recent completions
-3. Active spec — `docs/specs/*.md` referenced from STATUS (not under `done/`)
+3. Active spec ticket — `docs/specs/active/*_<n>.md` referenced from STATUS
 4. Relevant `docs/specs/done/*.md` — dependencies and patterns for the area
 5. `docs/product/README.md` + `docs/architecture/framework.md` — product and platform constraints
 6. `testing/README.md` — if the task touches behavior or quality

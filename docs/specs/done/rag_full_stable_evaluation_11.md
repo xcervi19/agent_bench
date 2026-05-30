@@ -7,7 +7,7 @@
 
 Stable, recoverable end-to-end **run harness** for the Newsfind pipeline (plan → deliver → refresh) across deployed instances. Captures **both output channels** (agent debug log + user-facing business output) and produces structured `evaluation.json` for cross-instance comparison.
 
-This ticket is **infrastructure** for two separate concerns (see `docs/specs/active/00_testing_vs_evaluation.md`):
+This ticket is **infrastructure** for two separate concerns:
 
 - **#15** — application verification (PASS/FAIL: did it work?)
 - **#18** — business output evaluation (judgment: is it valuable for users?)

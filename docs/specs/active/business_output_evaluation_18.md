@@ -3,13 +3,19 @@
 **Status:** active (planned)  
 **Depends on:** #11 (run harness — artifacts + `evaluation.json`)  
 **Lane:** A — *Is the result valuable for users’ business decisions?*  
-**See also:** `docs/specs/active/00_testing_vs_evaluation.md`
+**Related tickets:** #11 (harness), #15 (application verification), #17 (pilot ops)
 
 ## Goal
 
 Establish a **repeatable way to judge the information value** of a Newsfind run — not whether the app broke, but whether the **deliverable helps a professional user** (trader, analyst, risk desk) with their topic.
 
 This is the work that connects engineering output to **business requirements** (`docs/specs/business_requirements/business_requirements.md`): informational advantage, actionable insight, timeliness, trust in sources.
+
+## Execution policy (ticket-level)
+
+- Trigger manually by human decision only (local and/or VPS), not on every commit.
+- Not a merge gate by itself; use after Lane B PASS or for deliberate comparisons.
+- Paid AI/token spend is allowed here when needed for business-value evaluation.
 
 ## Core question (one sentence)
 
