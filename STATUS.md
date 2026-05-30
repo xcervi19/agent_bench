@@ -8,15 +8,26 @@ _Update this file as work progresses. The agent reads it every session to unders
 
 ### Backend V1 pilot-ready (#17)
 - **Spec:** `docs/specs/active/pilot_ops_v1_17.md`
-- **What's done:** Core API loop on prod (plan → deliver → refresh); eval harness #11; monitor/refresh v2 shipped
-- **What's missing:** Demo docs on HTTPS, thin QA gate, manual smoke tests, `GET /v1/topics`
+- **Lane:** Ops / demo readiness (not business quality program)
+- **What's done:** Core API loop on prod (plan → deliver → refresh); run harness #11; monitor/refresh v2 shipped
+- **What's missing:** Demo docs on HTTPS, thin **application verification** gate, manual smoke tests, `GET /v1/topics`
 - **Next step:** Fix `testing/app_testing_scenario.md`; add `scripts/qa_check_run.sh` + wire into vector runner
 
-### Newsfind QA automation (guardrails) (#15)
-- **Spec:** `docs/specs/active/newsfind_qa_automation_15.md`
-- **What's done:** QA scope defined (schema checks, threshold gates, event invariants, runner integration)
-- **What's missing:** `scripts/qa_check_run.sh`, `testing/qa_rules.json`, `qa_report.json` output, CI integration
-- **Next step:** Implement thin gate first in #17 (`qa_check_run.sh` + vector runner hook), then expand full #15 ruleset
+### Business output evaluation (#18)
+- **Spec:** `docs/specs/active/business_output_evaluation_18.md`
+- **Lane:** A — *Is the deliverable valuable for users' business decisions?*
+- **What's done:** Taxonomy + rubric scope defined; tied to #11 artifacts
+- **What's missing:** `testing/output_evaluation_rubric.md`, sample evaluation write-up, evaluator playbook
+- **Next step:** Draft rubric; run one full qualitative review on latest test1 `V001_hormuz`
+
+### Newsfind application verification (#15)
+- **Spec:** `docs/specs/active/newsfind_application_verification_15.md`
+- **Lane:** B — *Did the application work? PASS/FAIL regression gate*
+- **What's done:** Verification scope (schema, thresholds, event invariants, runner integration)
+- **What's missing:** `scripts/qa_check_run.sh`, `testing/qa_rules.json`, `qa_report.json`, CI integration
+- **Next step:** Thin gate in #17 first, then expand full #15 ruleset
+
+**Planning anchor:** `docs/specs/active/00_testing_vs_evaluation.md`
 
 ### SignalGather frontend V1 — topic intelligence UI (#16)
 - **Spec:** `docs/specs/signalgather_frontend_v1_16.md`

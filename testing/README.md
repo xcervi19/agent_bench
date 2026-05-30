@@ -99,15 +99,55 @@ scripts/compare_evaluations.sh <eval_a.json> <eval_b.json>
 
 Outputs a table comparing timing, cost, plan quality, delivery quality, and event metrics. Also writes `comparison.json` for programmatic use.
 
-## Evaluation Guide
+## Two lanes after a run
 
-See [How to evaluate results](#how-to-evaluate-results) below.
+| Lane | Question | Guide section |
+|------|----------|----------------|
+| **B — Application verification** | Did the app work? PASS/FAIL | [Application verification](#application-verification-lane-b) |
+| **A — Business output evaluation** | Is the output valuable for the user? | [Business output evaluation](#business-output-evaluation-lane-a) |
+
+Planning: `docs/specs/active/00_testing_vs_evaluation.md` · Tickets: **#15** (B), **#18** (A)
 
 ---
 
-## How to Evaluate Results
+## Application verification (Lane B)
 
-### 1. Quick comparison between instances
+Mechanical regression checks — **not** “is this report insightful.”
+
+- **Ticket #15:** `docs/specs/active/newsfind_application_verification_15.md`
+- **Script (planned):** `scripts/qa_check_run.sh` → `qa_report.json` with `passed: true/false`
+
+### Quick jq gate (until `qa_check_run.sh` exists)
+
+```bash
+jq -e '
+  .deliver.sources_total >= 5 and
+  .deliver.key_findings_count >= 2 and
+  .deliver.unique_citations >= 3 and
+  .events.tool_errors == 0 and
+  .cost.total_usd < 2.0
+' evaluation.json && echo "PASS" || echo "FAIL"
+```
+
+Use PASS/FAIL before demo deploy. If FAIL, fix the application (#15 / #17); skip business rubric until PASS.
+
+### Compare instances (operational metrics)
+
+```bash
+scripts/compare_evaluations.sh \
+  testing/results/test1/latest/evaluation.json \
+  testing/results/test2/latest/evaluation.json
+```
+
+Use for timing, cost, tool errors, artifact counts — **verification hints**, not business verdict.
+
+---
+
+## Business output evaluation (Lane A)
+
+Judgment of **information value** for trading/analyst users — see `docs/specs/active/business_output_evaluation_18.md`.
+
+### 1. Quick comparison between instances (which run is better for the user?)
 
 Run the same vector on two instances and compare:
 
@@ -119,14 +159,13 @@ scripts/compare_evaluations.sh \
   testing/results/test2/latest/evaluation.json
 ```
 
-Key metrics to compare:
-- **Cost efficiency**: `cost.total_usd` — lower is better for same quality
-- **Speed**: `timing.total_sec` — faster means better orchestration
-- **Source quality**: `deliver.sources_total`, `deliver.sources_unique_publishers`, `deliver.sources_avg_relevance`
-- **Output depth**: `deliver.key_findings_count`, `deliver.report_words`, `deliver.unique_citations`
-- **Reliability**: `events.tool_errors` — should be zero
+Use metrics as **hints**, then read `business_output/`:
 
-### 2. Track quality over time
+- **Cost / speed** — efficiency only; not business value alone
+- **Sources / findings / citations** — depth hints; rubric decides if they matter for the topic
+- **Reliability** (`tool_errors`) — belongs in Lane B; must be zero before business review
+
+### 2. Track output value over time
 
 Run on the same instance periodically. Compare the `latest` symlink with an older run:
 
@@ -136,25 +175,23 @@ scripts/compare_evaluations.sh \
   testing/results/test1/latest/evaluation.json
 ```
 
-### 3. Feed evaluation.json to an evaluator agent
+### 3. Evaluator agent (business rubric — Lane A)
 
-The `evaluation.json` is designed for agent consumption. Example prompt:
+Prompt must **separate** operational health from business value. Example:
 
 ```
-You are evaluating two runs of a news research pipeline.
-Compare these evaluation.json files and produce a quality assessment:
+You are assessing BUSINESS OUTPUT VALUE for commodity trading users.
+Lane B (verification) already passed for both runs.
 
-Run A (test1): <paste evaluation.json>
-Run B (test2): <paste evaluation.json>
+Run A: business_output/ + evaluation.json from test1
+Run B: same from test2
 
-Assess:
-1. Which run produced higher quality research output? 
-   (more sources, better relevance, deeper findings, better citations)
-2. Which was more cost-efficient?
-3. Which had fewer operational issues? (tool errors, drops)
-4. Based on the business_output/ files, which report.md is more 
-   comprehensive and actionable?
-5. Overall recommendation: which instance version is better?
+Using the rubric (topic fit, actionability, evidence, depth, clarity):
+1. Which report.md would a professional trust for decisions on this topic?
+2. Which sources and findings are more relevant and specific (not just more numerous)?
+3. Cost/speed tradeoffs — only after quality judgment.
+4. Do NOT treat tool_errors or source counts as sufficient for "good product."
+5. Recommendation: which instance for pilot demo, and what gaps to disclose?
 ```
 
 ### 4. Deep qualitative review using business_output/
@@ -178,21 +215,8 @@ For diagnosing system behavior:
 - Stage timing: `jq 'select(.event_type=="stage.finished")' events_full.ndjson`
 - Trace full tool sequence: `jq '{seq, type: .event_type, tool: .payload.tool}' events_full.ndjson`
 
-### 6. Automated regression check
-
-Write a script that reads evaluation.json and checks thresholds:
-
-```bash
-jq -e '
-  .deliver.sources_total >= 5 and
-  .deliver.key_findings_count >= 2 and
-  .deliver.unique_citations >= 3 and
-  .events.tool_errors == 0 and
-  .cost.total_usd < 2.0
-' evaluation.json && echo "PASS" || echo "FAIL"
-```
-
 ---
+
 
 ## Old Scripts (still work)
 
