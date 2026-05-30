@@ -33,3 +33,36 @@ scripts/test_newsfind.sh "China coal import shock" --timeout 1200
 ```bash
 scripts/list_runs.sh
 ```
+
+## Evaluate a completed run for demo/business quality
+
+After `scripts/test_full_pipeline.sh` or `scripts/test_topic.sh` finishes, run the
+offline evaluator against the run directory:
+
+```bash
+scripts/evaluate_newsfind_run.py testing/runs/<run-dir>
+```
+
+It writes:
+
+```
+testing/runs/<run-dir>/evaluation/
+  evaluation.json   machine-readable scorecard
+  evaluation.md     business-review brief for trader/NLP demo prep
+```
+
+The scorecard is intentionally about product value, not just JSON validity. It
+checks:
+
+- query-plan coverage of actors, languages, source classes, scenarios, and triggers
+- evidence quality: source breadth, high-trust source share, freshness, relevance
+- citation integrity between `report.md`, `report.json`, and `news.json`
+- trading usefulness: market-impact language, thesis status, scenario updates, next queries
+- artifact structure expected by the first demo flow
+
+To compare a new run against a previous candidate:
+
+```bash
+scripts/evaluate_newsfind_run.py testing/runs/<new-run> \
+  --baseline-run testing/runs/<old-run>
+```

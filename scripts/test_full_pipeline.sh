@@ -27,6 +27,8 @@ fi
 TOPIC="${1:-$DEFAULT_TOPIC}"
 AUTO_PROCEED="${AUTO_PROCEED:-true}"
 TIMEOUT_SEC="${TIMEOUT_SEC:-900}"
+RUN_EVALUATION="${RUN_EVALUATION:-true}"
+EVAL_FAIL_UNDER="${EVAL_FAIL_UNDER:-0}"
 
 # ── Validate deps ───────────────────────────────────────────
 for cmd in curl jq sed tee date tr; do
@@ -48,6 +50,7 @@ echo "  API:           $API"
 echo "  TOPIC:         $TOPIC"
 echo "  AUTO_PROCEED:  $AUTO_PROCEED"
 echo "  TIMEOUT:       ${TIMEOUT_SEC}s"
+echo "  EVALUATION:    $RUN_EVALUATION"
 echo "  RUN_DIR:       $RUN_DIR"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo
@@ -311,6 +314,25 @@ if [ -f "$DELIVER_DIR/report.md" ] && [ -s "$DELIVER_DIR/report.md" ]; then
   echo
 fi
 
+# ── Business/demo evaluation ───────────────────────────────
+if [ "$RUN_EVALUATION" = "true" ]; then
+  echo "  ┌─── BUSINESS EVALUATION ──────────────────────"
+  if command -v python3 >/dev/null && [ -f "$REPO_ROOT/scripts/evaluate_newsfind_run.py" ]; then
+    if python3 "$REPO_ROOT/scripts/evaluate_newsfind_run.py" "$RUN_DIR" --fail-under "$EVAL_FAIL_UNDER" \
+      | sed 's/^/  │ /'; then
+      echo "  │ Evaluation artifacts: $RUN_DIR/evaluation/"
+    else
+      echo "  │ Evaluation completed below threshold (EVAL_FAIL_UNDER=$EVAL_FAIL_UNDER)."
+      echo "  │ See artifacts: $RUN_DIR/evaluation/"
+      exit 1
+    fi
+  else
+    echo "  │ python3 or evaluator script not available"
+  fi
+  echo "  └─────────────────────────────────────────────"
+  echo
+fi
+
 # ── Artifacts ──────────────────────────────────────────────
 echo "  ┌─── ARTIFACTS ───────────────────────────────"
 echo "  │ $RUN_DIR/"
@@ -334,6 +356,7 @@ echo
 echo "  ┌─── NEXT STEPS ──────────────────────────────"
 echo "  │ View full report:   cat $DELIVER_DIR/report.md"
 echo "  │ View all sources:   jq '.sources[] | {title, url}' $DELIVER_DIR/news.json"
+echo "  │ View evaluation:    cat $RUN_DIR/evaluation/evaluation.md"
 echo "  │ Start monitoring:   scripts/test_refresh_cycle.sh $TOPIC_ID"
 echo "  │ Re-run pipeline:    $0 \"$TOPIC\""
 echo "  └─────────────────────────────────────────────"

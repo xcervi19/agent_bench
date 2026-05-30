@@ -41,3 +41,4 @@
 - Architecture: `docs/specs/done/agentic_search_claude_code_architecture.md`
 - VPS ops: `docs/ops/vps.md`
 - Business: `docs/specs/business_requirements/business_requirements.md`
+- Evaluation: `docs/product/evaluation.md`
