@@ -44,6 +44,7 @@ agent_bench/
 │   └── specs/
 │       ├── active/             ← executable ticket specs (numbered)
 │       ├── done/               ← shipped specs — persistent capability context
+│       ├── TICKET_REGISTRY.md  ← canonical ticket # list; next available #
 │       └── business_requirements/
 ├── docker-compose.yml
 ├── .env                        ← top-level (postgres creds, shared)
@@ -88,6 +89,8 @@ curl -N -X POST "$API/v1/agent/stream" \
 | Platform architecture | `docs/architecture/framework.md` |
 | Implemented capabilities (ground truth) | `docs/specs/done/*.md` |
 | Planned / in-flight executable tasks | `docs/specs/active/*.md` |
+| Ticket numbers + next `#` | `docs/specs/TICKET_REGISTRY.md` |
+| Prioritized build order | `STATUS.md` → Build queue |
 | Full doc index | `.cursor/skills/technical-architect/doc-map.md` |
 | VPS deploy + SSH commands | `docs/ops/commands.md` |
 | Debug cheat sheet + war stories | `docs/ops/debugging.md` |
@@ -131,7 +134,105 @@ docs/specs/active/<name>_<n>.md   docs/specs/done/<name>_<n>.md
 | **In progress** | same file | `Status: in progress` | `STATUS.md` → In Progress |
 | **Done** | move to `docs/specs/done/` | `Status: done (YYYY-MM-DD)` | `STATUS.md` → Recently Completed; related docs below |
 
-**Starting work:** Pick or create a spec under `docs/specs/active/`. Add an In Progress entry to `STATUS.md` with spec path, what's done, what's missing, next step.
+**Starting work:** Pick the next item from [`STATUS.md` → Build queue](#build-queue-and-prioritization) (or get a new ordering via **technical-architect**). Pick or create a spec under `docs/specs/active/`. Add an In Progress entry to `STATUS.md` with spec path, what's done, what's missing, next step.
+
+### Creating a new ticket (task spec)
+
+Use this when workflow, planning, or a Decision brief identifies **new work** that is not covered by an existing active ticket.
+
+#### 1) Allocate a number (required)
+
+1. Open `docs/specs/TICKET_REGISTRY.md` — read **Next available number**.
+2. Confirm no file exists matching `*_<n>.md` under `docs/specs/active/` and `docs/specs/done/`.
+3. Create `docs/specs/active/<short_snake_name>_<n>.md` (example: `topic_cancel_abort_23.md` for `#23`).
+4. Add the row to **Active** in the registry; set **Next available number** to `n+1`.
+5. In the spec header, use the same `#n` in the title and in all cross-references.
+
+**Do not** create tickets outside `docs/specs/active/` (legacy `#16` was relocated — follow the registry path).
+
+#### 2) Run technical-architect before prioritizing (recommended)
+
+For anything that affects **what we build next** toward the full V1 application:
+
+1. Invoke the **technical-architect** skill (`.cursor/skills/technical-architect/SKILL.md`).
+2. Produce a **Decision brief** (build / defer / split).
+3. If the outcome is **build** or **split**, either update an existing ticket or create a new one using the [active spec contract](#active-spec-contract) below.
+4. Update **`STATUS.md` → Build queue** with the recommended sequence and one-line rationale per step.
+
+Human override always wins; document overrides in the Build queue (e.g. "demo-first: #16 before #22").
+
+#### 3) Wire dependencies in the ticket
+
+Every new ticket must declare:
+
+| Field | Required | Purpose |
+|---|---|---|
+| **Depends on** | Yes | Which shipped or active `#` tickets must exist first |
+| **Blocks** | If applicable | Which tickets cannot finish until this ships |
+| **Lane** | If applicable | e.g. A = business value, B = technical verification, DevOps, Product |
+| **Out of scope** | Yes | Point to other `#` tickets — prevents duplicate work |
+
+Mirror dependency changes in related tickets' **Related** sections.
+
+#### 4) Register in session state
+
+| When | Update |
+|---|---|
+| Ticket created, not started | Registry only; optional one-line under **Planned backlog** in `STATUS.md` |
+| Work begins | `Status: in progress` + **In Progress** block in `STATUS.md` |
+| Work ships | Move to `done/`, [done spec contract](#done-spec-contract), registry → Done, Build queue |
+
+### Active spec contract (planned / in progress)
+
+Every file in `docs/specs/active/*_<n>.md` must include:
+
+| Section | Purpose |
+|---|---|
+| **Title + `#n`** | Matches filename suffix |
+| **Status** | `planned` or `in progress` |
+| **Depends on / Blocks / Lane** | Chain position (see above) |
+| **Goal** | Why this ticket exists |
+| **Core question** | One sentence — how we know it succeeded |
+| **Scope** | Numbered deliverables (what to build) |
+| **Out of scope** | Other ticket numbers that own adjacent work |
+| **Acceptance criteria** | Checklist — definition of done |
+| **Related** | Links to done/active specs, testing, ops |
+
+Optional: responsibility split table (as in #18), server flows, schemas.
+
+**Example (shape):** `docs/specs/active/topic_refresh_scheduler_22.md`  
+**Anti-pattern:** A second markdown file as "execution plan" — keep coordination inside the ticket.
+
+### Ticket numbering validation
+
+Before committing a new or renamed ticket:
+
+- [ ] Number in **filename** = number in **title** = number in **registry**
+- [ ] Number not already used in registry (active or done)
+- [ ] File lives under `docs/specs/active/` until shipped
+- [ ] **Depends on** references only existing `#` or documented unnumbered done specs
+- [ ] **Blocks** / **Feeds** updated on sibling tickets when chain changes
+- [ ] `TICKET_REGISTRY.md` **Next available number** incremented
+
+### Build queue and prioritization
+
+**Per-ticket chaining** lives inside each spec (`Depends on`, `Blocks`).  
+**Cross-ticket execution order** for the whole application lives in **`STATUS.md` → Build queue**.
+
+Rules:
+
+1. **Default next work** = first not-done item in Build queue, unless the user assigns a specific `#`.
+2. **Build queue order** is derived from technical-architect Decision briefs (business + product + dependency fit), not from ticket number alone (`#22` is not "after #21" by sort order only).
+3. When creating or splitting tickets, **recompute** the queue and edit `STATUS.md` in the same session.
+4. Ticket numbers are **stable IDs**; priority is **explicit in Build queue**, not implied by `#n`.
+
+Current V1 chain (maintained in `STATUS.md`; update when priorities change):
+
+```
+#15 → #19 (advisory) → #22 → #16 → #21 → #18 → #20
+```
+
+Parallel work is allowed when **Depends on** is satisfied (e.g. #21 can start once #11 artifacts exist; #16a can start after #17).
 
 ### Ticket execution contract (agent behavior)
 
@@ -175,7 +276,7 @@ Use this order at the start of a session or before substantial work:
 6. `testing/README.md` — if the task touches behavior or quality
 7. Target code under `apps/`, `libs/` — when docs are missing or suspected stale
 
-For planning and sequencing, use the **technical-architect** skill (`.cursor/skills/technical-architect/SKILL.md`).
+For planning, sequencing, and **Build queue** updates, use the **technical-architect** skill (`.cursor/skills/technical-architect/SKILL.md`). Read `docs/specs/TICKET_REGISTRY.md` before allocating a new `#`.
 
 ### Close-out checklist
 
@@ -198,7 +299,8 @@ When marking a spec **done**, the agent (or developer) should:
 4. **Don't re-spec done work** — read `docs/specs/done/`; only reopen with an explicit change request.
 5. **Link, don't duplicate** — architecture stays in `docs/architecture/`; done specs link to it.
 6. **Test artifacts are context** — `testing/results/<env>/` samples help agents see real output shape.
-7. **Number specs** — use ticket numbers in filenames (`*_11.md`) for ordering and cross-reference.
+7. **Number specs** — use ticket numbers in filenames (`*_11.md`) for stable IDs; use **Build queue** for priority, not numeric sort.
+8. **Registry is source of truth for `#`** — create and retire numbers only via `docs/specs/TICKET_REGISTRY.md`.
 
 ---
 

@@ -2,6 +2,39 @@
 
 _Update this file as work progresses. The agent reads it every session to understand current context._
 
+**Ticket numbers:** `docs/specs/TICKET_REGISTRY.md` (next: **#23**).  
+**How to create / prioritize tickets:** `AGENT.md` → Creating a new ticket, Build queue.
+
+---
+
+## Build queue (prioritized)
+
+_Order for completing the **shipped V1 application** (Newsfind + UI + eval). Recompute with **technical-architect** when scope or business priority changes; ticket `#` is an ID, not priority._
+
+| Order | Ticket | Why now | Unblocks |
+|------|--------|---------|----------|
+| 1 | **#15** Application verification | Technical PASS/FAIL gate before trusting demos and business sign-off | #18, #19 |
+| 2 | **#19** DevOps test execution (advisory first) | Makes #15 checks visible on VPS/CI without blocking merges yet | Team confidence in regressions |
+| 3 | **#22** Topic refresh scheduler | Automatic monitoring cadence — product expectation for pilot | #16 (16c), #20 |
+| 4 | **#16** SignalGather frontend V1 | User-facing surface on shipped API (#17) | Pilot demos without curl |
+| 5 | **#21** Timeliness & channel metrics | Measurable inputs for eval lanes | #18, #20 (richer verdicts) |
+| 6 | **#18** Business output evaluation | Lane A — is the deliverable decision-useful? | Pilot go/no-go narrative |
+| 7 | **#20** Continuous monitoring evaluation | Lane A over time — needs scheduler + rubric | Longitudinal product proof |
+
+**Suggested next pick:** **#15** (finish rule mapping + `qa_rules.json`, then hand runner wiring to #19).
+
+**Parallel (when deps met):** #21 after harness artifacts (#11); #16 phase **16a** (topic list) anytime after #17; do not start #20 until **#22** + **#18** rubric exist.
+
+**Dependency sketch:**
+
+```
+#11,#13,#17 (done) ──► #15 ──► #19
+                    └──► #22 ──► #16 (16c)
+                    └──► #21 ──┐
+#15 PASS ─────────────────────► #18 ──► #20
+#22 + #18 + #21 ───────────────────────────► #20
+```
+
 ---
 
 ## In Progress
@@ -51,7 +84,7 @@ _Update this file as work progresses. The agent reads it every session to unders
 **Execution rule:** Agents execute only `docs/specs/active/*_<n>.md` tickets. Move completed tickets to `docs/specs/done/`.
 
 ### SignalGather frontend V1 — topic intelligence UI (#16)
-- **Spec:** `docs/specs/signalgather_frontend_v1_16.md`
+- **Spec:** `docs/specs/active/signalgather_frontend_v1_16.md`
 - **What's done:** Task spec from business requirements + event-driven UX principles
 - **What's missing:** App scaffold, topic list/workspace, SSE client, artifact views, monitor/delta UI, deploy to test1
 - **Next step:** `GET /v1/topics` now shipped (#17 done); resolve open decisions (repo path, hosting URL, auth) and implement phase 16a

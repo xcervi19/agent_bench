@@ -105,5 +105,5 @@ includes "If output quality judgment is needed … run Lane A rubric from ticket
 - `docs/specs/done/rag_full_stable_evaluation_11.md` — harness (#11)
 - `docs/specs/active/newsfind_application_verification_15.md` — full verification (#15)
 - `docs/specs/active/business_output_evaluation_18.md` — business judgment (#18)
-- `docs/specs/signalgather_frontend_v1_16.md` — frontend (#16)
+- `docs/specs/active/signalgather_frontend_v1_16.md` — frontend (#16)
 - `testing/README.md`, `testing/app_testing_scenario.md`
