@@ -322,11 +322,11 @@ For multiple topics, loop over them in a small script. The server enforces a per
 
 ### Lane B manual smoke status (works / broken)
 
-Current state for pilot readiness:
+Current state for pilot readiness (verified on `test1`, 2026-06-02 — #17 closure):
 
-- **Cancel mid-run:** known gap (not executed in this pass)
-- **Concurrent topics:** known gap (not executed in this pass)
-- **Webhook subscribe + signed delivery:** known gap (not executed in this pass)
+- **Concurrent topics:** ✅ works — 3 topics created together all reached `planned_awaiting_review`; `/readyz` healthy; `max_concurrent_jobs` held.
+- **Webhook subscribe + signed delivery:** ✅ works — `POST /subscribe` → `201`; events delivered with `X-Signature: sha256=…` HMAC **verified** (recomputed match).
+- **Cancel mid-run:** ⚠️ **known gap** — `POST /cancel` returns `cancelled` immediately, but the in-flight background plan/deliver task is **not** aborted; it completes and re-sets state (e.g. back to `planned_awaiting_review`). Cancel from a gate/terminal state works and sticks. Aborting the live Claude subprocess is not yet implemented.
 - [x] **v2 continuous monitoring** — implemented in migration `0004_newsfind_monitoring`, `apps/claude_agent/topics/refresh.py`, and the `/newsfind-refresh` slash command. Test plan:
   - [ ] `POST /monitor` on a reported topic → auto-builds short_term_queries from disk.
   - [ ] `POST /refresh` → SSE shows `refresh.started` → `tool_use` × N → `refresh.completed` with `new_sources_count`.

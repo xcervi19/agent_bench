@@ -1,6 +1,6 @@
 # Backend V1 pilot-ready — #17
 
-**Status:** in progress  
+**Status:** done (verified on `test1`, 2026-06-02)  
 **Depends on:** #11 (stable run harness), #13 (multi-env HTTPS)  
 **Blocks:** #16 (frontend topic list needs `GET /v1/topics`)
 
@@ -48,11 +48,57 @@ This is **pilot readiness** (operations and API surface), not the full **busines
 
 ## Acceptance criteria
 
-- [ ] `scripts/test_vector_runner.sh --env test1` finishes with verification **PASS** (`qa_report.json` or equivalent)
-- [ ] Demo docs match prod HTTPS; operator needs no raw IP
-- [ ] Manual smoke items checked or documented as known gaps
-- [ ] `GET /v1/topics` returns topic list for FE
-- [ ] Demo ops checklist references #18 for business sign-off when needed
+- [x] `scripts/test_vector_runner.sh --env test1` finishes with verification **PASS** (`qa_report.json` or equivalent)
+- [x] Demo docs match prod HTTPS; operator needs no raw IP
+- [x] Manual smoke items checked or documented as known gaps
+- [x] `GET /v1/topics` returns topic list for FE
+- [x] Demo ops checklist references #18 for business sign-off when needed
+
+## Closure — verification 2026-06-02 (test1)
+
+All acceptance criteria met. Evidence and how each was satisfied:
+
+**AC1 — vector run PASS.** `scripts/test_vector_runner.sh --env test1` completed full lifecycle
+plan → deliver → refresh with **QA PASS (11/11 checks, 0 failed)**. Run:
+`testing/results/test1/2026-06-02T13-51-33Z/` (now `latest`).
+- deliver: 25 sources / 19 publishers, 7 key findings, 10 unique citations, report 38 lines / 891 words
+- refresh: 1 cycle, status `completed`, **15 new sources**, 12 queries
+- events: 147 total, 66 tool calls, **0 tool errors**; cost ≈ $2.91 total
+- artifacts: `qa_report.json` (`passed: true`), `evaluation.json`, `business_output/*`, `agent_log/events_full.ndjson`
+
+  Two pre-existing harness bugs (#11) were fixed to let the run complete and grade correctly
+  (see `scripts/test_vector_runner.sh`):
+  1. `_events_max_seq` now parses line-by-line and skips malformed lines — a concurrent SSE
+     writer could leave a partial line that made `jq -s` blank the max seq, spinning
+     `sync_events_from_api` on `from_seq=0`.
+  2. `evaluation.json` `sources_avg_relevance` divided by an array (`[N]`) instead of `N`,
+     which crashed `NEWS_METRICS` and dropped `deliver.sources_total` → QA spuriously failed
+     `sources_total_threshold`. Fixed the divisor.
+
+**AC2 — HTTPS, no raw IP in demo flow.** `testing/app_testing_scenario.md` and `testing/README.md`
+drive every API call via the HTTPS hostname (`$API=https://agent-test1.particletico.com`); the
+pre-demo checklist enforces HTTPS hostnames. Raw IP appears only in optional SSH DB/log helpers
+(SSH target), not the demo API flow.
+
+**AC3 — manual smoke (Lane B, works/broken).** Executed on `test1`:
+- **Concurrent topics:** ✅ 3 topics created together (all `202` → `planned_awaiting_review`),
+  `/readyz` healthy throughout; `max_concurrent_jobs` held.
+- **Webhook signed delivery:** ✅ `POST /subscribe` → `201`; events delivered to receiver with
+  `X-Signature: sha256=…` HMAC **verified** (recomputed HMAC matched). `intro.ready`/`report.ready`
+  traverse the same `emit → deliver_event` path.
+- **Cancel mid-run:** ⚠️ **known gap.** `POST /cancel` is accepted and momentarily sets
+  `cancelled`, but the in-flight background plan/deliver task is **not aborted** — it runs to
+  completion and re-sets state (observed `state→cancelled` at seq 4, then `→planned_awaiting_review`
+  at seq 34). Cancel from a gate/terminal state works and sticks. Tracked as a known bug; aborting
+  the Claude subprocess mid-stream is out of scope for #17 (no new pipeline features).
+
+**AC4 — `GET /v1/topics`.** Implemented (`list_topics` in `apps/claude_agent/topics/routes.py`),
+committed to `main`, and **deployed to test1** (worktree `git pull` + `docker compose build/up
+claude_agent`). Verified live: `200` with `items[]` (id, topic, state, available_actions,
+created/updated_at) and `?state=` filtering. (Before deploy, test1 returned `405 allow: POST`.)
+
+**AC5 — demo ops checklist references #18.** `testing/README.md` → "Pre-demo checklist (pilot ops)"
+includes "If output quality judgment is needed … run Lane A rubric from ticket #18."
 
 ## Related
 

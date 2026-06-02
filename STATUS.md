@@ -6,13 +6,6 @@ _Update this file as work progresses. The agent reads it every session to unders
 
 ## In Progress
 
-### Backend V1 pilot-ready (#17)
-- **Spec:** `docs/specs/active/pilot_ops_v1_17.md`
-- **Lane:** Ops / demo readiness (not business quality program)
-- **What's done:** Core API loop on prod (plan → deliver → refresh); run harness #11; monitor/refresh v2 shipped; HTTPS demo docs updated; thin QA gate (`scripts/qa_check_run.sh`) wired into vector runner; `GET /v1/topics` added
-- **What's missing:** Manual smoke execution evidence (cancel mid-run, concurrent topics, webhook delivery) and recording outcomes as works/broken
-- **Next step:** Execute manual smoke suite on test1 and record Lane B outcomes; then run Lane A business sign-off flow (#18) for demo readiness
-
 ### Business output evaluation (#18)
 - **Spec:** `docs/specs/active/business_output_evaluation_18.md`
 - **Lane:** A — *Is the deliverable valuable for users' business decisions?*
@@ -61,7 +54,7 @@ _Update this file as work progresses. The agent reads it every session to unders
 - **Spec:** `docs/specs/signalgather_frontend_v1_16.md`
 - **What's done:** Task spec from business requirements + event-driven UX principles
 - **What's missing:** App scaffold, topic list/workspace, SSE client, artifact views, monitor/delta UI, deploy to test1
-- **Next step:** Blocked on #17 subtask `GET /v1/topics`; then resolve open decisions (repo path, hosting URL, auth) and implement phase 16a
+- **Next step:** `GET /v1/topics` now shipped (#17 done); resolve open decisions (repo path, hosting URL, auth) and implement phase 16a
 
 ---
 
@@ -78,12 +71,19 @@ _Update this file as work progresses. The agent reads it every session to unders
   ```
 - **Full debug steps:** `docs/ops/debugging.md` → "RAG unavailable" section
 
+### Cancel does not abort an in-flight run
+- **Symptom:** `POST /v1/topics/{id}/cancel` during planning/delivering returns `cancelled`, but the topic later reappears at `planned_awaiting_review`/`reported`.
+- **Cause:** the background plan/deliver task (and its Claude subprocess) is not cancelled; it runs to completion and re-sets state via `set_state`.
+- **Impact:** cancel is only reliable from a gate/terminal state; mid-run cancel does not stop token spend.
+- **Found:** #17 Lane B smoke (2026-06-02). Fix needs cooperative cancellation of `run_plan`/`run_deliver`.
+
 ---
 
 ## Recently Completed
 
 | What | Date | Spec |
 |---|---|---|
+| **#17 Backend V1 pilot-ready** — `GET /v1/topics` deployed; vector run QA PASS on test1; Lane B smoke (concurrent ✅, webhook+HMAC ✅, cancel mid-run ⚠️ gap); 2 harness bugs fixed | Jun 2, 2026 | `docs/specs/done/pilot_ops_v1_17.md` |
 | **#11 RAG full stable evaluation** — vector runner, recovery, `evaluation.json` | May 27, 2026 | `docs/specs/done/rag_full_stable_evaluation_11.md` |
 | **News Pipeline v2 — monitor & refresh** — `/monitor`, `/refresh`, `/deltas`, `/newsfind-refresh` | May 2026 | `apps/claude_agent/topics/refresh.py`, `testing/app_testing_scenario.md` §7 |
 | **#10 RAG main corpus (highest ROI)** — download, chunk, ingest (66 docs / 3090 events) | May 22, 2026 | `docs/specs/done/rag_main_corpus_highest_roi_10.md` |

@@ -217,7 +217,9 @@ wait_for_topic_state() {
 _events_max_seq() {
   local f="$1"
   [ -s "$f" ] || { echo 0; return; }
-  jq -rs '[.[] | .seq // 0] | max' "$f" 2>/dev/null || echo 0
+  # Parse line-by-line and skip malformed lines (a concurrent SSE writer can leave
+  # a partial line); a single bad line must not blank out the whole max-seq.
+  jq -Rrs 'split("\n") | map(select(length > 0) | (fromjson? | .seq // 0)) | (max // 0)' "$f" 2>/dev/null || echo 0
 }
 
 # Backfill events via short SSE bursts (stream stays open on non-terminal states).
@@ -679,7 +681,7 @@ if [ "$STEP" = "collecting" ]; then
       sources_newest_date: ([.sources // [] | .[] | select(.published_at != null) | .published_at] | sort | reverse | .[0] // "n/a"),
       sources_oldest_date: ([.sources // [] | .[] | select(.published_at != null) | .published_at] | sort | .[0] // "n/a"),
       sources_unique_publishers: ([.sources // [] | .[] | .publisher // "unknown"] | unique | length),
-      sources_avg_relevance: (([.sources // [] | .[] | .relevance_score // 0] | add) / ([.sources // [] | length] | if . == 0 then 1 else . end) | . * 100 | floor / 100),
+      sources_avg_relevance: (([.sources // [] | .[] | .relevance_score // 0] | add // 0) / ((.sources // [] | length) | if . == 0 then 1 else . end) | . * 100 | floor / 100),
       source_classes: ([.sources // [] | .[] | .source_class // "unknown"] | group_by(.) | map({key: .[0], value: length}) | from_entries),
       queries_executed: (.executed_queries // [] | length),
       queries_with_results: ([.executed_queries // [] | .[] | select((.results_count // 0) > 0)] | length),
