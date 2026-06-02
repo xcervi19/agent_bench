@@ -46,5 +46,5 @@ docker compose exec postgres psql -U agentic -d agentic -c '\dt topic*'
 then test:
 export API=http://79.143.179.212:8002
 export CLAUDE_AGENT_API_KEY=<value from VPS apps/claude_agent/.env>
-scripts/test_topic.sh "Hormuz strait closure options to lower price"
-# → testing/runs/<UTC>__topic__hormuz-.../{events.ndjson, intro.md, news.json, report.md, ...}
+scripts/test_vector_runner.sh --env prod
+# → testing/results/prod/<UTC>/... (evaluation.json, qa_report.json, agent_log/, business_output/)

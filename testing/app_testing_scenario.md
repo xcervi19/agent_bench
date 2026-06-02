@@ -1,13 +1,17 @@
 # Newsfind Pipeline — Full Lifecycle Testing Guide
 
-API: `http://79.143.179.212:8002`
+API (set per environment, HTTPS only):
+
+- `https://agent-test1.particletico.com` (`test1`)
+- `https://agent-test2.particletico.com` (`test2`)
+- `https://agent.particletico.com` (`prod`)
 
 ---
 
 ## Setup (run once per terminal session)
 
 ```bash
-export API="http://79.143.179.212:8002"
+export API="https://agent-test1.particletico.com"
 export TOPIC="Hormuz strait closure options to lower price"
 ```
 
@@ -33,7 +37,7 @@ Expected: `{"topic_id":"...","state":"planning","events_url":"..."}`
 In a second terminal, tail the SSE stream while the agent plans:
 
 ```bash
-export API="http://79.143.179.212:8002"
+export API="https://agent-test1.particletico.com"
 export TOPIC_ID="<paste from step 1>"
 
 curl -N "$API/v1/topics/$TOPIC_ID/events" \
@@ -294,7 +298,7 @@ Sets `status: "paused"`. Subsequent `POST /refresh` calls return 409. Re-`POST /
 
 ```bash
 # every hour, hit refresh for one topic
-0 * * * * curl -fsS -X POST "http://79.143.179.212:8002/v1/topics/<TOPIC_ID>/refresh" >/dev/null
+0 * * * * curl -fsS -X POST "https://agent-test1.particletico.com/v1/topics/<TOPIC_ID>/refresh" >/dev/null
 ```
 
 For multiple topics, loop over them in a small script. The server enforces a per-topic lock so concurrent triggers on the same topic are safe.
@@ -309,12 +313,20 @@ For multiple topics, loop over them in a small script. The server enforces a per
 
 ## What needs testing before frontend
 
-- [ ] **`GET /v1/topics` (list endpoint)** — does not exist yet; needed by the FE to show all topics. Needs to be added to `apps/claude_agent/topics/routes.py`.
+- [x] **`GET /v1/topics` (list endpoint)** — implemented in `apps/claude_agent/topics/routes.py`.
 - [ ] **Deliver stage on existing gate topics** — topics stuck at `planned_awaiting_review` from before the fix can be proceeded now; verify they complete cleanly.
 - [ ] **Concurrent topics** — start 2–3 topics simultaneously and confirm `max_concurrent_jobs=4` keeps them stable.
 - [ ] **Cancel mid-run** — start a topic, cancel it during planning, verify state becomes `cancelled` and the Claude subprocess exits.
 - [ ] **Webhook delivery** — register a webhook with `POST /v1/topics/{id}/subscribe {url, secret}` and verify `intro.ready` + `report.ready` payloads arrive signed with HMAC.
 - [ ] **Artifact endpoints after failure** — if a topic ends in `failed`, confirm artifact endpoints return 404 (not 500).
+
+### Lane B manual smoke status (works / broken)
+
+Current state for pilot readiness:
+
+- **Cancel mid-run:** known gap (not executed in this pass)
+- **Concurrent topics:** known gap (not executed in this pass)
+- **Webhook subscribe + signed delivery:** known gap (not executed in this pass)
 - [x] **v2 continuous monitoring** — implemented in migration `0004_newsfind_monitoring`, `apps/claude_agent/topics/refresh.py`, and the `/newsfind-refresh` slash command. Test plan:
   - [ ] `POST /monitor` on a reported topic → auto-builds short_term_queries from disk.
   - [ ] `POST /refresh` → SSE shows `refresh.started` → `tool_use` × N → `refresh.completed` with `new_sources_count`.

@@ -28,14 +28,14 @@ L1_raw/
 ## Rebuild L1 (copy only; does not delete legacy folders)
 
 ```bash
-uv run python scripts/consolidate_corpus_l1.py
+uv run python scripts/data_processing/consolidate_corpus_l1.py
 ```
 
 ## Build L2 (L1 → clear text)
 
 ```bash
-uv run python scripts/corpus_l1_to_l2_text.py
-uv run python scripts/corpus_l1_to_l2_text.py --force   # rebuild
+uv run python scripts/data_processing/corpus_l1_to_l2_text.py
+uv run python scripts/data_processing/corpus_l1_to_l2_text.py --force   # rebuild
 ```
 
 Mirrors L1 folder structure with `.txt` extension. Report: `L2_manifest.json`.

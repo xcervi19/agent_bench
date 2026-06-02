@@ -3,7 +3,7 @@
 
 # Terminal 1: Full pipeline
 source testing/.env.testing
-scripts/test_full_pipeline.sh "Hormuz strait closure options to lower price"
+scripts/test_vector_runner.sh --env prod
 # → prints TOPIC_ID at the end
 
 # Terminal 2: Refresh for latest news (use TOPIC_ID from above)
@@ -27,9 +27,9 @@ Product scope: **`docs/product/README.md`**.
 Shared Claude login: `~/agent_bench/claude_home` on VPS (one subscription).
 
 ```bash
-scripts/vps_deploy_caddy.sh                    # reload Caddy
-scripts/vps_setup_test_slot.sh test1 main      # refresh test1 (postgres+rag+agent)
-scripts/vps_setup_test_slot.sh test2 main      # refresh test2
+scripts/devops/vps_deploy_caddy.sh                    # reload Caddy
+scripts/devops/vps_setup_test_slot.sh test1 main      # refresh test1 (postgres+rag+agent)
+scripts/devops/vps_setup_test_slot.sh test2 main      # refresh test2
 ```
 
 Tickets: #12 `docs/specs/done/setup_caddy_reverse_proxy_12.md`, #13 `docs/specs/done/multi_env_pre_frontend_13.md`.
@@ -128,9 +128,8 @@ cat ./newsfind.raw.txt | grep '"type":"result"' | head -1 \
   | jq -r '.result' \
   | jq '{schema_version, domain, queries_count: (.queries | length)}'
 
-# Topic pipeline test (scripts/test_topic.sh)
-export CLAUDE_AGENT_API_KEY="<from apps/claude_agent/.env>"
-scripts/test_topic.sh "Hormuz strait closure options to lower price"
+# Topic pipeline test (canonical runner)
+scripts/test_vector_runner.sh --env test1
 ```
 
 ---
@@ -172,7 +171,7 @@ uv run python -m source_ingest.ingest \
 docker compose exec api python -m database.seeds.seed_scenario signal_gather_commodity_trading
 
 # Replay an agent session (debugging)
-docker compose exec api python scripts/replay_session.py \
+docker compose exec api python scripts/utils/replay_session.py \
   --session-id <uuid> \
   --tenant-id 00000000-0000-0000-0000-000000000001
 ```

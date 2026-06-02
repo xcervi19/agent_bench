@@ -77,6 +77,34 @@ async def create_topic(
     return {"topic_id": str(new_id), "state": STATE_PLANNING, "events_url": f"/v1/topics/{new_id}/events"}
 
 
+@router.get("")
+async def list_topics(limit: int = 50, offset: int = 0, state: str | None = None) -> dict[str, Any]:
+    if limit < 1 or limit > 200:
+        raise HTTPException(status_code=422, detail="limit must be between 1 and 200")
+    if offset < 0:
+        raise HTTPException(status_code=422, detail="offset must be >= 0")
+
+    async with session_scope() as s:
+        stmt = select(Topic)
+        if state:
+            stmt = stmt.where(Topic.state == state)
+        rows = (await s.execute(
+            stmt.order_by(Topic.updated_at.desc(), Topic.created_at.desc()).offset(offset).limit(limit)
+        )).scalars().all()
+
+    items = [{
+        "id": str(row.id),
+        "topic": row.topic,
+        "state": row.state,
+        "available_actions": _actions(row.state),
+        "last_event_seq": row.last_event_seq,
+        "created_at": row.created_at.astimezone(timezone.utc).isoformat(),
+        "updated_at": row.updated_at.astimezone(timezone.utc).isoformat(),
+    } for row in rows]
+
+    return {"items": items, "count": len(items), "limit": limit, "offset": offset, "state": state}
+
+
 @router.get("/{topic_id}")
 async def get_topic(topic_id: uuid.UUID) -> dict[str, Any]:
     async with session_scope() as s:

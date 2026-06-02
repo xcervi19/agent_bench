@@ -78,7 +78,7 @@ Legacy IP:port URLs still work from localhost on the server; public access shoul
 
 ## Reverse proxy (Caddy)
 
-- **Install / reload from laptop:** `scripts/vps_deploy_caddy.sh`
+- **Install / reload from laptop:** `scripts/devops/vps_deploy_caddy.sh`
 - **Config on server:** `/etc/caddy/Caddyfile`
 - **Service:** `systemctl status caddy`
 
@@ -119,8 +119,8 @@ Each slot = git worktree + isolated DB/RAG/state + **shared** `~/agent_bench/cla
 Test slots run **minimal stack** only: `postgres`, `rag_adhoc`, `claude_agent` (`infra/docker-compose.slot-minimal.yml`).
 
 ```bash
-scripts/vps_setup_test_slot.sh test1 main
-scripts/vps_setup_test_slot.sh test2 feature/my-branch
+scripts/devops/vps_setup_test_slot.sh test1 main
+scripts/devops/vps_setup_test_slot.sh test2 feature/my-branch
 ```
 
 Stagger heavy topic **deliver** runs across slots — one Claude subscription shared by all agents.
@@ -130,7 +130,7 @@ Stagger heavy topic **deliver** runs across slots — one Claude subscription sh
 1. `git pull` on VPS
 2. `docker compose -f docker-compose.yml -f infra/docker-compose.vps-bind-local.yml up -d --build <services>`
 3. `docker compose exec api alembic current`
-4. `scripts/vps_deploy_caddy.sh` (if Caddyfile changed)
+4. `scripts/devops/vps_deploy_caddy.sh` (if Caddyfile changed)
 5. Smoke test HTTPS endpoints
 
 See also `docs/ops/commands.md` for day-to-day commands.

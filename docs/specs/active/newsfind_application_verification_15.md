@@ -1,128 +1,119 @@
 # Newsfind application verification — #15
 
-**Status:** active (queued)  
+**Status:** active (in progress)  
 **Depends on:** #11 (stable run harness), #13 (multi-env)  
-**Lane:** B — *Did the application work correctly? Did we break known behavior?*  
-**Related tickets:** #11 (harness), #17 (pilot ops), #18 (business evaluation)
+**Lane:** B — *Does the application still work correctly?*  
+**Related tickets:** #11 (harness), #18 (business output evaluation), #19 (DevOps test execution)
 
 ## Goal
 
-**Automated PASS/FAIL** after a run (or on CI): confirm the pipeline completed, artifacts are valid, events are healthy, and known operational failures are absent. **No manual diff** required for baseline safety before demo or deploy.
+Provide a **repeatable technical PASS/FAIL signal** for Newsfind runs.  
+This ticket defines **what to test** and **what counts as passing** so regressions are detected early and can later become strict release gates.
 
-This is **classic application testing** — regression and verification — not judgment of whether the report is insightful for traders.
+This is application correctness and regression safety. It is **not** a business-value judgment.
 
-## Execution policy (ticket-level)
+## Core question
 
-- Trigger automatically on branch/PR updates and in deploy pipelines.
-- Acts as merge/deploy gate (PASS required).
-- Must be non-billable: no paid inference API calls, no token-spending external AI calls in unit/integration/CI checks.
+*“Did we break product mechanics, output contracts, or known operational invariants?”*
 
-## Core question (one sentence)
+## Responsibility split
 
-*“Did we break the product’s mechanics and contracts, or reintroduce failures we already know how to detect?”*
+- **#15 (this ticket):** test definitions, assertions, and pass/fail criteria.
+- **#19:** where and how these tests execute on VPS/GitHub checks.
+- **#18:** business usefulness and qualitative output judgment.
 
-## Distinction from #18 (business output evaluation)
+## Test levels in scope
 
-| | **#15 (this ticket)** | **#18** |
-|--|------------------------|---------|
-| Question | Does it **work**? | Is it **useful**? |
-| Verdict | PASS / FAIL | Better / weaker / good enough for business |
-| Automation | Yes — scripts, CI | Mostly human / evaluator agent + rubric |
-| Example pass | `tool_errors == 0`, report has valid `[sN]` | “Findings are specific enough to hedge Hormuz exposure” |
+### 1) Unit tests (fast, non-billable, PR-level)
 
-#11 answers: *“What happened in this run?”* (data)  
-#15 answers: *“Is the run **valid** for release?”* (gate)  
-#18 answers: *“Is the run **valuable** for the user?”* (judgment)
+Unit tests must validate deterministic logic without external paid inference:
 
-## In scope
+- artifact parsing and validation helpers
+- threshold evaluators (`min_sources`, `min_findings`, citations count)
+- event sequence/invariant validators
+- `qa_check_run.sh` logic through fixture-based tests (good run vs broken run)
 
-### 1. Structural / schema checks
+Expected runtime: short enough for every PR.  
+No network dependency on VPS slots.
 
-Validate outputs against command contracts (`claude_agent_fe/.claude/commands/`):
+### 2) Integration/E2E run verification (artifact-driven)
 
-- **Plan:** `parsed.json` — `queries[]` shape, ids, languages; `intro.json` / `summary.json` present; `intro.md` non-empty
-- **Deliver:** `news.json` — `sources[]` with `url`, `relevance_score`, `source_class`; `report.json` — `key_findings`, scenarios; `report.md` — citation markers `[sN]`
-- **Refresh:** `delta.json` / refresh artifacts when monitoring enabled
+Validate run outputs from `test_vector_runner.sh`:
 
-Use JSON Schema or `jq` assertions; fail with file + field path.
+- required files exist and are non-empty (`evaluation.json`, `agent_log/events_full.ndjson`, `business_output/*`)
+- output schema/structure checks for plan and deliver artifacts
+- hard thresholds for technical validity (not quality scoring)
+- topic reaches expected terminal state (`reported` unless explicitly testing failure paths)
 
-### 2. Threshold gates (hard, not “quality score”)
+Output artifact: `qa_report.json` with `{ passed, failed_checks, summary, checks[] }`.
 
-Extend `vectors.json` — these are **regression guards**, not business excellence:
-
-- Plan: `min_queries`, `max_queries`, `min_rag_refs`
-- Deliver: `min_sources`, `min_findings`, `min_scenarios`, `report_min_lines`
-- Events: `tool_errors == 0`, topic reaches `reported` (or expected terminal state)
-- Cost ceiling (optional per env): `cost.total_usd < max`
-
-Output: `qa_report.json` with `{passed, failures[]}`.
-
-### 3. Event / pipeline invariants
+### 3) Operational invariants
 
 From `agent_log/events_full.ndjson` and `topic_final.json`:
 
-- Required sequence: `topic.created` → `stage.finished` (plan) → `needs_input` → … → `report.ready`
-- No `event_type: error` before success
-- `state.changed` ends in `reported` (not `failed` / stuck `planning`)
-- Stage timing present on `stage.finished`
+- expected high-level stage progression exists
+- no unrecovered error terminal path in successful runs
+- stage timing/cost fields are present when expected
+- citation integrity in report remains mechanically valid
 
-### 4. Smoke / health vectors
+### 4) Smoke checks
 
-Lightweight vectors in `testing/vectors.json` (e.g. `V000_health`):
+Minimal vector(s) for quick signal:
 
-- `GET /readyz` only, or minimal topic with short timeout
-- Run before/after deploy on `test1` / `test2`
+- readiness endpoint (`GET /readyz`)
+- lightweight topic path for fast end-to-end confidence
 
-### 5. Known-bad behavior catalog
+## Server process reference (definition only)
 
-Documented checks for failures seen in ops (extend over time):
+This ticket defines expected behavior for server-side execution:
+
+1. run vector on `test1`/`test2`
+2. run QA gate on produced run directory
+3. emit machine-readable pass/fail artifact (`qa_report.json`)
+4. in current informational mode: mark QA failure as advisory; in later required mode: block deployment/release on QA failure
+
+Execution mechanics (workflows, runners, branch protection, artifact upload) are implemented in **#19**.
+
+## Known-bad regression catalog (must fail)
 
 | Check | Example failure |
 |-------|-----------------|
-| Permission on `/state/news` | Topic stuck `planning`, empty events |
-| Empty `events_full.ndjson` | SSE/DB write failure |
-| `summary.json` missing after stage | Slash command did not complete |
-| Report citations without matching sources | Broken `[sN]` integrity |
+| Missing required artifact | No `report.json` after successful deliver |
+| Broken event log | Empty/missing `events_full.ndjson` |
+| Tool error regression | `events.tool_errors > 0` |
+| Citation integrity break | report cites `[sN]` with no matching source evidence |
+| Stuck lifecycle | topic never reaches expected terminal state |
 
-*(“All sources undated” may be a **warning** for #18; in #15 only if we define it as a known regression.)*
+## Out of scope
 
-### 6. Runner integration
-
-- `scripts/qa_check_run.sh <run_dir>` — reads `evaluation.json` + `business_output/` + `agent_log/`, writes `qa_report.json`, exit 1 on fail
-- `test_vector_runner.sh` calls it at end of run (after #17 thin gate proves the hook)
-- CI: vector on `test1` after deploy → `qa_check_run.sh` → block if fail
-
-### 7. Comparison / baselines (later)
-
-- Store last-known-good `evaluation.json` per env as `testing/baselines/<env>/V001.json`
-- Fail if **mechanical** metrics drop below baseline — not “worse writing quality”
-
-## Out of scope (for #15 v1)
-
-- LLM-as-judge business value scoring → **#18**
-- Cache-hit / warm-path testing — separate ticket
-- Frontend E2E (Playwright) — pre-frontend phase
+- Human or LLM-as-judge business-value scoring (**#18**)
+- VPS execution wiring and GitHub check orchestration (**#19**)
+- Frontend E2E (Playwright)
 - Load/stress testing
 
-## Artifacts (planned)
+## Planned artifacts
 
 | Path | Role |
 |------|------|
-| `testing/qa_rules.json` | Machine-readable rules + thresholds per vector |
-| `scripts/qa_check_run.sh` | Post-run assertion engine |
-| `testing/results/<env>/<ts>/qa_report.json` | PASS/FAIL + failure list |
-| `testing/baselines/` | Optional golden **mechanical** metrics per env |
+| `testing/qa_rules.json` | Machine-readable rules and thresholds |
+| `scripts/qa_check_run.sh` | Post-run PASS/FAIL evaluator |
+| `testing/results/<env>/<ts>/qa_report.json` | Gate result per run |
+| `testing/baselines/` | Optional baseline metrics for mechanical drift detection |
 
-## Acceptance criteria (when implemented)
+## Acceptance criteria
 
-- [ ] `qa_check_run.sh` fails a run with injected bad artifact (local test)
-- [ ] All rules in `qa_rules.json` documented with rationale (operational, not business)
-- [ ] V001 full run produces `qa_report.json` with `passed: true` on healthy instance
-- [ ] CI hook documented in `testing/README.md` under **Application verification**
-- [ ] Docs state clearly: #15 = gate; #18 = business judgment
+- [ ] Unit-test scope is explicitly documented and runnable in CI.
+- [ ] `qa_check_run.sh` passes on healthy fixtures and fails on injected-bad fixtures.
+- [ ] Full V001 run on `test1` produces `qa_report.json` with `passed: true` when healthy.
+- [ ] Known-bad regression cases are represented as explicit failing checks.
+- [ ] `testing/README.md` documents verification flow and references #19 for execution.
+- [ ] Docs consistently state: #15 = technical gate, #18 = business evaluation, #19 = execution pipeline.
 
 ## Related
 
-- `docs/specs/done/rag_full_stable_evaluation_11.md` — harness (#11)
-- `docs/specs/active/business_output_evaluation_18.md` — Lane A
-- `testing/vectors.json`, `scripts/test_vector_runner.sh`, `scripts/compare_evaluations.sh`
+- `docs/specs/done/rag_full_stable_evaluation_11.md` — harness foundation
+- `docs/specs/active/business_output_evaluation_18.md` — business lane
+- `docs/specs/active/devops_vps_test_execution_19.md` — execution lane
+- `testing/vectors.json`
+- `scripts/test_vector_runner.sh`
+- `scripts/qa_check_run.sh`

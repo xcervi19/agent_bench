@@ -113,6 +113,7 @@ STATE_FILE="$RUN_DIR/state.json"
 AGENT_LOG="$RUN_DIR/agent_log"
 BIZ_OUT="$RUN_DIR/business_output"
 EVAL_FILE="$RUN_DIR/evaluation.json"
+QA_REPORT_FILE="$RUN_DIR/qa_report.json"
 mkdir -p "$AGENT_LOG" "$BIZ_OUT"
 
 # ── Logging ──────────────────────────────────────────────────
@@ -765,6 +766,16 @@ if [ "$STEP" = "collecting" ]; then
 
   log "  ✓ evaluation.json written"
 
+  # Thin mechanical verification gate (ticket #17, full rules in #15).
+  log "  Running QA gate..."
+  if bash "$REPO_ROOT/scripts/qa_check_run.sh" --run-dir "$RUN_DIR" --out "$QA_REPORT_FILE"; then
+    log "  ✓ QA PASS ($QA_REPORT_FILE)"
+  else
+    log "  ✗ QA FAIL ($QA_REPORT_FILE)"
+    save_result "failed" "qa gate failed"
+    exit 1
+  fi
+
   # Update symlink for latest
   ln -sf "$RUN_DIR" "$RESULTS_BASE/latest"
 
@@ -793,9 +804,16 @@ if [ -s "$EVAL_FILE" ]; then
   ' "$EVAL_FILE" 2>/dev/null
 fi
 
+if [ -s "$QA_REPORT_FILE" ]; then
+  jq -r '
+    "  QA:       \(.passed | if . then "PASS" else "FAIL" end) (\(.summary.checks_total) checks)"
+  ' "$QA_REPORT_FILE" 2>/dev/null
+fi
+
 echo
 echo "  Output:"
 echo "    evaluation.json     $EVAL_FILE"
+echo "    qa_report.json      $QA_REPORT_FILE"
 echo "    agent_log/          $AGENT_LOG/"
 echo "    business_output/    $BIZ_OUT/"
 echo "    runner.log          $LOG_FILE"

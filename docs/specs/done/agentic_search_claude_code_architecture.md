@@ -51,9 +51,10 @@ Each run produces files in `state/news/<topic_hash>/runs/<run_id>/`:
 
 ### Test scripts
 
-- `scripts/test_full_pipeline.sh` — End-to-end: create topic → plan → gate → deliver → report. Saves artifacts to `testing/runs/<ts>__pipeline__<id>/`.
-- `scripts/test_refresh_cycle.sh` — Trigger refresh with live SSE progress (search queries, fetches, writes visible in real-time), then display queries executed, dedup stats, sources found, key changes.
-- `scripts/test_continue_topic.sh` — Resume from any state after timeout.
+- `scripts/test_vector_runner.sh` — Canonical end-to-end runner (plan → deliver → refresh), resumable, writes `testing/results/<env>/...` artifacts.
+- `scripts/qa_check_run.sh` — Mechanical PASS/FAIL gate on run artifacts (`qa_report.json`).
+- `scripts/test_refresh_cycle.sh` — Refresh-only debug run for an already reported topic.
+- `scripts/legacy/test_full_pipeline.sh` + `scripts/legacy/test_continue_topic.sh` — legacy fallback scripts.
 - `testing/.env.testing` — VPS/API/DB config for test scripts.
 
 ## Mapping to original requirements

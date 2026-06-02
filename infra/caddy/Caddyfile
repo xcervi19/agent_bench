@@ -1,5 +1,5 @@
 # Host Caddy on VPS — public agent APIs only; RAG/DB stay on 127.0.0.1.
-# Deploy: scripts/vps_deploy_caddy.sh
+# Deploy: scripts/devops/vps_deploy_caddy.sh
 
 {
 	email admin@particletico.com

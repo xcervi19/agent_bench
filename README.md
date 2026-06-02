@@ -17,7 +17,7 @@ apps/signal_gather/         ← first application
   scenarios/                  ← deterministic seed data
 database/migrations/        ← Alembic
 database/seeds/             ← scenario seeders
-scripts/replay_session.py   ← debug tool
+scripts/utils/replay_session.py   ← debug tool
 source_ingest/              ← preprocess .txt → JSONL; ingest JSONL → Postgres + embeddings
 oil_rag_collector/          ← download curated oil/WTI RAG sources (PDF/HTML/API)
 docker/                     ← Dockerfile + entrypoints
@@ -185,7 +185,7 @@ Only ingest material you are allowed to copy, embed, and store.
 ## Replaying an agent session
 
 ```bash
-docker compose exec api python scripts/replay_session.py \
+docker compose exec api python scripts/utils/replay_session.py \
   --session-id <uuid> \
   --tenant-id 00000000-0000-0000-0000-000000000001
 ```

@@ -1,4 +1,4 @@
-"""CLI: python scripts/replay_session.py --session-id <uuid> --tenant-id <uuid>."""
+"""CLI: python scripts/utils/replay_session.py --session-id <uuid> --tenant-id <uuid>."""
 
 import argparse
 import asyncio

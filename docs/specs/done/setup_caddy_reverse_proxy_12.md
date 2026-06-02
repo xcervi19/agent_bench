@@ -43,7 +43,7 @@ Docker Compose (~/agent_bench, project agent_bench)
 | `infra/caddy/Caddyfile` | Source of truth for vhosts and TLS |
 | `infra/caddy/README.md` | Short pointer |
 | `infra/docker-compose.vps-bind-local.yml` | Bind service ports to `127.0.0.1` (`!override`) |
-| `scripts/vps_deploy_caddy.sh` | Install Caddy (if missing) + deploy config from laptop |
+| `scripts/devops/vps_deploy_caddy.sh` | Install Caddy (if missing) + deploy config from laptop |
 | `docs/ops/vps.md` | Live server inventory and ops runbook |
 
 ## Hostname map
@@ -61,7 +61,7 @@ Docker Compose (~/agent_bench, project agent_bench)
 | `agent-test2.particletico.com` | `127.0.0.1:8202` | test2 claude_agent |
 | `rag-test2.particletico.com` | `127.0.0.1:8201` | test2 rag_adhoc |
 
-Provision test slots: `scripts/vps_setup_test_slot.sh test1|test2 [branch]`
+Provision test slots: `scripts/devops/vps_setup_test_slot.sh test1|test2 [branch]`
 
 ## DNS prerequisites
 
@@ -75,14 +75,14 @@ Provision test slots: `scripts/vps_setup_test_slot.sh test1|test2 [branch]`
 
 ### 1. Install Caddy on VPS
 
-Handled by `scripts/vps_deploy_caddy.sh` (official Caddy apt repo, systemd service).
+Handled by `scripts/devops/vps_deploy_caddy.sh` (official Caddy apt repo, systemd service).
 
 ### 2. Deploy Caddyfile
 
 From laptop:
 
 ```bash
-scripts/vps_deploy_caddy.sh
+scripts/devops/vps_deploy_caddy.sh
 ```
 
 On server, config lives at `/etc/caddy/Caddyfile`.
@@ -115,14 +115,14 @@ ufw enable
 ### Update Caddy config
 
 1. Edit `infra/caddy/Caddyfile`
-2. Run `scripts/vps_deploy_caddy.sh`
+2. Run `scripts/devops/vps_deploy_caddy.sh`
 3. Smoke test (see below)
 
 ### Enable a test slot (when stack exists)
 
 1. Start test compose on ports `810x` or `820x` (separate worktree + `.env`)
 2. Uncomment matching block(s) in `infra/caddy/Caddyfile`
-3. `scripts/vps_deploy_caddy.sh`
+3. `scripts/devops/vps_deploy_caddy.sh`
 
 ## Verification
 
@@ -169,7 +169,7 @@ curl --max-time 5 http://79.143.179.212:8002/readyz
 - [x] UFW allows only 22, 80, 443
 - [x] Test slot hostnames documented and stubbed in Caddyfile (commented)
 - [x] HTTPS certificates issued (prod + test1 + test2)
-- [x] Test slots `test1` / `test2` deployed (`scripts/vps_setup_test_slot.sh`)
+- [x] Test slots `test1` / `test2` deployed (`scripts/devops/vps_setup_test_slot.sh`)
 
 ## Related docs
 
@@ -178,5 +178,5 @@ curl --max-time 5 http://79.143.179.212:8002/readyz
 
 ## Follow-up
 
-- Point test1/test2 at feature branches: `scripts/vps_setup_test_slot.sh test1 my-branch`
+- Point test1/test2 at feature branches: `scripts/devops/vps_setup_test_slot.sh test1 my-branch`
 - Frontend build: deploy static assets or separate compose service per slot as needed

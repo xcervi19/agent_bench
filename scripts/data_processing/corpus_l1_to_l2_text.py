@@ -98,7 +98,9 @@ def main() -> None:
     l2_root = corpus / "L2_text"
 
     if not l1_root.is_dir():
-        raise SystemExit(f"L1_raw not found: {l1_root}. Run: uv run python scripts/consolidate_corpus_l1.py")
+        raise SystemExit(
+            f"L1_raw not found: {l1_root}. Run: uv run python scripts/data_processing/consolidate_corpus_l1.py"
+        )
 
     meta_by_l1 = load_l1_manifest(corpus)
     outcomes: list[dict] = []

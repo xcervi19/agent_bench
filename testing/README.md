@@ -25,7 +25,7 @@ scripts/compare_evaluations.sh \
   testing/results/test2/latest/evaluation.json
 ```
 
-**Results:** `testing/results/<env>/<timestamp>/` — `evaluation.json`, `agent_log/`, `business_output/`, `runner.log`. Latest: `testing/results/<env>/latest/`.
+**Results:** `testing/results/<env>/<timestamp>/` — `evaluation.json`, `qa_report.json`, `agent_log/`, `business_output/`, `runner.log`. Latest: `testing/results/<env>/latest/`.
 
 ## Environments
 
@@ -108,6 +108,16 @@ Outputs a table comparing timing, cost, plan quality, delivery quality, and even
 
 Tickets: **#15** (B), **#18** (A)
 
+## Pre-demo checklist (pilot ops)
+
+Run this before a client demo:
+
+- [ ] Verify RAG env vars are present in `claude_agent` container (`docs/ops/debugging.md`, "RAG unavailable" section).
+- [ ] Run `scripts/test_vector_runner.sh --env test1` and confirm `qa_report.json` has `"passed": true`.
+- [ ] Confirm docs/operators use HTTPS hostnames (`agent-test1.particletico.com`, `agent-test2.particletico.com`, `agent.particletico.com`) rather than raw IP + port.
+- [ ] Review manual smoke status for cancel/concurrency/webhooks in `testing/app_testing_scenario.md`.
+- [ ] If output quality judgment is needed (not just app health), run Lane A rubric from ticket #18.
+
 ---
 
 ## Application verification (Lane B)
@@ -115,9 +125,15 @@ Tickets: **#15** (B), **#18** (A)
 Mechanical regression checks — **not** “is this report insightful.”
 
 - **Ticket #15:** `docs/specs/active/newsfind_application_verification_15.md`
-- **Script (planned):** `scripts/qa_check_run.sh` → `qa_report.json` with `passed: true/false`
+- **Script (thin gate in #17):** `scripts/qa_check_run.sh` → `qa_report.json` with `passed: true/false`
 
-### Quick jq gate (until `qa_check_run.sh` exists)
+### Run the gate directly (optional)
+
+```bash
+scripts/qa_check_run.sh --run-dir testing/results/test1/latest
+```
+
+### Quick jq gate (fallback)
 
 ```bash
 jq -e '
@@ -217,12 +233,33 @@ For diagnosing system behavior:
 
 ---
 
+## Monitoring evaluation — two modes (#20)
 
-## Old Scripts (still work)
+| Mode | Command / harness | Output |
+|------|---------------------|--------|
+| **A — Refresh works** | `test_vector_runner.sh` (refresh step), `test_refresh_cycle.sh` | Per-cycle `refresh_*.json` — proves mechanism |
+| **B — Monitoring over time** | Planned: `test_monitoring_window.sh` or vector `V002_*` | `monitoring_timeline.json` — all news in `[T_start, T_end]` for **#18 P4** retrospective review |
+
+Mode B needs **#22** scheduler (or cron) running for the window, then timeline assembly. Spec: `docs/specs/active/continuous_monitoring_evaluation_20.md`.
+
+---
+
+## Deprecated scripts (fallback only)
 
 | Script | Purpose |
 |---|---|
-| `scripts/test_full_pipeline.sh` | One-shot A→Z (no recovery) |
-| `scripts/test_continue_topic.sh` | Resume a single topic by ID |
+| `scripts/legacy/test_full_pipeline.sh` | One-shot A→Z (no recovery) |
+| `scripts/legacy/test_continue_topic.sh` | Resume a single topic by ID |
 | `scripts/test_refresh_cycle.sh` | Refresh cycle on a reported topic |
-| `scripts/test_topic.sh` | Quick single-command test |
+| `scripts/legacy/test_topic.sh` | Quick single-command test |
+
+For regular development testing, use:
+
+- `scripts/test_vector_runner.sh`
+- `scripts/qa_check_run.sh`
+- `scripts/compare_evaluations.sh`
+
+## Specialized debug scripts (kept at top-level)
+
+- `scripts/test_refresh_cycle.sh` — refresh-only investigation on an existing reported topic
+- `scripts/test_newsfind.sh` — direct `/v1/agent/stream` slash-command debugging for `/newsfind-queries`

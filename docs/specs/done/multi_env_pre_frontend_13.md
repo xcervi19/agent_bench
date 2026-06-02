@@ -19,7 +19,7 @@ Three isolated app instances (prod, test1, test2) with:
 | Shared Claude auth | `../agent_bench/claude_home` mount in test1/test2 compose |
 | Caddy | `agent`, `agent-test1`, `agent-test2` only (+ optional `app`) |
 | Minimal stack | `infra/docker-compose.slot-minimal.yml` drops `api` dependency |
-| Script | `scripts/vps_setup_test_slot.sh` uses minimal services |
+| Script | `scripts/devops/vps_setup_test_slot.sh` uses minimal services |
 | Docs | `docs/product/README.md`, updated `docs/ops/vps.md` |
 
 ## Acceptance criteria

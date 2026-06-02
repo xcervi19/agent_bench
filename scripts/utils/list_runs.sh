@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/list_runs.sh
+# scripts/utils/list_runs.sh
 #
 # Show the 20 most recent local debug runs under testing/runs/ with a one-line
 # summary of each (domain / queries count / actors count). Failed runs (no

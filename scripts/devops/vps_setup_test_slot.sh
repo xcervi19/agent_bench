@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Create or refresh a test slot on the VPS (worktree + .env + minimal compose up).
 # Usage (from laptop):
-#   scripts/vps_setup_test_slot.sh test1 [git-branch]
-#   scripts/vps_setup_test_slot.sh test2 feature/my-branch
+#   scripts/devops/vps_setup_test_slot.sh test1 [git-branch]
+#   scripts/devops/vps_setup_test_slot.sh test2 feature/my-branch
 set -euo pipefail
 
 SLOT="${1:?Usage: $0 test1|test2 [branch]}"
@@ -92,4 +92,4 @@ docker compose ps
 echo "--- ${SLOT} ready branch=$(git branch --show-current) DB=${POSTGRES_DB} shared_claude_home=~/agent_bench/claude_home ---"
 REMOTE
 
-echo "Slot ${SLOT} deployed. Run: scripts/vps_deploy_caddy.sh (if Caddyfile changed)"
+echo "Slot ${SLOT} deployed. Run: scripts/devops/vps_deploy_caddy.sh (if Caddyfile changed)"

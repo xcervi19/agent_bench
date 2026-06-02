@@ -122,7 +122,7 @@ docker compose up --build
 Additional commands:
 - Seed data: `python -m database.seeds.seed_dev_data`
 - Run scenario: `python -m database.seeds.seed_scenario signal_gather_commodity_trading`
-- Replay session: `python scripts/replay_session.py --session-id=abc123`
+- Replay session: `python scripts/utils/replay_session.py --session-id=abc123`
 
 ### 8. Production Deployment Workflow
 
@@ -170,7 +170,7 @@ Here is a clear, direct description of the **main features** of the framework, w
 
 - **Event Replay & Debugging**  
   - Every agent session (user request → agent actions → tool calls → final response) is fully recorded.  
-  - Developers can replay any session locally with one command: `python scripts/replay_session.py --session-id=xxx`.  
+  - Developers can replay any session locally with one command: `python scripts/utils/replay_session.py --session-id=xxx`.  
   - Greatly simplifies debugging complex agent behavior.
 
 - **Deterministic Seeding & Scenarios**  
