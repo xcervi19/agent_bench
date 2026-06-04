@@ -21,10 +21,8 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 
 | # | File | Status | Blocks / unblocks |
 |---|------|--------|---------------------|
-| 15 | `docs/specs/active/newsfind_application_verification_15.md` | planned | Unblocks confident technical PASS; feeds #18, #19 |
 | 16 | `docs/specs/active/signalgather_frontend_v1_16.md` | planned | User-facing V1 UI; needs #17 done |
 | 18 | `docs/specs/active/business_output_evaluation_18.md` | planned | Needs #15 PASS; pairs with #20, #21 |
-| 19 | `docs/specs/active/devops_vps_test_execution_19.md` | planned | Needs #15 definitions; CI visibility |
 | 20 | `docs/specs/active/continuous_monitoring_evaluation_20.md` | planned | Needs #18, #21, **#22** |
 | 21 | `docs/specs/active/timeliness_channel_metrics_21.md` | planned | Feeds #15, #18, #20 |
 | 22 | `docs/specs/active/topic_refresh_scheduler_22.md` | planned | Blocks #16 (16c), #20 |
@@ -39,7 +37,9 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 | 11 | `docs/specs/done/rag_full_stable_evaluation_11.md` | 2026-05 |
 | 12 | `docs/specs/done/setup_caddy_reverse_proxy_12.md` | — |
 | 13 | `docs/specs/done/multi_env_pre_frontend_13.md` | — |
+| 15 | `docs/specs/done/newsfind_application_verification_15.md` | 2026-06-02 |
 | 17 | `docs/specs/done/pilot_ops_v1_17.md` | 2026-06-02 |
+| 19 | `docs/specs/done/devops_vps_test_execution_19.md` | 2026-06-02 |
 
 ---
 

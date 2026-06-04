@@ -190,8 +190,8 @@ Checklist item for client-facing demos (complements #17 ops checklist):
 ## Related
 
 - `docs/specs/done/rag_full_stable_evaluation_11.md` — harness only
-- `docs/specs/active/newsfind_application_verification_15.md` — Lane B
-- `docs/specs/active/devops_vps_test_execution_19.md` — execution lane
+- `docs/specs/done/newsfind_application_verification_15.md` — Lane B
+- `docs/specs/done/devops_vps_test_execution_19.md` — execution lane
 - `docs/specs/active/continuous_monitoring_evaluation_20.md` — monitoring over time
 - `docs/specs/active/timeliness_channel_metrics_21.md` — timeliness & channel metrics
 - `docs/specs/done/pilot_ops_v1_17.md` — pilot ops baseline

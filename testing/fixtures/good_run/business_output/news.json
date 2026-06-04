@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1.0",
+  "topic_id": "fixture-topic-0001",
+  "executed_queries": [
+    {"id": "q01", "query": "Strait of Hormuz closure oil price impact", "results_count": 5},
+    {"id": "q02", "query": "OPEC spare capacity 2026", "results_count": 4}
+  ],
+  "sources": [
+    {"id": "s01", "url": "https://reuters.com/hormuz-a", "url_hash": "a1b2c3d4e5f60718", "title": "Tanker traffic slows near Hormuz amid tensions", "publisher": "Reuters", "published_at": "2026-06-01T08:00:00Z", "language": "en", "snippet": "...", "query_ids": ["q01"], "source_class": "primary_official", "relevance_score": 0.88, "novelty_score": 0.7},
+    {"id": "s02", "url": "https://argusmedia.com/spare-cap", "url_hash": "b2c3d4e5f6071829", "title": "OPEC+ spare capacity estimated near 4 mb/d", "publisher": "Argus Media", "published_at": "2026-05-30T10:00:00Z", "language": "en", "snippet": "...", "query_ids": ["q02"], "source_class": "specialist_outlet", "relevance_score": 0.82, "novelty_score": 0.6},
+    {"id": "s03", "url": "https://eia.gov/spr", "url_hash": "c3d4e5f607182930", "title": "SPR drawdown mechanics and timing", "publisher": "US EIA", "published_at": "2026-05-28T12:00:00Z", "language": "en", "snippet": "...", "query_ids": ["q01"], "source_class": "data_feed", "relevance_score": 0.79, "novelty_score": 0.65},
+    {"id": "s04", "url": "https://bloomberg.com/freight", "url_hash": "d4e5f60718293041", "title": "Tanker freight rates jump on Gulf risk premium", "publisher": "Bloomberg", "published_at": "2026-06-01T14:00:00Z", "language": "en", "snippet": "...", "query_ids": ["q01"], "source_class": "aggregator", "relevance_score": 0.74, "novelty_score": 0.55},
+    {"id": "s05", "url": "https://platts.com/pipeline", "url_hash": "e5f6071829304152", "title": "Goreh-Jask bypass throughput limits", "publisher": "S&P Global Platts", "published_at": "2026-05-29T09:00:00Z", "language": "en", "snippet": "...", "query_ids": ["q02"], "source_class": "specialist_outlet", "relevance_score": 0.71, "novelty_score": 0.6},
+    {"id": "s06", "url": "https://irna.ir/strait", "url_hash": "f60718293041526a", "title": "Official statements on strait security", "publisher": "IRNA", "published_at": "2026-05-31T16:00:00Z", "language": "fa", "snippet": "...", "query_ids": ["q01"], "source_class": "local_press", "relevance_score": 0.63, "novelty_score": 0.5}
+  ],
+  "drops": {"deduped": 3, "low_relevance": 5, "off_topic": 1},
+  "search_budget_used": {"queries_executed": 12, "web_searches": 12, "web_fetches": 3}
+}

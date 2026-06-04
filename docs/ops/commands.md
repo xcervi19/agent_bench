@@ -36,6 +36,23 @@ Tickets: #12 `docs/specs/done/setup_caddy_reverse_proxy_12.md`, #13 `docs/specs/
 
 ---
 
+## GitHub CI / test execution (#19)
+
+**Phase 1:** checks are **advisory** (failures visible, merges not blocked). See `.github/README.md` for secrets.
+
+| Trigger | Command / workflow |
+|---------|-------------------|
+| Every PR | `.github/workflows/pr-verification.yml` → `unit-tests`, `verification-smoke`, `qa-gate` |
+| Manual only | Actions → “VPS E2E test1” → Run workflow |
+| Local PR parity | `python -m pytest tests/qa -q` && `bash scripts/devops/ci_verification_smoke.sh` |
+| Local full VPS E2E | `export TEST1_API=… TEST1_CLAUDE_AGENT_API_KEY=…` then `bash scripts/devops/ci_run_vps_e2e_ssh.sh` |
+
+**Rerun failed VPS E2E:** Actions → “VPS E2E test1” → Run workflow (optional `git_ref`). Or SSH and run `scripts/devops/ci_vps_e2e_test1.sh` on `~/agent_bench_test1`.
+
+**Artifacts:** GitHub retains `test1-e2e-<run_id>` 14 days (`qa_report.json`, `evaluation.json`, `runner.log`).
+
+---
+
 ## SSH & SCP (VPS)
 
 ```bash

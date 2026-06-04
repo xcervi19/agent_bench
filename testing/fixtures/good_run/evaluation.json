@@ -1,0 +1,44 @@
+{
+  "vector_id": "V001_hormuz",
+  "env": "fixture",
+  "api": "https://fixture.local",
+  "topic": "Hormuz strait closure options to lower price",
+  "topic_id": "fixture-topic-0001",
+  "timestamp": "2026-06-02T20:00:00Z",
+  "claude_version": "fixture",
+  "timing": {"plan_sec": 120, "deliver_sec": 240, "refresh_sec": 90, "total_sec": 450},
+  "cost": {"plan_usd": 0.21, "deliver_usd": 0.54, "refresh_usd": 0.12, "total_usd": 0.87},
+  "events": {
+    "total_events": 42,
+    "tool_calls": 18,
+    "tool_errors": 0,
+    "stages": [
+      {"stage": "plan", "duration_ms": 120000, "cost_usd": 0.21},
+      {"stage": "deliver", "duration_ms": 240000, "cost_usd": 0.54}
+    ],
+    "plan_cost_usd": 0.21,
+    "deliver_cost_usd": 0.54,
+    "refresh_cost_usd": 0.12,
+    "refresh_new_sources": 2
+  },
+  "plan": {
+    "queries_count": 12,
+    "language_count": 3,
+    "rag_refs_count": 4
+  },
+  "deliver": {
+    "sources_total": 6,
+    "sources_unique_publishers": 5,
+    "key_findings_count": 4,
+    "scenarios_count": 2,
+    "thesis_status": "supported",
+    "report_lines": 48,
+    "report_words": 620,
+    "unique_citations": 5
+  },
+  "refresh": {
+    "enabled": true,
+    "new_sources_count": 2,
+    "status": "completed"
+  }
+}

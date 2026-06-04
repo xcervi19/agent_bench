@@ -1,0 +1,137 @@
+{
+  "run_dir": "testing/fixtures/good_run",
+  "generated_at": "2026-06-02T23:06:47Z",
+  "rules_file": "/Users/karel.cervicek/Documents/projects/agent_bench/testing/qa_rules.json",
+  "thresholds": {
+    "min_sources": 5,
+    "min_findings": 2,
+    "min_citations": 3
+  },
+  "checks": [
+    {
+      "id": "artifact_evaluation_json",
+      "category": "artifact",
+      "severity": "error",
+      "pass": true,
+      "actual": "testing/fixtures/good_run/evaluation.json"
+    },
+    {
+      "id": "artifact_events_full_ndjson",
+      "category": "artifact",
+      "severity": "error",
+      "pass": true,
+      "actual": "testing/fixtures/good_run/agent_log/events_full.ndjson"
+    },
+    {
+      "id": "artifact_parsed_json",
+      "category": "artifact",
+      "severity": "error",
+      "pass": true,
+      "actual": "testing/fixtures/good_run/business_output/parsed.json"
+    },
+    {
+      "id": "artifact_intro_md",
+      "category": "artifact",
+      "severity": "error",
+      "pass": true,
+      "actual": "testing/fixtures/good_run/business_output/intro.md"
+    },
+    {
+      "id": "artifact_news_json",
+      "category": "artifact",
+      "severity": "error",
+      "pass": true,
+      "actual": "testing/fixtures/good_run/business_output/news.json"
+    },
+    {
+      "id": "artifact_report_json",
+      "category": "artifact",
+      "severity": "error",
+      "pass": true,
+      "actual": "testing/fixtures/good_run/business_output/report.json"
+    },
+    {
+      "id": "artifact_report_md",
+      "category": "artifact",
+      "severity": "error",
+      "pass": true,
+      "actual": "testing/fixtures/good_run/business_output/report.md"
+    },
+    {
+      "id": "tool_errors_zero",
+      "category": "operational",
+      "severity": "error",
+      "pass": true,
+      "actual": 0,
+      "expected": 0
+    },
+    {
+      "id": "sources_total_threshold",
+      "category": "threshold",
+      "severity": "error",
+      "pass": true,
+      "actual": 6,
+      "expected_min": 5
+    },
+    {
+      "id": "key_findings_threshold",
+      "category": "threshold",
+      "severity": "error",
+      "pass": true,
+      "actual": 4,
+      "expected_min": 2
+    },
+    {
+      "id": "unique_citations_threshold",
+      "category": "threshold",
+      "severity": "error",
+      "pass": true,
+      "actual": 5,
+      "expected_min": 3
+    },
+    {
+      "id": "terminal_state_reported",
+      "category": "lifecycle",
+      "severity": "error",
+      "pass": true,
+      "actual": "reported",
+      "expected": "reported"
+    },
+    {
+      "id": "no_error_terminal",
+      "category": "lifecycle",
+      "severity": "error",
+      "pass": true,
+      "actual": "reported"
+    },
+    {
+      "id": "stage_progression_plan",
+      "category": "invariant",
+      "severity": "error",
+      "pass": true
+    },
+    {
+      "id": "stage_progression_deliver",
+      "category": "invariant",
+      "severity": "error",
+      "pass": true
+    },
+    {
+      "id": "citation_integrity",
+      "category": "invariant",
+      "severity": "error",
+      "pass": true,
+      "actual": {
+        "cited": 6,
+        "unresolved": ""
+      }
+    }
+  ],
+  "failed_checks": [],
+  "summary": {
+    "checks_total": 16,
+    "checks_failed": 0,
+    "passed": true
+  },
+  "passed": true
+}

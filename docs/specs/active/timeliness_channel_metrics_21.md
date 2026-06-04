@@ -73,6 +73,6 @@ From `source_class` across `news.json` (and refresh `news.json`):
 
 - `docs/specs/active/business_output_evaluation_18.md`
 - `docs/specs/active/continuous_monitoring_evaluation_20.md`
-- `docs/specs/active/newsfind_application_verification_15.md`
+- `docs/specs/done/newsfind_application_verification_15.md`
 - `scripts/test_vector_runner.sh` (evaluation.json builder)
 - `claude_agent_fe/.claude/commands/newsfind-deliver.md`, `newsfind-refresh.md`

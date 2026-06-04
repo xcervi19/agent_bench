@@ -124,14 +124,90 @@ Run this before a client demo:
 
 Mechanical regression checks — **not** “is this report insightful.”
 
-- **Ticket #15:** `docs/specs/active/newsfind_application_verification_15.md`
-- **Script (thin gate in #17):** `scripts/qa_check_run.sh` → `qa_report.json` with `passed: true/false`
+- **Ticket #15 (definitions, done):** `docs/specs/done/newsfind_application_verification_15.md` — what to test and pass/fail criteria.
+- **Rule catalog:** `testing/qa_rules.json` — machine-readable rule ids, thresholds, severity, and the known-bad regression each rule guards.
+- **Gate script:** `scripts/qa_check_run.sh` → `qa_report.json` with `passed: true/false`.
+- **Unit tests:** `tests/qa/` — fixture-based PR-level checks (non-billable, no network).
+- **Execution (CI/VPS/GitHub checks):** ticket #19 — `docs/specs/done/devops_vps_test_execution_19.md`, setup: `.github/README.md`.
+
+### Verification flow (real run vs unit tests)
+
+The **extended gate** only reads a finished run directory; it does not create topics. Unit tests exercise the same gate on committed fixtures (no API, no billable inference).
+
+```mermaid
+flowchart LR
+  subgraph real["Real workflow (billable, VPS)"]
+    V[test_vector_runner.sh]
+    T[API: create topic plan deliver refresh]
+    R[testing/results/.../]
+    V --> T --> R
+  end
+  subgraph gate["Lane B gate (mechanical)"]
+    Q[qa_check_run.sh]
+    QR[qa_report.json]
+    Q --> QR
+  end
+  subgraph unit["Unit tests (PR, no app)"]
+    F[fixtures/good_run]
+    PY[pytest tests/qa]
+    F --> PY
+    PY --> Q
+  end
+  R --> Q
+```
+
+| Path | When to use |
+|------|-------------|
+| **Unit tests** | Every PR — validates gate + `qa_rules.json` without running the app |
+| **Vector runner + gate** | After deploy or before demo — proves live `test1`/`test2` still passes |
+| **Gate only** | Re-check an existing run dir (`--run-dir testing/results/test1/latest`) |
+
+### GitHub CI (ticket #19)
+
+**Phase 1 — advisory** (checks visible; not required in branch protection).
+
+| Check name | Workflow | What runs |
+|------------|----------|-----------|
+| `unit-tests` | `pr-verification.yml` | `pytest tests/qa` |
+| `verification-smoke` | `pr-verification.yml` | `scripts/devops/ci_verification_smoke.sh` |
+| `qa-gate` | `pr-verification.yml` | Gate on `testing/fixtures/good_run` |
+| `vps-e2e-test1` | `vps-e2e-test1.yml` (manual run in Actions) | SSH → VPS: vector + gate on `test1` |
+| `qa-gate` (live) | `vps-e2e-test1.yml` | Assert `qa_report.json` from VPS run |
+
+Secrets and rerun: **`.github/README.md`**. Local VPS driver: `scripts/devops/ci_run_vps_e2e_ssh.sh`.
+
+**Failure triage:** red `unit-tests` / `verification-smoke` → #15 rules or gate script; red `vps-e2e-test1` → API/VPS/logs in uploaded artifact; business quality → #18 (not CI).
+
+### What the gate checks
+
+Loaded from `testing/qa_rules.json` (16 checks, all gating):
+
+| Category | Checks | Known-bad caught |
+|---|---|---|
+| artifact | `evaluation.json`, `events_full.ndjson`, `parsed.json`, `intro.md`, `news.json`, `report.json`, `report.md` non-empty | Missing artifact, broken event log |
+| operational | `tool_errors_zero` | Tool error regression |
+| threshold | `sources_total`, `key_findings`, `unique_citations` ≥ minimums | Thin output |
+| lifecycle | `terminal_state_reported`, `no_error_terminal` (from `agent_log/topic_final.json`) | Stuck lifecycle |
+| invariant | `stage_progression_plan`, `stage_progression_deliver`, `citation_integrity` (`[sNN]` resolves to `news.json` ids) | Missing stage, citation integrity break |
+
+`passed` is true only when **zero** checks fail. The runner (`test_vector_runner.sh`) calls the gate automatically after building `evaluation.json`.
 
 ### Run the gate directly (optional)
 
 ```bash
 scripts/qa_check_run.sh --run-dir testing/results/test1/latest
+# override a threshold ad-hoc:
+scripts/qa_check_run.sh --run-dir testing/results/test1/latest --min-sources 8
 ```
+
+### Run the unit tests (PR-level, no server)
+
+```bash
+# uses committed fixtures under testing/fixtures/; requires bash + jq
+python -m pytest tests/qa -q
+```
+
+`tests/qa/` runs the gate against `testing/fixtures/good_run/` (must PASS) and against runtime-mutated broken copies (each must FAIL on its mapped check), and asserts `qa_rules.json` stays in sync with the gate. This is the `unit-tests` signal #19 publishes in GitHub.
 
 ### Quick jq gate (fallback)
 

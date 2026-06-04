@@ -1,0 +1,159 @@
+# VPS E2E on test1 via SSH (ticket #19 Phase 1 — advisory).
+# Stable check names: vps-e2e-test1, qa-gate (live run).
+#
+# Required repository secrets:
+#   VPS_SSH_PRIVATE_KEY  — private key for root@VPS (PEM)
+#   TEST1_API            — https://agent-test1.particletico.com
+#   TEST1_CLAUDE_AGENT_API_KEY
+#
+# Optional variables:
+#   VPS_HOST             — default root@79.143.179.212
+#   VPS_REPO_DIR         — default /root/agent_bench_test1
+name: VPS E2E test1
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: Git ref to run on VPS worktree
+        required: false
+        default: main
+  # Manual only — full vector is billable (~15–30 min). PRs use pr-verification.yml instead.
+
+concurrency:
+  group: vps-e2e-test1
+  cancel-in-progress: false
+
+jobs:
+  vps-e2e-test1:
+    name: vps-e2e-test1
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    # Phase 1: advisory — do not mark as required in branch protection yet.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate secrets
+        run: |
+          test -n "${{ secrets.VPS_SSH_PRIVATE_KEY }}" || { echo "Missing VPS_SSH_PRIVATE_KEY"; exit 1; }
+          test -n "${{ secrets.TEST1_API }}" || { echo "Missing TEST1_API"; exit 1; }
+          test -n "${{ secrets.TEST1_CLAUDE_AGENT_API_KEY }}" || { echo "Missing TEST1_CLAUDE_AGENT_API_KEY"; exit 1; }
+
+      - name: Configure SSH key
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/vps_ci
+          chmod 600 ~/.ssh/vps_ci
+          echo "VPS_HOST=${{ vars.VPS_HOST }}" >> "$GITHUB_ENV"
+          echo "VPS_REPO_DIR=${{ vars.VPS_REPO_DIR }}" >> "$GITHUB_ENV"
+
+      - name: Set VPS target defaults
+        run: |
+          echo "VPS_HOST=${VPS_HOST:-root@79.143.179.212}" >> "$GITHUB_ENV"
+          echo "VPS_REPO_DIR=${VPS_REPO_DIR:-/root/agent_bench_test1}" >> "$GITHUB_ENV"
+          echo "GIT_REF=${{ github.event.inputs.git_ref || github.ref_name }}" >> "$GITHUB_ENV"
+
+      - name: Sync scripts and test assets to VPS
+        run: |
+          set -euo pipefail
+          SSH_OPTS=(-i ~/.ssh/vps_ci -o StrictHostKeyChecking=accept-new)
+          DEST="${VPS_REPO_DIR:-/root/agent_bench_test1}"
+          ssh "${SSH_OPTS[@]}" "${VPS_HOST:-root@79.143.179.212}" "mkdir -p $DEST/testing"
+          scp -r "${SSH_OPTS[@]}" scripts "${VPS_HOST:-root@79.143.179.212}:$DEST/"
+          scp -r "${SSH_OPTS[@]}" testing/qa_rules.json testing/vectors.json testing/fixtures \
+            "${VPS_HOST:-root@79.143.179.212}:$DEST/testing/"
+          ssh "${SSH_OPTS[@]}" "${VPS_HOST:-root@79.143.179.212}" "chmod +x $DEST/scripts/devops/*.sh $DEST/scripts/*.sh 2>/dev/null || true"
+
+      - name: Run vector + QA on VPS (SSH)
+        env:
+          TEST1_API: ${{ secrets.TEST1_API }}
+          TEST1_CLAUDE_AGENT_API_KEY: ${{ secrets.TEST1_CLAUDE_AGENT_API_KEY }}
+        run: |
+          set -euo pipefail
+          SSH_OPTS=(-i ~/.ssh/vps_ci -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30)
+          ssh "${SSH_OPTS[@]}" "${VPS_HOST}" \
+            TEST1_API="$(printf '%q' "$TEST1_API")" \
+            TEST1_CLAUDE_AGENT_API_KEY="$(printf '%q' "$TEST1_CLAUDE_AGENT_API_KEY")" \
+            VPS_REPO_DIR="$(printf '%q' "$VPS_REPO_DIR")" \
+            GIT_REF="$(printf '%q' "$GIT_REF")" \
+            bash <<'REMOTE'
+          set -euo pipefail
+          cd "$VPS_REPO_DIR"
+          export VPS_REPO_DIR TEST1_API TEST1_CLAUDE_AGENT_API_KEY GIT_REF
+          git fetch origin 2>/dev/null || true
+          git checkout "$GIT_REF" 2>/dev/null || git checkout "origin/$GIT_REF" 2>/dev/null || true
+          git pull --ff-only origin "$GIT_REF" 2>/dev/null || true
+          bash scripts/devops/ci_vps_e2e_test1.sh
+          REMOTE
+
+      - name: Fetch run artifacts from VPS
+        if: always()
+        env:
+          VPS_SSH_KEY: ~/.ssh/vps_ci
+        run: |
+          mkdir -p artifacts/test1
+          VPS_HOST="${VPS_HOST}" VPS_REPO_DIR="${VPS_REPO_DIR}" VPS_SSH_KEY=~/.ssh/vps_ci \
+            bash scripts/devops/ci_fetch_test1_artifacts.sh artifacts/test1 || true
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test1-e2e-${{ github.run_id }}
+          path: artifacts/test1/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Step summary
+        if: always()
+        run: |
+          {
+            echo "### vps-e2e-test1"
+            echo "- **env:** test1"
+            echo "- **ref:** ${{ github.event.inputs.git_ref || 'main' }}"
+            echo "- **mode:** Phase 1 advisory (\`continue-on-error: true\`)"
+            if [[ -f artifacts/test1/qa_report.json ]]; then
+              echo "#### qa_report.json"
+              jq -r '"- passed: " + (.passed|tostring) + "\n- failed_checks: " + ((.failed_checks|join(", ")) // "none")' \
+                artifacts/test1/qa_report.json
+            else
+              echo "_No artifacts fetched (SSH run may have failed or secrets missing)._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  qa-gate:
+    name: qa-gate
+    runs-on: ubuntu-latest
+    needs: [vps-e2e-test1]
+    if: always()
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test1-e2e-${{ github.run_id }}
+          path: artifacts/test1
+        continue-on-error: true
+
+      - name: Assert qa_report.json passed
+        run: |
+          REPORT="artifacts/test1/qa_report.json"
+          if [[ ! -f "$REPORT" ]]; then
+            echo "No qa_report.json — vps-e2e-test1 did not produce artifacts"
+            exit 1
+          fi
+          sudo apt-get install -y -qq jq
+          PASSED=$(jq -r '.passed' "$REPORT")
+          echo "passed=$PASSED"
+          jq '{passed, failed_checks, summary}' "$REPORT"
+          test "$PASSED" = "true"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### qa-gate (live test1)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Derived from \`qa_report.json\` after VPS E2E (#15 rules)." >> "$GITHUB_STEP_SUMMARY"

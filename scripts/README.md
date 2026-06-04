@@ -34,6 +34,10 @@ Use these three commands for normal validation and pilot readiness:
 
 - `scripts/devops/vps_setup_test_slot.sh` — slot setup (test1/test2 worktree + compose)
 - `scripts/devops/vps_deploy_caddy.sh` — Caddy deployment/reload helper
+- `scripts/devops/ci_verification_smoke.sh` — PR smoke (fixture PASS/FAIL)
+- `scripts/devops/ci_vps_e2e_test1.sh` — full vector + gate on VPS
+- `scripts/devops/ci_run_vps_e2e_ssh.sh` — SSH driver for VPS E2E
+- `scripts/devops/ci_fetch_test1_artifacts.sh` — pull `test1/latest` from VPS for CI upload
 
 ### Data / corpus processing
 

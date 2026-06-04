@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.1.0",
+  "topic_id": "fixture-topic-0001",
+  "thesis_status": "supported",
+  "thesis_update_md": "Short-term price spike risk confirmed; relief levers exist but are partial and lagged.",
+  "summary_md": "A Hormuz disruption would lift crude sharply on a risk premium [s01][s04]. Relief depends on OPEC spare capacity [s02], SPR drawdown timing [s03], and limited bypass throughput [s05].",
+  "key_findings": [
+    {"finding": "Risk premium already visible in tanker freight rates", "confidence": "high", "source_ids": ["s04", "s01"]},
+    {"finding": "OPEC+ spare capacity near 4 mb/d offers partial offset", "confidence": "medium", "source_ids": ["s02"]},
+    {"finding": "SPR drawdown is material but lagged by logistics", "confidence": "medium", "source_ids": ["s03"]},
+    {"finding": "Goreh-Jask bypass cannot replace full Hormuz throughput", "confidence": "high", "source_ids": ["s05"]}
+  ],
+  "scenarios": [
+    {"name": "Brief closure", "probability": "0.4-0.5", "summary": "Days-long disruption, sharp spike then partial mean reversion."},
+    {"name": "Sustained blockade", "probability": "0.1-0.2", "summary": "Weeks-long, structural repricing, coordinated SPR + OPEC response."}
+  ],
+  "open_questions": ["Will SPR coordination be multilateral?"],
+  "next_queries": ["IEA emergency stock release coordination"]
+}

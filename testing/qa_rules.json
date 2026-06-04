@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Ticket #15 — machine-readable technical verification rules for a finished Newsfind run. Consumed by scripts/qa_check_run.sh (gate) and tests/qa/ (fixtures). This file defines WHAT to check and pass/fail thresholds; #19 owns where/how it executes (CI/VPS); #18 owns business-value judgment.",
+  "thresholds": {
+    "min_sources": 5,
+    "min_findings": 2,
+    "min_citations": 3
+  },
+  "expected_terminal_state": "reported",
+  "required_stages": ["plan", "deliver"],
+  "rules": [
+    {
+      "id": "artifact_evaluation_json",
+      "category": "artifact",
+      "severity": "error",
+      "gating": true,
+      "description": "evaluation.json exists and is non-empty.",
+      "known_bad": "Missing required artifact"
+    },
+    {
+      "id": "artifact_events_full_ndjson",
+      "category": "artifact",
+      "severity": "error",
+      "gating": true,
+      "description": "agent_log/events_full.ndjson exists and is non-empty.",
+      "known_bad": "Broken event log"
+    },
+    {
+      "id": "artifact_parsed_json",
+      "category": "artifact",
+      "severity": "error",
+      "gating": true,
+      "description": "business_output/parsed.json (plan output) exists and is non-empty."
+    },
+    {
+      "id": "artifact_intro_md",
+      "category": "artifact",
+      "severity": "error",
+      "gating": true,
+      "description": "business_output/intro.md exists and is non-empty."
+    },
+    {
+      "id": "artifact_news_json",
+      "category": "artifact",
+      "severity": "error",
+      "gating": true,
+      "description": "business_output/news.json (sources) exists and is non-empty."
+    },
+    {
+      "id": "artifact_report_json",
+      "category": "artifact",
+      "severity": "error",
+      "gating": true,
+      "description": "business_output/report.json exists and is non-empty.",
+      "known_bad": "Missing required artifact"
+    },
+    {
+      "id": "artifact_report_md",
+      "category": "artifact",
+      "severity": "error",
+      "gating": true,
+      "description": "business_output/report.md (user-facing report) exists and is non-empty."
+    },
+    {
+      "id": "tool_errors_zero",
+      "category": "operational",
+      "severity": "error",
+      "gating": true,
+      "description": "events.tool_errors == 0 — no tool-call regressions.",
+      "known_bad": "Tool error regression"
+    },
+    {
+      "id": "sources_total_threshold",
+      "category": "threshold",
+      "severity": "error",
+      "gating": true,
+      "threshold_key": "min_sources",
+      "description": "deliver.sources_total >= min_sources."
+    },
+    {
+      "id": "key_findings_threshold",
+      "category": "threshold",
+      "severity": "error",
+      "gating": true,
+      "threshold_key": "min_findings",
+      "description": "deliver.key_findings_count >= min_findings."
+    },
+    {
+      "id": "unique_citations_threshold",
+      "category": "threshold",
+      "severity": "error",
+      "gating": true,
+      "threshold_key": "min_citations",
+      "description": "deliver.unique_citations >= min_citations."
+    },
+    {
+      "id": "terminal_state_reported",
+      "category": "lifecycle",
+      "severity": "error",
+      "gating": true,
+      "description": "agent_log/topic_final.json .state == expected_terminal_state (reported).",
+      "known_bad": "Stuck lifecycle"
+    },
+    {
+      "id": "no_error_terminal",
+      "category": "lifecycle",
+      "severity": "error",
+      "gating": true,
+      "description": "Final topic state is not 'failed' on a successful run.",
+      "known_bad": "Stuck lifecycle"
+    },
+    {
+      "id": "stage_progression_plan",
+      "category": "invariant",
+      "severity": "error",
+      "gating": true,
+      "description": "events_full.ndjson contains a stage.finished event for stage 'plan'."
+    },
+    {
+      "id": "stage_progression_deliver",
+      "category": "invariant",
+      "severity": "error",
+      "gating": true,
+      "description": "events_full.ndjson contains a stage.finished event for stage 'deliver'."
+    },
+    {
+      "id": "citation_integrity",
+      "category": "invariant",
+      "severity": "error",
+      "gating": true,
+      "description": "Every [sNN] / NewsCard source-id cited in report.md resolves to a news.json sources[].id, and at least one citation exists.",
+      "known_bad": "Citation integrity break"
+    }
+  ]
+}

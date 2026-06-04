@@ -1,0 +1,9 @@
+{
+  "topic_id": "fixture-topic-0001",
+  "topic": "Hormuz strait closure options to lower price",
+  "state": "reported",
+  "error": null,
+  "last_event_seq": 42,
+  "created_at": "2026-06-02T19:52:00Z",
+  "updated_at": "2026-06-02T20:00:00Z"
+}

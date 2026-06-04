@@ -1,0 +1,75 @@
+# PR / push: fast technical verification (ticket #19 Phase 1 — advisory checks).
+# No VPS, no billable inference. Stable check names: unit-tests, verification-smoke, qa-gate.
+name: PR verification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: pr-verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq jq bc curl
+          pip install pytest
+
+      - name: Run pytest (tests/qa)
+        run: python -m pytest tests/qa -q
+
+  verification-smoke:
+    name: verification-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq jq
+
+      - name: Fixture gate smoke (PASS + FAIL paths)
+        run: bash scripts/devops/ci_verification_smoke.sh
+
+  qa-gate:
+    name: qa-gate
+    runs-on: ubuntu-latest
+    needs: [verification-smoke]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get install -y -qq jq
+
+      - name: qa-gate on healthy fixture (same rules as post-run gate)
+        run: |
+          bash scripts/qa_check_run.sh \
+            --run-dir testing/fixtures/good_run \
+            --out testing/fixtures/good_run/qa_report.json
+          PASSED=$(jq -r '.passed' testing/fixtures/good_run/qa_report.json)
+          echo "passed=$PASSED"
+          test "$PASSED" = "true"
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "### qa-gate (fixture)"
+            echo "Lane B mechanical check on \`testing/fixtures/good_run\`."
+            echo "Advisory in Phase 1 — does not block merge via branch protection."
+            if [[ -f testing/fixtures/good_run/qa_report.json ]]; then
+              jq -r '"- **passed:** " + (.passed|tostring) + "\n- **checks_failed:** " + (.summary.checks_failed|tostring)' \
+                testing/fixtures/good_run/qa_report.json
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

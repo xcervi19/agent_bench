@@ -91,6 +91,7 @@ curl -N -X POST "$API/v1/agent/stream" \
 | Planned / in-flight executable tasks | `docs/specs/active/*.md` |
 | Ticket numbers + next `#` | `docs/specs/TICKET_REGISTRY.md` |
 | Prioritized build order | `STATUS.md` → Build queue |
+| GitHub CI secrets & checks | `.github/README.md` |
 | Full doc index | `.cursor/skills/technical-architect/doc-map.md` |
 | VPS deploy + SSH commands | `docs/ops/commands.md` |
 | Debug cheat sheet + war stories | `docs/ops/debugging.md` |

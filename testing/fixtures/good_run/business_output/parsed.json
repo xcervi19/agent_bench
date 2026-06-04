@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.1.0",
+  "topic_id": "fixture-topic-0001",
+  "topic_restated": "Options to lower oil price given a Strait of Hormuz closure scenario",
+  "working_thesis": "A Hormuz closure spikes prices short-term; relief depends on SPR releases, OPEC spare capacity, and alternative pipeline routing.",
+  "rag_context_refs": [
+    {"source": "corpus/oil_baseline.md", "source_id": "c01", "score": 0.71},
+    {"source": "corpus/opec_capacity.md", "source_id": "c02", "score": 0.66}
+  ],
+  "queries": [
+    {"id": "q01", "query": "Strait of Hormuz closure oil price impact", "language": "en"},
+    {"id": "q02", "query": "OPEC spare capacity 2026", "language": "en"},
+    {"id": "q03", "query": "هرمز إغلاق مضيق النفط", "language": "ar"},
+    {"id": "q04", "query": "SPR release crude price effect", "language": "en"},
+    {"id": "q05", "query": "تنگه هرمز بستن قیمت نفت", "language": "fa"}
+  ],
+  "entities": {"actors": [{"name": "OPEC"}, {"name": "US SPR"}, {"name": "IRGC Navy"}]},
+  "monitoring_plan": {"trigger_terms": ["Hormuz", "tanker", "SPR release"]}
+}

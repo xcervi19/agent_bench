@@ -13,25 +13,22 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 | Order | Ticket | Why now | Unblocks |
 |------|--------|---------|----------|
-| 1 | **#15** Application verification | Technical PASS/FAIL gate before trusting demos and business sign-off | #18, #19 |
-| 2 | **#19** DevOps test execution (advisory first) | Makes #15 checks visible on VPS/CI without blocking merges yet | Team confidence in regressions |
-| 3 | **#22** Topic refresh scheduler | Automatic monitoring cadence — product expectation for pilot | #16 (16c), #20 |
-| 4 | **#16** SignalGather frontend V1 | User-facing surface on shipped API (#17) | Pilot demos without curl |
-| 5 | **#21** Timeliness & channel metrics | Measurable inputs for eval lanes | #18, #20 (richer verdicts) |
-| 6 | **#18** Business output evaluation | Lane A — is the deliverable decision-useful? | Pilot go/no-go narrative |
-| 7 | **#20** Continuous monitoring evaluation | Lane A over time — needs scheduler + rubric | Longitudinal product proof |
+| 1 | **#22** Topic refresh scheduler | Automatic monitoring cadence — product expectation for pilot | #16 (16c), #20 |
+| 2 | **#16** SignalGather frontend V1 | User-facing surface on shipped API (#17) | Pilot demos without curl |
+| 3 | **#21** Timeliness & channel metrics | Measurable inputs for eval lanes | #18, #20 (richer verdicts) |
+| 4 | **#18** Business output evaluation | Lane A — technical PASS available (`test1/latest`) | Pilot go/no-go narrative |
+| 5 | **#20** Continuous monitoring evaluation | Lane A over time — needs scheduler + rubric | Longitudinal product proof |
 
-**Suggested next pick:** **#15** (finish rule mapping + `qa_rules.json`, then hand runner wiring to #19).
+**Suggested next pick:** **#22** — topic refresh scheduler (product cadence). **CI:** add GitHub secrets (`.github/README.md`) then run workflow “VPS E2E test1” for a live green artifact.
 
-**Parallel (when deps met):** #21 after harness artifacts (#11); #16 phase **16a** (topic list) anytime after #17; do not start #20 until **#22** + **#18** rubric exist.
+**Parallel (when deps met):** #21 after harness artifacts (#11); #16 phase **16a** (topic list) anytime after #17; #18 can start rubric using `testing/results/test1/latest` (Lane B PASS); do not start #20 until **#22** + **#18** rubric exist.
 
 **Dependency sketch:**
 
 ```
-#11,#13,#17 (done) ──► #15 ──► #19
-                    └──► #22 ──► #16 (16c)
-                    └──► #21 ──┐
-#15 PASS ─────────────────────► #18 ──► #20
+#11,#13,#15,#17,#19 (done) ──► #22 ──► #16 (16c)
+                       └──► #21 ──┐
+#15 PASS (test1/latest) ───────► #18 ──► #20
 #22 + #18 + #21 ───────────────────────────► #20
 ```
 
@@ -66,20 +63,6 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **What's done:** Gap framed (no time-to-surface or channel-coverage metrics today); metric definitions drafted
 - **What's missing:** `timeliness`/`channels` blocks in `evaluation.json`, field docs, verification on a real run
 - **Next step:** Implement metric calculators in `scripts/test_vector_runner.sh` and document fields in `testing/README.md`
-
-### Newsfind application verification (#15)
-- **Spec:** `docs/specs/active/newsfind_application_verification_15.md`
-- **Lane:** B — *Technical verification definition (what to test and pass/fail criteria)*
-- **What's done:** Gate model, artifact checks, thresholds, event invariants, known-bad catalog, server-process expectations defined
-- **What's missing:** Explicit unit-test suite coverage and finalized `testing/qa_rules.json` mapped to all checks
-- **Next step:** Complete rule mapping + fixture-based test coverage, then hand execution wiring to #19 (advisory mode first)
-
-### DevOps VPS test execution and GitHub checks (#19)
-- **Spec:** `docs/specs/active/devops_vps_test_execution_19.md`
-- **Lane:** DevOps — *How tests run on CI/VPS and become enforceable in GitHub over time*
-- **What's done:** Scope and phased acceptance model defined (informational mode now, required mode later)
-- **What's missing:** `.github/workflows/` implementation, check publishing, artifact upload, and later branch-protection switch
-- **Next step:** Implement workflows in advisory mode and stabilize signals before enabling required checks
 
 **Execution rule:** Agents execute only `docs/specs/active/*_<n>.md` tickets. Move completed tickets to `docs/specs/done/`.
 
@@ -116,6 +99,8 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 | What | Date | Spec |
 |---|---|---|
+| **#19 DevOps test execution (Phase 1)** — `pr-verification.yml`, `vps-e2e-test1.yml`, SSH E2E scripts, `.github/README.md`; advisory checks | Jun 2, 2026 | `docs/specs/done/devops_vps_test_execution_19.md` |
+| **#15 Application verification** — `qa_rules.json`, extended gate (16 checks), `tests/qa/`, fixtures; V001 `test1/latest` `qa_report.json` PASS; stage checks fixed for spaced NDJSON | Jun 2, 2026 | `docs/specs/done/newsfind_application_verification_15.md` |
 | **#17 Backend V1 pilot-ready** — `GET /v1/topics` deployed; vector run QA PASS on test1; Lane B smoke (concurrent ✅, webhook+HMAC ✅, cancel mid-run ⚠️ gap); 2 harness bugs fixed | Jun 2, 2026 | `docs/specs/done/pilot_ops_v1_17.md` |
 | **#11 RAG full stable evaluation** — vector runner, recovery, `evaluation.json` | May 27, 2026 | `docs/specs/done/rag_full_stable_evaluation_11.md` |
 | **News Pipeline v2 — monitor & refresh** — `/monitor`, `/refresh`, `/deltas`, `/newsfind-refresh` | May 2026 | `apps/claude_agent/topics/refresh.py`, `testing/app_testing_scenario.md` §7 |
