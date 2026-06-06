@@ -43,7 +43,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["libs"]
-include = ["agentic_core*"]
+include = ["agentic_core*", "eval_framework*"]
+
+[tool.setuptools.package-data]
+eval_framework = ["*.json"]
 
 [tool.ruff]
 line-length = 100

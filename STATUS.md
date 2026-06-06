@@ -2,7 +2,7 @@
 
 _Update this file as work progresses. The agent reads it every session to understand current context._
 
-**Ticket numbers:** `docs/specs/TICKET_REGISTRY.md` (next: **#23**).  
+**Ticket numbers:** `docs/specs/TICKET_REGISTRY.md` (next: **#24**).  
 **How to create / prioritize tickets:** `AGENT.md` → Creating a new ticket, Build queue.
 
 ---
@@ -16,8 +16,9 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 | 1 | **#22** Topic refresh scheduler | Automatic monitoring cadence — product expectation for pilot | #16 (16c), #20 |
 | 2 | **#16** SignalGather frontend V1 | User-facing surface on shipped API (#17) | Pilot demos without curl |
 | 3 | **#21** Timeliness & channel metrics | Measurable inputs for eval lanes | #18, #20 (richer verdicts) |
-| 4 | **#18** Business output evaluation | Lane A — technical PASS available (`test1/latest`) | Pilot go/no-go narrative |
-| 5 | **#20** Continuous monitoring evaluation | Lane A over time — needs scheduler + rubric | Longitudinal product proof |
+| 4 | **#23** Trading Intelligence Evaluation Framework | Lane A — runnable framework (generalizes #18); offline + LLM judge | Pilot go/no-go narrative; version-vs-version verdicts |
+| 5 | **#18** Business output evaluation | Lane A rubric/playbook narrative — folded into #23 framework | Pilot go/no-go narrative |
+| 6 | **#20** Continuous monitoring evaluation | Lane A over time — needs scheduler + rubric | Longitudinal product proof |
 
 **Suggested next pick:** **#22** — topic refresh scheduler (product cadence). **CI:** add GitHub secrets (`.github/README.md`) then run workflow “VPS E2E test1” for a live green artifact.
 
@@ -35,6 +36,13 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 ---
 
 ## In Progress
+
+### Trading Intelligence Evaluation Framework (#23)
+- **Spec:** `docs/specs/active/trading_intelligence_evaluation_23.md`
+- **Lane:** A — *Is the deliverable valuable for users' business decisions?* (generalizes #18)
+- **What's done:** `libs/eval_framework/` package — configurable 3-layer/14-category rubric (Information Discovery 40% / Research 30% / Trading 30%, 0–5), absolute + relative (Better/Equal/Worse) modes, win-rate aggregation, offline deterministic `HeuristicEvaluator` + `LLMEvaluator` (Output Quality Curator), pluggable benchmark-provider registry, `quality_review.{json,md}` rendering, CLI (`python -m eval_framework`) + `scripts/evaluate_output.sh`, rubric doc (`testing/output_evaluation_rubric.md`), 25 offline tests in `tests/eval/`
+- **What's missing:** one **LLM-judge** write-up on `test1/latest` referencing a #15 PASS; adoption in pilot go/no-go; optional #21 timeliness/channel hints wired into latency scoring
+- **Next step:** Run `scripts/evaluate_output.sh absolute --run-dir testing/results/test1/latest --evaluator llm` on a technically-passing run and attach the verdict to the pilot checklist
 
 ### Business output evaluation (#18)
 - **Spec:** `docs/specs/active/business_output_evaluation_18.md`

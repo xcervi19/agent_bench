@@ -239,6 +239,40 @@ Use for timing, cost, tool errors, artifact counts — **verification hints**, n
 
 Judgment of **information value** for trading/analyst users — see `docs/specs/active/business_output_evaluation_18.md`.
 
+### 0. Trading Intelligence Evaluation Framework (#23)
+
+Runnable Lane A scoring (`libs/eval_framework/`). Scores the whole
+intelligence-generation process against a configurable **3-layer / 14-category**
+rubric (Information Discovery 40% / Research Quality 30% / Trading Intelligence
+30%, each 0–5). Rubric: `testing/output_evaluation_rubric.md`.
+
+```bash
+# Mode 1 — absolute (score one run; writes quality_review.{json,md})
+scripts/evaluate_output.sh absolute --run-dir testing/results/test1/latest
+
+# Mode 2 — relative (baseline vs candidate → Better/Equal/Worse)
+scripts/evaluate_output.sh relative \
+  --baseline testing/results/test1/<older> \
+  --candidate testing/results/test1/latest
+
+# Aggregate many comparison files into win-rate stats
+scripts/evaluate_output.sh aggregate testing/results/**/quality_review.json --out testing/results
+
+# Inspect / override weights, or use the LLM judge
+scripts/evaluate_output.sh show-rubric
+scripts/evaluate_output.sh absolute --run-dir <dir> --evaluator llm        # needs OPENAI_API_KEY
+scripts/evaluate_output.sh absolute --run-dir <dir> --layer-weight information_discovery=0.5
+```
+
+- **Evaluators:** `heuristic` (default, deterministic, offline, non-billable — CI
+  anchor + pre-screen) and `llm` (Output Quality Curator persona).
+- **Outputs:** `quality_review.json` (per-category/layer/overall, 0–5 and 0–100)
+  and `quality_review.md` next to the run.
+- **Benchmarks:** pluggable providers (`libs/eval_framework/benchmarks.py`) score
+  generic LLMs, internet-disabled models, search workflows, human/Bloomberg-style
+  reports against the *same* rubric.
+- **Tests:** `python -m pytest tests/eval -q` (offline, no network).
+
 ### 1. Quick comparison between instances (which run is better for the user?)
 
 Run the same vector on two instances and compare:

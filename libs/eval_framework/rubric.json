@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0.0",
+  "name": "trading_intelligence",
+  "title": "Trading Intelligence Evaluation Rubric",
+  "description": "Senior trading-analyst rubric for judging the intelligence-generation process (discovery, research, business value) of a Newsfind run. Scores are 0-5 per category. Weights are configurable; layer weights and within-layer category weights are normalized at runtime.",
+  "persona": "A senior trading analyst at a professional trading organization (energy/commodity trading firm, quant fund, asset manager, or market intelligence desk).",
+  "scale": {
+    "min": 0,
+    "max": 5,
+    "anchors": {
+      "0": "Absent or actively misleading",
+      "1": "Poor; generic-LLM level or worse",
+      "2": "Below professional bar; notable gaps",
+      "3": "Adequate; usable with caveats",
+      "4": "Strong; professional quality",
+      "5": "Exceptional; clear information advantage"
+    }
+  },
+  "relative_margin": 0.2,
+  "layers": [
+    {
+      "id": "information_discovery",
+      "name": "Information Discovery",
+      "weight": 0.40,
+      "description": "Quality of information acquisition. The system's most important capability: discovering, acquiring, and validating information from the internet. A system that writes well on incomplete information must score lower here than one that discovers superior information.",
+      "categories": [
+        {
+          "id": "primary_source_discovery",
+          "name": "Primary Source Discovery",
+          "weight": 1.0,
+          "description": "Can the system locate the original source (regulatory filings, company announcements, grid/TSO publications, government agencies, exchange notices, port authorities, official reports, valuable/official regional social accounts) rather than news aggregators, blogs, or secondary reporting?"
+        },
+        {
+          "id": "information_latency",
+          "name": "Information Latency",
+          "weight": 1.0,
+          "description": "How close is the discovered information to the original publication event? Higher scores for surfacing information nearer to source-publication time (e.g. original 08:00 vs Reuters 08:12 vs later media)."
+        },
+        {
+          "id": "source_coverage",
+          "name": "Source Coverage",
+          "weight": 1.0,
+          "description": "Did the system explore a sufficiently broad information space across categories: official institutions, regulatory databases, industry organizations, regional media, specialist publications, academic sources, corporate communications, technical reports, official regional social sources?"
+        },
+        {
+          "id": "non_obvious_source_discovery",
+          "name": "Non-Obvious Source Discovery",
+          "weight": 1.0,
+          "description": "Can the system identify sources not commonly found by generic search (terminal operator reports, shipping authority data, infrastructure operator notices, local government disclosures, industry datasets) rather than only Reuters/Bloomberg?"
+        },
+        {
+          "id": "source_authority_assessment",
+          "name": "Source Authority Assessment",
+          "weight": 1.0,
+          "description": "Can the system correctly distinguish information producers, information consumers, commentators, and aggregators?"
+        }
+      ]
+    },
+    {
+      "id": "research_quality",
+      "name": "Research Quality",
+      "weight": 0.30,
+      "description": "How well information is transformed into intelligence.",
+      "categories": [
+        {
+          "id": "entity_discovery",
+          "name": "Entity Discovery",
+          "weight": 1.0,
+          "description": "Did the system identify relevant entities (companies, assets, infrastructure, commodities, countries, regulatory bodies, key individuals)?"
+        },
+        {
+          "id": "relationship_discovery",
+          "name": "Relationship Discovery",
+          "weight": 1.0,
+          "description": "Did the system identify relationships between entities (supply-chain, infrastructure, ownership, market, regulatory dependencies)?"
+        },
+        {
+          "id": "causal_reasoning",
+          "name": "Causal Reasoning",
+          "weight": 1.0,
+          "description": "Did the system explain why something happened, what caused it, and the likely consequences?"
+        },
+        {
+          "id": "research_depth",
+          "name": "Research Depth",
+          "weight": 1.0,
+          "description": "Did the system move beyond surface reporting: multiple independent sources, cross-validation, supporting evidence, historical context?"
+        },
+        {
+          "id": "signal_to_noise",
+          "name": "Signal-to-Noise Ratio",
+          "weight": 1.0,
+          "description": "Did the report focus on important information while minimizing irrelevant detail?"
+        }
+      ]
+    },
+    {
+      "id": "trading_intelligence",
+      "name": "Trading Intelligence",
+      "weight": 0.30,
+      "description": "Business value to professional market participants.",
+      "categories": [
+        {
+          "id": "market_relevance",
+          "name": "Market Relevance",
+          "weight": 1.0,
+          "description": "Is the information relevant to market participants?"
+        },
+        {
+          "id": "actionability",
+          "name": "Actionability",
+          "weight": 1.0,
+          "description": "Can a trader, analyst, or risk manager take action based on the report?"
+        },
+        {
+          "id": "potential_market_impact",
+          "name": "Potential Market Impact",
+          "weight": 1.0,
+          "description": "Could the discovered information affect prices, volatility, supply, demand, or risk?"
+        },
+        {
+          "id": "information_edge",
+          "name": "Information Edge",
+          "weight": 1.0,
+          "description": "Did the system provide information, relationships, or insights not obvious to generic LLMs or standard news-consumption workflows? One of the most important metrics."
+        }
+      ]
+    }
+  ]
+}
