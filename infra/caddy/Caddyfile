@@ -10,6 +10,13 @@ particletico.com, www.particletico.com {
 }
 
 # Production (~/agent_bench)
+# SignalGather web UI (static dist from apps/signalgather_web)
+# app.particletico.com {
+# 	root * /path/to/signalgather_web/dist
+# 	file_server
+# 	try_files {path} /index.html
+# }
+# Legacy signal_gather API (port 8000) — uncomment if UI not deployed yet:
 app.particletico.com {
 	reverse_proxy 127.0.0.1:8000
 }
