@@ -58,9 +58,13 @@ class TopicSubscription(TopicsBase):
 
     Persists the short-term query plan, which is generated once when monitoring
     starts (from the original parsed.queries + report.next_queries + recency
-    hints) and reused on every refresh. A user-driven external scheduler is
-    expected to call POST /v1/topics/{id}/refresh on its own cadence — this
-    table does not store an interval.
+    hints) and reused on every refresh.
+
+    Refresh can be driven two ways (#22):
+      - **Manual:** POST /v1/topics/{id}/refresh (always available).
+      - **Scheduled:** when `schedule_enabled` is true, the in-app scheduler
+        fires a refresh every `schedule_interval_hours`. Scheduling is OFF by
+        default; enabling it requires an interval.
     """
 
     __tablename__ = "topic_subscriptions"
@@ -77,6 +81,13 @@ class TopicSubscription(TopicsBase):
     last_refresh_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     last_refresh_run_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     refresh_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # --- automatic scheduling (#22): off by default ---
+    schedule_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    schedule_interval_hours: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    next_refresh_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_scheduled_refresh_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()

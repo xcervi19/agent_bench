@@ -1,6 +1,6 @@
 # Topic refresh scheduler — #22
 
-**Status:** active (planned)  
+**Status:** active (in progress — backend + tests done; live VPS verification pending)  
 **Depends on:** #17 (monitor + manual `/refresh` shipped), #13 (multi-env VPS)  
 **Blocks:** #16 phase 16c (scheduled monitoring UX), #20 (realistic longitudinal cadence)  
 **Lane:** Product / backend — *automatic monitoring without external cron*
@@ -80,19 +80,31 @@ Test cases:
 - Backoff when refresh fails repeatedly — pause schedule or retry?
 - Should `max_age_hours` and `schedule_interval_hours` be validated together (interval ≤ max_age)?
 
+## Decisions (resolved)
+
+- **Interval-only** cadence (`schedule_interval_hours`), not cron, for V1.
+- **Single in-process async loop** inside `claude_agent` (not a separate
+  container, not RQ) — fits the single-service architecture and reuses
+  `run_refresh`. The compose `scheduler` service stays signal_gather-only.
+- **Default OFF** per subscription; enabling requires an interval (clamped to
+  `[schedule_min_interval_hours, schedule_max_interval_hours]`).
+- `next_refresh_at` advances at **claim time** (now + interval) so a slow run is
+  never double-dispatched; the per-topic `refresh_locked` lock is the backstop.
+
 ## Acceptance criteria
 
-- [ ] User can enable monitoring with an optional refresh interval via API.
-- [ ] Scheduler service runs on test1/prod and triggers refresh without manual POST.
-- [ ] Manual `POST /refresh` still works for topics with or without schedule.
-- [ ] SSE clients cannot tell apart scheduled vs manual by missing events (same `refresh.*` stream; optional `trigger: scheduled|manual` in payload).
-- [ ] Harness updated: at least one automated test proves scheduler-triggered refresh.
-- [ ] `docs/ops/vps.md` documents scheduler enablement and health check.
+- [x] User can enable monitoring with an optional refresh interval via API (`POST`/`PATCH /monitor`).
+- [ ] Scheduler service runs on test1/prod and triggers refresh without manual POST. *(code done; VPS run pending)*
+- [x] Manual `POST /refresh` still works for topics with or without schedule.
+- [x] SSE clients cannot tell apart scheduled vs manual by missing events (same `refresh.*` stream; `trigger: scheduled|manual` in payload).
+- [x] Harness updated: automated tests prove the dispatch/cadence logic (`tests/topics/test_scheduler.py`). *(live scheduler-triggered refresh on VPS still pending)*
+- [x] `docs/ops/vps.md` documents scheduler enablement and health check.
 
 ## Related
 
 - `docs/specs/done/pilot_ops_v1_17.md` — external cron was interim model; superseded for product by this ticket
 - `docs/specs/active/signalgather_frontend_v1_16.md` — 16c monitor + deltas UX
+- `docs/specs/active/topic_user_ownership_24.md` — per-user topic access; collected data scoped to owner
 - `docs/specs/active/continuous_monitoring_evaluation_20.md` — realistic cadence for longitudinal capture
 - `apps/claude_agent/topics/refresh.py`, `apps/claude_agent/topics/models.py`
 - `testing/app_testing_scenario.md` §7 (monitor + refresh)

@@ -1,7 +1,7 @@
 import asyncio
 import json
 import uuid
-from datetime import timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -26,6 +26,7 @@ from .pipeline import (
     topic_id_hash,
 )
 from .refresh import build_short_term_queries, list_deltas, run_refresh
+from .scheduler import compute_next_refresh_at, normalize_interval
 
 
 class CreateTopicBody(BaseModel):
@@ -43,6 +44,21 @@ class MonitorBody(BaseModel):
         default=None,
         description="Optional override. If omitted, queries are auto-built from parsed.json + report.json.",
     )
+    # Automatic scheduling (#22). Off by default; enabling requires an interval.
+    schedule_enabled: bool = Field(default=False)
+    schedule_interval_hours: int | None = Field(
+        default=None,
+        ge=1,
+        description="Refresh cadence in hours. Required when schedule_enabled is true.",
+    )
+
+
+class UpdateMonitorBody(BaseModel):
+    """PATCH /monitor — all fields optional; only provided fields change."""
+
+    max_age_hours: int | None = Field(default=None, ge=1, le=720)
+    schedule_enabled: bool | None = None
+    schedule_interval_hours: int | None = Field(default=None, ge=1)
 
 
 def _require_api_key(
@@ -176,6 +192,63 @@ async def subscribe(topic_id: uuid.UUID, body: WebhookBody) -> dict[str, Any]:
 # ---- v2: continuous monitoring ---------------------------------------------
 
 
+def _apply_schedule(
+    sub: TopicSubscription,
+    *,
+    enabled: bool,
+    interval_hours: int | None,
+    settings: ClaudeAgentSettings,
+) -> None:
+    """Set schedule fields on a subscription, validating + clamping the interval.
+
+    Enabling requires an interval; the value is clamped to the configured
+    [min, max] bounds. Disabling clears the next fire time so the scheduler
+    skips the topic. Manual POST /refresh stays available either way.
+    """
+    if enabled:
+        if interval_hours is None:
+            raise HTTPException(
+                status_code=422,
+                detail="schedule_interval_hours is required when schedule_enabled is true",
+            )
+        interval = normalize_interval(
+            interval_hours,
+            lo=settings.schedule_min_interval_hours,
+            hi=settings.schedule_max_interval_hours,
+        )
+        sub.schedule_enabled = True
+        sub.schedule_interval_hours = interval
+        sub.next_refresh_at = compute_next_refresh_at(datetime.now(timezone.utc), interval)
+    else:
+        sub.schedule_enabled = False
+        sub.next_refresh_at = None
+        if interval_hours is not None:
+            sub.schedule_interval_hours = normalize_interval(
+                interval_hours,
+                lo=settings.schedule_min_interval_hours,
+                hi=settings.schedule_max_interval_hours,
+            )
+
+
+def _monitor_payload(sub: TopicSubscription) -> dict[str, Any]:
+    def _iso(dt: datetime | None) -> str | None:
+        return dt.astimezone(timezone.utc).isoformat() if dt is not None else None
+
+    return {
+        "subscription_id": sub.id,
+        "status": sub.status,
+        "max_age_hours": sub.max_age_hours,
+        "refresh_count": sub.refresh_count,
+        "refresh_locked": sub.refresh_locked,
+        "schedule_enabled": sub.schedule_enabled,
+        "schedule_interval_hours": sub.schedule_interval_hours,
+        "next_refresh_at": _iso(sub.next_refresh_at),
+        "last_refresh_at": _iso(sub.last_refresh_at),
+        "last_scheduled_refresh_at": _iso(sub.last_scheduled_refresh_at),
+        "last_refresh_run_id": sub.last_refresh_run_id,
+    }
+
+
 @router.post("/{topic_id}/monitor", status_code=status.HTTP_201_CREATED)
 async def start_monitoring(
     topic_id: uuid.UUID,
@@ -217,29 +290,39 @@ async def start_monitoring(
                 short_term_queries=queries,
                 max_age_hours=body.max_age_hours,
             )
+            _apply_schedule(
+                sub,
+                enabled=body.schedule_enabled,
+                interval_hours=body.schedule_interval_hours,
+                settings=settings,
+            )
             s.add(sub)
             await s.flush()
             sub_id = sub.id
             created = True
+            payload = _monitor_payload(sub)
         else:
             existing.status = "active"
             existing.short_term_queries = queries
             existing.max_age_hours = body.max_age_hours
+            _apply_schedule(
+                existing,
+                enabled=body.schedule_enabled,
+                interval_hours=body.schedule_interval_hours,
+                settings=settings,
+            )
             sub_id = existing.id
             created = False
+            payload = _monitor_payload(existing)
 
     await emit(topic_id, "monitor.started" if created else "monitor.updated", {
         "subscription_id": sub_id,
         "queries_count": len(queries),
         "max_age_hours": body.max_age_hours,
+        "schedule_enabled": payload["schedule_enabled"],
+        "schedule_interval_hours": payload["schedule_interval_hours"],
     })
-    return {
-        "subscription_id": sub_id,
-        "status": "active",
-        "queries_count": len(queries),
-        "max_age_hours": body.max_age_hours,
-        "short_term_queries": queries,
-    }
+    return {**payload, "queries_count": len(queries), "short_term_queries": queries}
 
 
 @router.get("/{topic_id}/monitor")
@@ -250,20 +333,60 @@ async def get_monitoring(topic_id: uuid.UUID) -> dict[str, Any]:
         )).scalar_one_or_none()
         if sub is None:
             raise HTTPException(status_code=404, detail="no monitoring subscription")
-        return {
-            "subscription_id": sub.id,
-            "status": sub.status,
-            "max_age_hours": sub.max_age_hours,
-            "refresh_count": sub.refresh_count,
-            "refresh_locked": sub.refresh_locked,
-            "last_refresh_at": (
-                sub.last_refresh_at.astimezone(timezone.utc).isoformat()
-                if sub.last_refresh_at is not None
-                else None
-            ),
-            "last_refresh_run_id": sub.last_refresh_run_id,
-            "short_term_queries": sub.short_term_queries,
-        }
+        return {**_monitor_payload(sub), "short_term_queries": sub.short_term_queries}
+
+
+@router.patch("/{topic_id}/monitor")
+async def update_monitoring(
+    topic_id: uuid.UUID,
+    body: UpdateMonitorBody,
+    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
+) -> dict[str, Any]:
+    """Update monitoring settings — notably turn the auto-refresh schedule on/off.
+
+    Only provided fields change. Enabling the schedule requires an interval
+    (either supplied here or already stored).
+    """
+    async with session_scope() as s:
+        sub = (await s.execute(
+            select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
+        )).scalar_one_or_none()
+        if sub is None:
+            raise HTTPException(status_code=404, detail="no monitoring subscription")
+
+        if body.max_age_hours is not None:
+            sub.max_age_hours = body.max_age_hours
+
+        if body.schedule_enabled is not None:
+            interval = (
+                body.schedule_interval_hours
+                if body.schedule_interval_hours is not None
+                else sub.schedule_interval_hours
+            )
+            _apply_schedule(
+                sub,
+                enabled=body.schedule_enabled,
+                interval_hours=interval,
+                settings=settings,
+            )
+        elif body.schedule_interval_hours is not None:
+            # Interval change only; re-apply current enabled state with new value.
+            _apply_schedule(
+                sub,
+                enabled=sub.schedule_enabled,
+                interval_hours=body.schedule_interval_hours,
+                settings=settings,
+            )
+
+        payload = _monitor_payload(sub)
+
+    await emit(topic_id, "monitor.updated", {
+        "subscription_id": payload["subscription_id"],
+        "schedule_enabled": payload["schedule_enabled"],
+        "schedule_interval_hours": payload["schedule_interval_hours"],
+        "max_age_hours": payload["max_age_hours"],
+    })
+    return payload
 
 
 @router.delete("/{topic_id}/monitor", status_code=status.HTTP_200_OK)
@@ -302,8 +425,8 @@ async def trigger_refresh(
             return {"accepted": True, "subscription_id": sub.id, "queued": False, "reason": "refresh already running"}
         subscription_id = sub.id
 
-    background.add_task(run_refresh, topic_id, subscription_id, settings)
-    return {"accepted": True, "subscription_id": subscription_id, "queued": True}
+    background.add_task(run_refresh, topic_id, subscription_id, settings, trigger="manual")
+    return {"accepted": True, "subscription_id": subscription_id, "queued": True, "trigger": "manual"}
 
 
 @router.get("/{topic_id}/deltas")

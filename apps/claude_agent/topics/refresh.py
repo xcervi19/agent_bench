@@ -156,9 +156,15 @@ async def _release_lock(subscription_id: int) -> None:
 # ---------------------------------------------------------------------------
 
 
-async def run_refresh(topic_id: uuid.UUID, subscription_id: int, settings: ClaudeAgentSettings) -> None:
+async def run_refresh(
+    topic_id: uuid.UUID,
+    subscription_id: int,
+    settings: ClaudeAgentSettings,
+    *,
+    trigger: str = "manual",
+) -> None:
     if not await _try_acquire_lock(subscription_id):
-        await emit(topic_id, "refresh.skipped", {"reason": "already_running_or_paused"})
+        await emit(topic_id, "refresh.skipped", {"reason": "already_running_or_paused", "trigger": trigger})
         return
 
     refresh_run_id = str(uuid.uuid4())
@@ -222,6 +228,7 @@ async def run_refresh(topic_id: uuid.UUID, subscription_id: int, settings: Claud
             "refresh_seq": delta_seq,
             "run_id": refresh_run_id,
             "queries": len(short_term_queries),
+            "trigger": trigger,
         })
 
         try:
@@ -262,8 +269,11 @@ async def run_refresh(topic_id: uuid.UUID, subscription_id: int, settings: Claud
             )
             sub = await s.get(TopicSubscription, subscription_id)
             if sub is not None and error is None:
-                sub.last_refresh_at = datetime.now(timezone.utc)
+                now = datetime.now(timezone.utc)
+                sub.last_refresh_at = now
                 sub.refresh_count = (sub.refresh_count or 0) + 1
+                if trigger == "scheduled":
+                    sub.last_scheduled_refresh_at = now
 
         if error is not None:
             await emit(topic_id, "refresh.failed", {
@@ -271,6 +281,7 @@ async def run_refresh(topic_id: uuid.UUID, subscription_id: int, settings: Claud
                 "refresh_seq": delta_seq,
                 "run_id": refresh_run_id,
                 "error": error,
+                "trigger": trigger,
             })
         else:
             await emit(topic_id, "refresh.completed", {
@@ -281,6 +292,7 @@ async def run_refresh(topic_id: uuid.UUID, subscription_id: int, settings: Claud
                 "queries_executed": queries_executed,
                 "duration_ms": duration_ms,
                 "total_cost_usd": cost,
+                "trigger": trigger,
             })
     finally:
         await _release_lock(subscription_id)

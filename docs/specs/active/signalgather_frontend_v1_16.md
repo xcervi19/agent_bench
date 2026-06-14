@@ -1,7 +1,7 @@
 # SignalGather frontend V1 — topic intelligence UI — #16
 
 **Status:** planned  
-**Depends on:** #9 (topic pipeline API + SSE), #13 (multi-env HTTPS slots), #17 (`GET /v1/topics` for topic list)
+**Depends on:** #9 (topic pipeline API + SSE), #13 (multi-env HTTPS slots), #17 (`GET /v1/topics` for topic list), **#24** (topics bound to authenticated users)
 
 ## Goal
 
@@ -143,7 +143,7 @@ No duplicate business logic in the frontend — orchestration stays in `claude_a
 ## Out of scope (V1)
 
 - Global multi-topic signals dashboard
-- User accounts / multi-tenant auth beyond API key
+- Backend user ownership & JWT wiring — **#24** (frontend consumes it here)
 - Email, Slack, or push notifications
 - LLM chat inside the UI for topic setup (NL form field is enough for V1)
 - WebSocket server (unless SSE blocker documented)
@@ -157,11 +157,12 @@ No duplicate business logic in the frontend — orchestration stays in `claude_a
 - `docs/specs/done/agentic_search_claude_code_architecture.md` — state machine, events, artifacts (#9)
 - `docs/specs/done/multi_env_pre_frontend_13.md` — prod/test1/test2 (#13)
 - `testing/app_testing_scenario.md` — reference flows the UI must replace
-- `docs/specs/active/pilot_ops_v1_17.md` — backend pilot-ready work including `GET /v1/topics`
+- `docs/specs/done/pilot_ops_v1_17.md` — backend pilot-ready work including `GET /v1/topics`
+- `docs/specs/active/topic_user_ownership_24.md` — per-user topic ownership & access control
 
 ## Open decisions (resolve at kickoff)
 
 1. **App location in monorepo** — `apps/signalgather_web/` vs separate repo
 2. **Hosting URL** — `app.particletico.com` vs path on `agent.particletico.com`
-3. **Auth model V1** — API key in settings vs simple login proxy
+3. **Auth model V1** — JWT login via `claude_agent` auth routes (**#24**); frontend stores Bearer token
 4. **Citation links** — resolve `[s01]` to source URLs in UI (known API limitation in #9)

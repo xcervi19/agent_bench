@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#24` (assign to the next new ticket; then bump this line)
+**Next available number:** `#25` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -27,6 +27,7 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 | 21 | `docs/specs/active/timeliness_channel_metrics_21.md` | planned | Feeds #15, #18, #20 |
 | 22 | `docs/specs/active/topic_refresh_scheduler_22.md` | planned | Blocks #16 (16c), #20 |
 | 23 | `docs/specs/active/trading_intelligence_evaluation_23.md` | in progress | Lane A framework; generalizes #18; needs #15 PASS |
+| 24 | `docs/specs/active/topic_user_ownership_24.md` | planned | Blocks #16 (user sessions); pairs with #22 |
 
 ---
 

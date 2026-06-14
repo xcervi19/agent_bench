@@ -218,7 +218,10 @@ ssh -i ~/.ssh/contabo_ed25519 root@79.143.179.212 \
 
 ## 7. Continuous monitoring (v2)
 
-Once a topic reaches `reported`, you can **subscribe to monitoring** so each `POST /refresh` reruns a persistent **short-term query plan** that focuses on what's new since the last cycle. An external scheduler (cron, GitHub Actions, etc.) is expected to call `/refresh` on whatever cadence you want — the server does not poll on its own.
+Once a topic reaches `reported`, you can **subscribe to monitoring** so each refresh reruns a persistent **short-term query plan** that focuses on what's new since the last cycle. Refresh can be driven two ways:
+
+- **Manual** — `POST /refresh` on demand (always available).
+- **Automatic schedule (#22)** — enable `schedule_enabled` with a `schedule_interval_hours`; the in-app scheduler then fires refreshes on that cadence with no external cron. Scheduling is **off by default**.
 
 ### 7.1 Start monitoring
 
@@ -252,13 +255,39 @@ Inspect the persisted plan at any time:
 curl -fsS "$API/v1/topics/$TOPIC_ID/monitor" | jq .
 ```
 
-### 7.2 Trigger a refresh
+### 7.2 Trigger a refresh (manual)
 
 ```bash
 curl -fsS -X POST "$API/v1/topics/$TOPIC_ID/refresh" | jq .
 ```
 
-Returns `{"accepted":true,"subscription_id":N,"queued":true}` immediately. If a refresh is already running for this topic the API responds with `queued: false` (idempotent — no double-runs).
+Returns `{"accepted":true,"subscription_id":N,"queued":true,"trigger":"manual"}` immediately. If a refresh is already running for this topic the API responds with `queued: false` (idempotent — no double-runs).
+
+### 7.2a Automatic schedule (turn on / off) — #22
+
+Enable monitoring **with** an interval (turns the scheduler on for this topic):
+
+```bash
+curl -fsS -X POST "$API/v1/topics/$TOPIC_ID/monitor" \
+  -H "Content-Type: application/json" \
+  -d '{"max_age_hours": 48, "schedule_enabled": true, "schedule_interval_hours": 6}' | jq .
+```
+
+Toggle the schedule on an existing subscription with `PATCH /monitor`:
+
+```bash
+# turn ON (every 6h)
+curl -fsS -X PATCH "$API/v1/topics/$TOPIC_ID/monitor" \
+  -H "Content-Type: application/json" \
+  -d '{"schedule_enabled": true, "schedule_interval_hours": 6}' | jq .
+
+# turn OFF (monitoring stays; only auto-refresh stops — manual POST /refresh still works)
+curl -fsS -X PATCH "$API/v1/topics/$TOPIC_ID/monitor" \
+  -H "Content-Type: application/json" \
+  -d '{"schedule_enabled": false}' | jq .
+```
+
+`GET /monitor` reports `schedule_enabled`, `schedule_interval_hours`, `next_refresh_at`, and `last_scheduled_refresh_at`. Scheduled cycles emit the same `refresh.started` / `refresh.completed` SSE events as manual ones, distinguished only by `payload.trigger == "scheduled"`. So a topic set up at 08:00 with a 1h interval, left running, will have ~12 delta cycles by 20:00 — visible via `GET /deltas` when you reconnect.
 
 Watch the SSE stream for new event types:
 
@@ -295,6 +324,9 @@ curl -fsS -X DELETE "$API/v1/topics/$TOPIC_ID/monitor" | jq .
 Sets `status: "paused"`. Subsequent `POST /refresh` calls return 409. Re-`POST /monitor` to reactivate.
 
 ### 7.5 External scheduler example (cron on your laptop)
+
+Prefer the built-in schedule (§7.2a). External cron remains available for ops or
+when the in-app scheduler is disabled (`CLAUDE_AGENT_SCHEDULER_ENABLED=false`):
 
 ```bash
 # every hour, hit refresh for one topic

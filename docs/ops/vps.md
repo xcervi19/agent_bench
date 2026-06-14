@@ -48,9 +48,26 @@ Compose project name: `agent_bench`.
 | `minio` | `agent_bench-minio-1` | `127.0.0.1:9000`, `9001` | S3-compatible object store |
 | `api` | `agent_bench-api-1` | `127.0.0.1:8000` | FastAPI + Alembic on startup |
 | `rag_adhoc` | `agent_bench-rag_adhoc-1` | `127.0.0.1:8001` | RAG search API |
-| `claude_agent` | `agent_bench-claude_agent-1` | `127.0.0.1:8002` | Claude agent API |
+| `claude_agent` | `agent_bench-claude_agent-1` | `127.0.0.1:8002` | Claude agent API (+ in-app topic refresh scheduler, #22) |
 | `worker` | — | — | **Not running** (defined in compose) |
-| `scheduler` | — | — | **Not running** (defined in compose) |
+| `scheduler` | — | — | **Not running** — signal_gather RQ scheduler; **not** the topic refresh scheduler |
+
+### Topic refresh scheduler (#22)
+
+The Newsfind auto-refresh scheduler runs **in-process inside `claude_agent`** (an
+asyncio loop started in the app lifespan), not in the separate `scheduler`
+container above. No extra service to deploy.
+
+- **Enable/disable (process):** `CLAUDE_AGENT_SCHEDULER_ENABLED` (default `true`).
+  Requires `CLAUDE_AGENT_DATABASE_URL` set (topic API enabled).
+- **Per-topic:** off until a user enables `schedule_enabled` on the monitor subscription.
+- **Tuning:** `CLAUDE_AGENT_SCHEDULER_POLL_INTERVAL_SEC` (default 60),
+  `CLAUDE_AGENT_SCHEDULER_MAX_CONCURRENT_REFRESHES` (default 2).
+- **Health check:** look for `scheduler.started` in `claude_agent` logs on boot;
+  `scheduler.dispatch` lines when it fires a refresh.
+  ```bash
+  docker compose logs claude_agent | grep -E "scheduler\.(started|dispatch)"
+  ```
 
 Volumes:
 

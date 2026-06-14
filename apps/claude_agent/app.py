@@ -52,7 +52,20 @@ async def _lifespan(app: FastAPI):
         claude_bin=settings.claude_bin,
         allowed_commands=settings.allowed_commands,
     )
-    yield
+
+    app.state.scheduler = None
+    if settings.database_url and settings.scheduler_enabled:
+        from .topics.scheduler import RefreshScheduler
+
+        scheduler = RefreshScheduler(settings)
+        scheduler.start()
+        app.state.scheduler = scheduler
+
+    try:
+        yield
+    finally:
+        if app.state.scheduler is not None:
+            await app.state.scheduler.stop()
 
 
 def build_app() -> FastAPI:

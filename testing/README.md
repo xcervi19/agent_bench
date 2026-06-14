@@ -87,9 +87,23 @@ testing/results/<env>/<timestamp>/
 State machine with checkpoints:
 ```
 not_started → planning → planned → delivering → reported → collecting → completed
+                                                    │
+                                          monitor + refresh (manual or scheduled)
 ```
 
 If interrupted, `--resume` reads state.json, checks server-side topic state, and continues.
+
+## Refresh: manual vs scheduled (#22)
+
+After a topic is `reported`, monitoring can refresh two ways:
+
+- **Manual:** `POST /v1/topics/{id}/refresh` (on demand).
+- **Scheduled:** `schedule_enabled` + `schedule_interval_hours` on the monitor
+  subscription → the in-app scheduler fires refreshes on that cadence (no external
+  cron). Off by default; toggle via `POST`/`PATCH /monitor`. Process switch:
+  `CLAUDE_AGENT_SCHEDULER_ENABLED` (default true). Both paths emit the same
+  `refresh.*` SSE events, distinguished by `payload.trigger` (`manual|scheduled`).
+  Setup walkthrough: `testing/app_testing_scenario.md` §7.2a.
 
 ## Cross-Instance Comparison
 

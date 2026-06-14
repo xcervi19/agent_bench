@@ -113,6 +113,37 @@ class ClaudeAgentSettings(BaseSettings):
         ),
     )
 
+    # Internal topic refresh scheduler (#22). Drives automatic refresh cycles for
+    # monitored topics that opted in (schedule_enabled). Off-able at the process
+    # level; per-topic scheduling is independently off by default.
+    scheduler_enabled: bool = Field(
+        default=True,
+        description=(
+            "Process-level switch for the in-app refresh scheduler loop. When "
+            "false, no automatic refreshes fire (manual POST /refresh still works)."
+        ),
+    )
+    scheduler_poll_interval_sec: int = Field(
+        default=60,
+        ge=5,
+        description="How often the scheduler scans for due subscriptions.",
+    )
+    scheduler_max_concurrent_refreshes: int = Field(
+        default=2,
+        ge=1,
+        description="Max scheduled refreshes dispatched per poll / running at once.",
+    )
+    schedule_min_interval_hours: int = Field(
+        default=1,
+        ge=1,
+        description="Lower bound accepted for schedule_interval_hours.",
+    )
+    schedule_max_interval_hours: int = Field(
+        default=168,
+        ge=1,
+        description="Upper bound accepted for schedule_interval_hours (default 7d).",
+    )
+
 
 @lru_cache
 def get_settings() -> ClaudeAgentSettings:
