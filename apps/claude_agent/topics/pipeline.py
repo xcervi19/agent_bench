@@ -132,36 +132,42 @@ async def _run_slash(
     duration_ms: int | None = None
     success = False
 
-    async for line in stream_claude(req, settings):
-        event = _try_loads(line)
-        if not isinstance(event, dict):
-            continue
-        kind = event.get("type")
-        if kind == "assistant":
-            for block in event.get("message", {}).get("content", []) or []:
-                if block.get("type") == "tool_use":
-                    await emit(topic_id, "tool_use", {
-                        "tool": block.get("name"),
-                        "tool_use_id": block.get("id"),
-                        "input_preview": str(block.get("input"))[:400],
-                    })
-        elif kind == "user":
-            for block in event.get("message", {}).get("content", []) or []:
-                if block.get("type") == "tool_result":
-                    await emit(topic_id, "tool_result", {
-                        "tool_use_id": block.get("tool_use_id"),
-                        "is_error": bool(block.get("is_error")),
-                        "output_preview": _result_preview(block.get("content")),
-                    })
-        elif kind == "result":
-            if event.get("subtype") == "success":
-                cost = event.get("total_cost_usd")
-                duration_ms = event.get("duration_ms")
-                success = True
-            else:
-                error = f"result subtype={event.get('subtype')}"
-        elif kind == "error":
-            error = str(event.get("error") or "stream error")
+    try:
+        async for line in stream_claude(req, settings):
+            event = _try_loads(line)
+            if not isinstance(event, dict):
+                continue
+            kind = event.get("type")
+            if kind == "assistant":
+                for block in event.get("message", {}).get("content", []) or []:
+                    if block.get("type") == "tool_use":
+                        await emit(topic_id, "tool_use", {
+                            "tool": block.get("name"),
+                            "tool_use_id": block.get("id"),
+                            "input_preview": str(block.get("input"))[:400],
+                        })
+            elif kind == "user":
+                for block in event.get("message", {}).get("content", []) or []:
+                    if block.get("type") == "tool_result":
+                        await emit(topic_id, "tool_result", {
+                            "tool_use_id": block.get("tool_use_id"),
+                            "is_error": bool(block.get("is_error")),
+                            "output_preview": _result_preview(block.get("content")),
+                        })
+            elif kind == "result":
+                if event.get("subtype") == "success":
+                    cost = event.get("total_cost_usd")
+                    duration_ms = event.get("duration_ms")
+                    success = True
+                else:
+                    error = f"result subtype={event.get('subtype')}"
+            elif kind == "error":
+                error = str(event.get("error") or "stream error")
+    except Exception as exc:  # pragma: no cover - must not leave topic stuck mid-stage
+        error = f"pipeline error: {exc}"
+        await emit(topic_id, "error", {"stage": leg, "error": error})
+        await set_state(topic_id, STATE_FAILED, error=error)
+        return None
 
     if error is None and not success:
         error = "agent produced no result event"

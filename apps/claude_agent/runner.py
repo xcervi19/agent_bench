@@ -123,6 +123,7 @@ async def run_claude(req: RunRequest, settings: ClaudeAgentSettings) -> RunResul
         env=built.env,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
+        limit=settings.max_output_bytes,
     )
 
     try:
@@ -185,6 +186,7 @@ async def stream_claude(
         env=built.env,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
+        limit=settings.max_output_bytes,
     )
     assert proc.stdout is not None
 
@@ -201,6 +203,15 @@ async def stream_claude(
             except asyncio.TimeoutError:
                 proc.kill()
                 yield json.dumps({"type": "error", "error": "timeout"})
+                break
+            except (asyncio.LimitOverrunError, ValueError) as exc:
+                # stream-json lines can exceed the default 64 KiB reader limit when
+                # tool results (e.g. WebFetch) embed large page bodies.
+                proc.kill()
+                yield json.dumps({
+                    "type": "error",
+                    "error": f"stdout line exceeded {settings.max_output_bytes} byte limit: {exc}",
+                })
                 break
             if not line:
                 break
