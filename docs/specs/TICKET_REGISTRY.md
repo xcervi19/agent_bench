@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#25` (assign to the next new ticket; then bump this line)
+**Next available number:** `#26` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -35,6 +35,7 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 
 | # | File | Shipped |
 |---|------|---------|
+| 25 | `docs/specs/done/slim_main_archive_25.md` | 2026-06-16 |
 | 10 | `docs/specs/done/rag_main_corpus_highest_roi_10.md` | 2026-05 |
 | 11 | `docs/specs/done/rag_full_stable_evaluation_11.md` | 2026-05 |
 | 12 | `docs/specs/done/setup_caddy_reverse_proxy_12.md` | — |

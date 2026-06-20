@@ -26,12 +26,12 @@ All **A** records point to `79.143.179.212`:
 | Hostname | Purpose | Backend (localhost) |
 |----------|---------|---------------------|
 | `particletico.com`, `www` | Redirect → `agent` | — |
-| `app.particletico.com` | Production API (`signal_gather`, optional) | `127.0.0.1:8000` |
+| `app.particletico.com` | Legacy API (optional, pre-#25) | `127.0.0.1:8000` if still deployed |
 | `agent.particletico.com` | Production **product API** (topics) | `127.0.0.1:8002` |
 | `agent-test1.particletico.com` | Test slot 1 agent | `127.0.0.1:8102` |
 | `agent-test2.particletico.com` | Test slot 2 agent | `127.0.0.1:8202` |
 
-**Internal only** (127.0.0.1, no public hostname): RAG `8001/8101/8201`, Postgres `5432/5433/5434`, test signal_gather API `8100/8200`.
+**Internal only** (127.0.0.1, no public hostname): RAG `8001/8101/8201`, Postgres `5432/5433/5434`.
 
 TLS: Let’s Encrypt via **Caddy** on the host (`/etc/caddy/Caddyfile`, source in `infra/caddy/Caddyfile`).
 
@@ -44,19 +44,15 @@ Compose project name: `agent_bench`.
 | Service | Container | Host port | Notes |
 |---------|-----------|-----------|--------|
 | `postgres` | `agent_bench-postgres-1` | `127.0.0.1:5432` | pgvector/pg16, DB `agentic` |
-| `redis` | `agent_bench-redis-1` | `127.0.0.1:6379` | RQ queue |
-| `minio` | `agent_bench-minio-1` | `127.0.0.1:9000`, `9001` | S3-compatible object store |
-| `api` | `agent_bench-api-1` | `127.0.0.1:8000` | FastAPI + Alembic on startup |
 | `rag_adhoc` | `agent_bench-rag_adhoc-1` | `127.0.0.1:8001` | RAG search API |
 | `claude_agent` | `agent_bench-claude_agent-1` | `127.0.0.1:8002` | Claude agent API (+ in-app topic refresh scheduler, #22) |
-| `worker` | — | — | **Not running** (defined in compose) |
-| `scheduler` | — | — | **Not running** — signal_gather RQ scheduler; **not** the topic refresh scheduler |
+
+Slim compose (#25): no `api`/`worker`/`scheduler`/Redis/MinIO. Legacy stack on `archive/signal_gather-platform`.
 
 ### Topic refresh scheduler (#22)
 
 The Newsfind auto-refresh scheduler runs **in-process inside `claude_agent`** (an
-asyncio loop started in the app lifespan), not in the separate `scheduler`
-container above. No extra service to deploy.
+asyncio loop started in the app lifespan). No separate scheduler container.
 
 - **Enable/disable (process):** `CLAUDE_AGENT_SCHEDULER_ENABLED` (default `true`).
   Requires `CLAUDE_AGENT_DATABASE_URL` set (topic API enabled).
@@ -72,7 +68,6 @@ container above. No extra service to deploy.
 Volumes:
 
 - `agent_bench_postgres_data`
-- `agent_bench_minio_data`
 
 ### Run production on VPS
 
@@ -146,7 +141,7 @@ Stagger heavy topic **deliver** runs across slots — one Claude subscription sh
 
 1. `git pull` on VPS
 2. `docker compose -f docker-compose.yml -f infra/docker-compose.vps-bind-local.yml up -d --build <services>`
-3. `docker compose exec api alembic current`
+3. `docker compose run --rm --no-deps --entrypoint alembic rag_adhoc current`
 4. `scripts/devops/vps_deploy_caddy.sh` (if Caddyfile changed)
 5. Smoke test HTTPS endpoints
 

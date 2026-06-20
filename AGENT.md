@@ -1,36 +1,39 @@
 # agent_bench
 
-Monorepo for the Agentic Platform: a reusable multi-agent framework with two applications built on top.
+Monorepo for **Newsfind topic intelligence** — Claude Code pipeline, RAG, and evaluation.
+
+Legacy **Signal Gather** (CrewAI RSS/signals stack) lives on branch
+`archive/signal_gather-platform` — see `docs/archive/README.md`.
 
 ## Applications
 
 | App | Location | Purpose |
 |---|---|---|
-| `signal_gather` | `apps/signal_gather/` | Commodity market intelligence (CrewAI crews: discovery → events → signals → briefings) |
-| `claude_agent` | `apps/claude_agent/` | Claude-powered topic research pipeline (`/newsfind-*` slash commands) |
+| `claude_agent` | `apps/claude_agent/` | Topic pipeline (`/newsfind-*`) — **product** |
+| `rag_adhoc` | `apps/rag_adhoc/` | RAG semantic search; used during **plan** |
 
-The shared framework lives in `libs/agentic_core/`.  
-Claude slash commands workspace: `claude_agent_fe/` (mounted into the `claude_agent` container).
+Shared auth/DB: `libs/agentic_core/` (JWT for **#24**).
 
 ## Services & Ports
 
 | Service | Local | VPS |
 |---|---|---|
-| `api` (signal_gather) | 8000 | 8001 |
 | `claude_agent` | 8002 | 8002 |
-| `rag_adhoc` | 8003 | 8003 |
+| `rag_adhoc` | 8001 | 8001 (internal) |
 | `postgres` | 5432 | — (tunnel to 5433) |
-| `redis` | 6379 | — |
+
+Claude slash commands workspace: `claude_agent_fe/` (mounted into `claude_agent`).
 
 ## Repo Layout
 
 ```
 agent_bench/
 ├── apps/
-│   ├── signal_gather/          ← commodity intel API (CrewAI)
-│   └── claude_agent/           ← news research pipeline (Claude CLI)
+│   ├── claude_agent/           ← news research pipeline (Claude CLI)
+│   └── rag_adhoc/              ← RAG search API + corpus models
 ├── libs/
-│   └── agentic_core/           ← shared framework (pip-installable)
+│   ├── agentic_core/           ← auth, DB, health (slim)
+│   └── eval_framework/
 ├── claude_agent_fe/
 │   └── .claude/commands/       ← slash commands: /newsfind-*, /trade-*, /rag-*
 ├── testing/                    ← test scripts + captured runs
@@ -39,7 +42,7 @@ agent_bench/
 │   ├── migrations/             ← Alembic
 │   └── seeds/
 ├── docs/
-│   ├── architecture/           ← stable system design docs
+│   ├── archive/                ← legacy platform (see README there)
 │   ├── ops/                    ← commands, debugging, DB queries
 │   └── specs/
 │       ├── active/             ← executable ticket specs (numbered)
@@ -54,14 +57,11 @@ agent_bench/
 ## Quick Commands
 
 ```bash
-# Start everything locally
-docker compose up --build
-
-# Seed demo data (signal_gather)
-docker compose exec api python -m database.seeds.seed_scenario signal_gather_commodity_trading
+# Start shipped stack locally
+docker compose up --build postgres rag_adhoc claude_agent
 
 # Run migrations
-docker compose run --rm --no-deps --entrypoint alembic api upgrade head
+docker compose run --rm --no-deps --entrypoint alembic rag_adhoc upgrade head
 
 # Rebuild + restart claude_agent only
 docker compose build claude_agent && docker compose up -d claude_agent
@@ -86,7 +86,7 @@ curl -N -X POST "$API/v1/agent/stream" \
 | Current work, bugs, blockers | `STATUS.md` |
 | Long-term vision + domain language | `docs/specs/business_requirements/business_requirements.md` |
 | Shipped product surface (V1) | `docs/product/README.md` |
-| Platform architecture | `docs/architecture/framework.md` |
+| Platform architecture (legacy) | `docs/archive/framework_legacy.md` |
 | Implemented capabilities (ground truth) | `docs/specs/done/*.md` |
 | Planned / in-flight executable tasks | `docs/specs/active/*.md` |
 | Ticket numbers + next `#` | `docs/specs/TICKET_REGISTRY.md` |
@@ -273,7 +273,7 @@ Use this order at the start of a session or before substantial work:
 2. `STATUS.md` — current work, bugs, recent completions
 3. Active spec ticket — `docs/specs/active/*_<n>.md` referenced from STATUS
 4. Relevant `docs/specs/done/*.md` — dependencies and patterns for the area
-5. `docs/product/README.md` + `docs/architecture/framework.md` — product and platform constraints
+5. `docs/product/README.md` + `docs/archive/framework_legacy.md` — product and platform constraints
 6. `testing/README.md` — if the task touches behavior or quality
 7. Target code under `apps/`, `libs/` — when docs are missing or suspected stale
 
@@ -311,6 +311,6 @@ When marking a spec **done**, the agent (or developer) should:
 - **API:** FastAPI + Pydantic v2 + SQLAlchemy 2.0
 - **DB:** PostgreSQL + pgvector + Alembic
 - **Queue:** Redis
-- **Agent orchestration:** CrewAI (`signal_gather`), Claude CLI (`claude_agent`)
+- **Agent orchestration:** Claude CLI (`claude_agent`); legacy CrewAI stack on `archive/signal_gather-platform`
 - **Containers:** Docker Compose (local) → single-node VPS (production)
 - **Embeddings:** OpenAI `text-embedding-3-small`

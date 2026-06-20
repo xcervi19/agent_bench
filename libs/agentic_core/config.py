@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
 
-    app_name: str = "signal_gather"
+    app_name: str = "newsfinder"
     app_env: str = "local"
     log_level: str = "INFO"
 

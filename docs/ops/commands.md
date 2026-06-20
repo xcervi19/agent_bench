@@ -20,7 +20,7 @@ Product scope: **`docs/product/README.md`**.
 
 | Env | Agent (topics API) | Notes |
 |-----|-------------------|--------|
-| prod | `https://agent.particletico.com` | + optional `https://app.particletico.com` (signal_gather) |
+| prod | `https://agent.particletico.com` | topics API only |
 | test1 | `https://agent-test1.particletico.com` | minimal stack, DB `agentic_test1` |
 | test2 | `https://agent-test2.particletico.com` | minimal stack, DB `agentic_test2` |
 
@@ -95,10 +95,10 @@ docker compose up -d api claude_agent
 
 ```bash
 # Apply migrations (local)
-docker compose run --rm --no-deps --entrypoint alembic api upgrade head
+docker compose run --rm --no-deps --entrypoint alembic rag_adhoc upgrade head
 
 # Check current migration
-docker compose exec api alembic current
+docker compose run --rm --no-deps --entrypoint alembic rag_adhoc current
 
 # Verify topic tables exist
 docker compose exec postgres psql -U agentic -d agentic -c '\dt topic*'
@@ -116,7 +116,7 @@ curl -s http://79.143.179.212:8002/readyz
 curl -s http://79.143.179.212:8002/v1/agent/info \
   -H "X-API-Key: $CLAUDE_AGENT_API_KEY" | jq '.allowed_commands'
 
-# signal_gather / rag_adhoc
+# rag_adhoc
 curl -sS -X POST "http://79.143.179.212:8001/v1/search" \
   -H "Content-Type: application/json" \
   -H "X-Tenant-Id: 00000000-0000-0000-0000-000000000001" \
@@ -183,12 +183,12 @@ uv run python -m source_ingest.ingest \
 
 ## Seed & Demo Data
 
-```bash
-# Seed signal_gather demo scenario
-docker compose exec api python -m database.seeds.seed_scenario signal_gather_commodity_trading
+Legacy Signal Gather seed scenarios live on branch `archive/signal_gather-platform`.
 
-# Replay an agent session (debugging)
-docker compose exec api python scripts/utils/replay_session.py \
+```bash
+# Replay an agent session (debugging, local)
+export PYTHONPATH=libs:.
+uv run python scripts/utils/replay_session.py \
   --session-id <uuid> \
   --tenant-id 00000000-0000-0000-0000-000000000001
 ```
@@ -201,11 +201,11 @@ cd ~/agent_bench
 # Pull latest code (includes migration 0004)
 git pull origin main
 
-# Apply migrations inside the running api container
-docker compose exec api alembic upgrade head
+# Apply migrations (rag_adhoc image has alembic)
+docker compose run --rm --no-deps --entrypoint alembic rag_adhoc upgrade head
 
 # Verify current state
-docker compose exec api alembic current
+docker compose run --rm --no-deps --entrypoint alembic rag_adhoc current
 
 # Verify all topic* tables exist
 docker compose exec postgres psql -U agentic -d agentic -c '\dt topic*'

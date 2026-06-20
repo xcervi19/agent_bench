@@ -13,7 +13,7 @@ from agentic_core.database import Base
 
 import agentic_core.agents.replay  # noqa: F401  (register AgentSession, AgentEvent)
 import agentic_core.api.user_model  # noqa: F401  (register User)
-import apps.signal_gather.models  # noqa: F401  (register app models)
+import apps.rag_adhoc.models  # noqa: F401  (register Document, Event for RAG corpus)
 
 config = context.config
 if config.config_file_name is not None:

@@ -1,5 +1,5 @@
 # ─── App ─────────────────────────────────────────────────────────────
-APP_NAME=signal_gather
+APP_NAME=newsfinder
 APP_ENV=local
 LOG_LEVEL=INFO
 

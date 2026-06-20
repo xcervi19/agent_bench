@@ -51,8 +51,8 @@ def main() -> None:
 
     bootstrap_for_ingest(_REPO)
 
-    from apps.signal_gather.models import Document, Event
-    from apps.signal_gather.services.embeddings import EMBED_DIM, embed
+    from apps.rag_adhoc.models import Document, Event
+    from apps.rag_adhoc.services.embeddings import EMBED_DIM, embed
     from agentic_core.database import session_scope, tenant_scope
 
     async def run() -> None:

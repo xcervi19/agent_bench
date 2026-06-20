@@ -16,8 +16,8 @@ from agentic_core.database import current_tenant_id
 from agentic_core.api.middleware import register_middleware
 from agentic_core.logging import configure_logging
 
-from apps.signal_gather.schemas import SearchRequest, SearchResponse
-from apps.signal_gather.services import search_events_by_text
+from .schemas import SearchRequest, SearchResponse
+from .services import search_events_by_text
 
 from .deps import get_adhoc_db
 

@@ -2,7 +2,7 @@
 
 _Update this file as work progresses. The agent reads it every session to understand current context._
 
-**Ticket numbers:** `docs/specs/TICKET_REGISTRY.md` (next: **#25**).  
+**Ticket numbers:** `docs/specs/TICKET_REGISTRY.md` (next: **#26**).  
 **How to create / prioritize tickets:** `AGENT.md` → Creating a new ticket, Build queue.
 
 ---
@@ -116,7 +116,7 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 | What | Date | Spec |
 |---|---|---|
-| **#19 DevOps test execution (Phase 1)** — `pr-verification.yml`, `vps-e2e-test1.yml`, SSH E2E scripts, `.github/README.md`; advisory checks | Jun 2, 2026 | `docs/specs/done/devops_vps_test_execution_19.md` |
+| **#25 Slim main — archive legacy stack** — tag `archive/pre-slim-2026`, branch `archive/signal_gather-platform`; removed `signal_gather` + CrewAI deps; slim compose | Jun 16, 2026 | `docs/specs/done/slim_main_archive_25.md` |
 | **#15 Application verification** — `qa_rules.json`, extended gate (16 checks), `tests/qa/`, fixtures; V001 `test1/latest` `qa_report.json` PASS; stage checks fixed for spaced NDJSON | Jun 2, 2026 | `docs/specs/done/newsfind_application_verification_15.md` |
 | **#17 Backend V1 pilot-ready** — `GET /v1/topics` deployed; vector run QA PASS on test1; Lane B smoke (concurrent ✅, webhook+HMAC ✅, cancel mid-run ⚠️ gap); 2 harness bugs fixed | Jun 2, 2026 | `docs/specs/done/pilot_ops_v1_17.md` |
 | **#11 RAG full stable evaluation** — vector runner, recovery, `evaluation.json` | May 27, 2026 | `docs/specs/done/rag_full_stable_evaluation_11.md` |

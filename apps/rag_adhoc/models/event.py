@@ -1,4 +1,4 @@
-"""Structured market/business event extracted from a document."""
+"""Structured event row used by RAG semantic search (pgvector)."""
 
 from datetime import datetime
 from uuid import UUID, uuid4

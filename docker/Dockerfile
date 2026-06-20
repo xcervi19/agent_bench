@@ -26,4 +26,4 @@ ENV PYTHONPATH=/app/libs:/app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "apps.signal_gather.entrypoints.api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "apps.rag_adhoc.app:app", "--host", "0.0.0.0", "--port", "8000"]

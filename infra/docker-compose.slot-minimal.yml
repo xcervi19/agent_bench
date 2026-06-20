@@ -1,4 +1,4 @@
-# Minimal Newsfind stack: postgres + rag_adhoc + claude_agent (no signal_gather api/worker).
+# Optional overlay for test slots — same as default compose since #25 slim main.
 # Use with test slot overlays, e.g.:
 #   COMPOSE_PROJECT_NAME=test1 docker compose \
 #     -f docker-compose.yml \

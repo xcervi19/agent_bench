@@ -25,26 +25,6 @@ async def search_events_by_text(
     return await _semantic_events(db, tenant_id, embedding, commodity, region, limit)
 
 
-async def recent_events_for_profile(
-    db: AsyncSession,
-    tenant_id: UUID,
-    *,
-    commodities: list[str],
-    regions: list[str],
-    hours: int = 48,
-    limit: int = 20,
-) -> list[Event]:
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
-    stmt = select(Event).where(Event.tenant_id == tenant_id, Event.created_at >= cutoff)
-    if commodities:
-        stmt = stmt.where(Event.commodity.in_(commodities))
-    if regions:
-        stmt = stmt.where(Event.region.in_(regions))
-    stmt = stmt.order_by(Event.created_at.desc()).limit(limit)
-
-    return list((await db.execute(stmt)).scalars().all())
-
-
 async def _semantic_events(
     db: AsyncSession,
     tenant_id: UUID,

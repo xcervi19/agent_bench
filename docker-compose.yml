@@ -15,34 +15,7 @@ services:
       timeout: 3s
       retries: 20
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  # Slim retrieval API only (Postgres + shared schema); no Redis/MinIO required. Port 8001.
+  # Semantic search over RAG corpus (documents/events). Port 8001.
   rag_adhoc:
     build:
       context: .
@@ -63,41 +36,6 @@ services:
       - "8001:8000"
     depends_on:
       postgres: {condition: service_healthy}
-
-  api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    command: ["/app/docker/entrypoint-api.sh"]
-    env_file: .env
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres: {condition: service_healthy}
-      redis:    {condition: service_healthy}
-      minio:    {condition: service_healthy}
-
-  worker:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    command: ["python", "-m", "apps.signal_gather.entrypoints.worker"]
-    env_file: .env
-    depends_on:
-      postgres: {condition: service_healthy}
-      redis:    {condition: service_healthy}
-      api:      {condition: service_started}
-
-  scheduler:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    command: ["python", "-m", "apps.signal_gather.entrypoints.scheduler"]
-    env_file: .env
-    depends_on:
-      postgres: {condition: service_healthy}
-      redis:    {condition: service_healthy}
-      api:      {condition: service_started}
 
   # Claude Code CLI behind FastAPI. Port 8002.
   # Auth: mount a host directory holding `claude auth login` state to /home/app/.claude
@@ -128,10 +66,8 @@ services:
       - ${CLAUDE_STATE_DIR:-./state}:/state:rw
     depends_on:
       postgres: { condition: service_healthy }
-      api:      { condition: service_started }
     ports:
       - "8002:8002"
 
 volumes:
   postgres_data:
-  minio_data:

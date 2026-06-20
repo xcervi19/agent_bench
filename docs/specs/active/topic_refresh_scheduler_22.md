@@ -85,7 +85,7 @@ Test cases:
 - **Interval-only** cadence (`schedule_interval_hours`), not cron, for V1.
 - **Single in-process async loop** inside `claude_agent` (not a separate
   container, not RQ) — fits the single-service architecture and reuses
-  `run_refresh`. The compose `scheduler` service stays signal_gather-only.
+  `run_refresh`. Topic refresh runs in-process in `claude_agent` (#22), not a separate compose service.
 - **Default OFF** per subscription; enabling requires an interval (clamped to
   `[schedule_min_interval_hours, schedule_max_interval_hours]`).
 - `next_refresh_at` advances at **claim time** (now + interval) so a slow run is

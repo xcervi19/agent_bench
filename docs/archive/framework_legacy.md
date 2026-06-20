@@ -1,3 +1,7 @@
+> **Archived (2026-06, #25):** This document describes the pre-slim CrewAI platform vision.
+> Live code is on branch `archive/signal_gather-platform`. Shipped product architecture:
+> `docs/specs/done/agentic_search_claude_code_architecture.md`.
+
 ### 1. Purpose & Vision
 
 We are building a **reusable, multi-agent orchestration framework** in Python.  

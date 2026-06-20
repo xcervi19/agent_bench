@@ -1,7 +1,7 @@
 # Product — Newsfind Topic Intelligence
 
 **Brand:** SignalGather (business brief)  
-**Shipped surface (V1):** Topic pipeline on `claude_agent` — not the full Signal Gather RSS/signals stack.
+**Shipped surface (V1):** Topic pipeline on `claude_agent`.
 
 ## What the product does
 
@@ -14,15 +14,20 @@
 **API:** `POST /v1/topics`, SSE `/events`, `/proceed`, `/monitor`, `/refresh`, artifact routes.  
 **Public URL (prod):** `https://agent.particletico.com`
 
-## In the repo but not the current product UI
+## Shipped stack (main)
 
-| Area | Role |
-|------|------|
-| `libs/agentic_core` | Reusable platform |
-| `apps/signal_gather` | RSS → events → signals → briefings (Iteration 1 README app) |
-| `apps/rag_adhoc` | Internal search API; used during **plan** stage |
-| `source_ingest` / `oil_rag_collector` | Build RAG corpus (ops, not user-facing) |
-| `worker` / `scheduler` | Background jobs for signal_gather |
+| Component | Role |
+|-----------|------|
+| `apps/claude_agent` | Topic pipeline + in-app refresh scheduler (#22) |
+| `apps/rag_adhoc` | RAG search during **plan**; `documents`/`events` models |
+| `libs/agentic_core` | Auth/DB layer for **#24** |
+| `source_ingest` / `oil_rag_collector` | RAG corpus ops (not user-facing) |
+| `libs/eval_framework` | Lane A quality evaluation (#23) |
+
+## Archived (not on main)
+
+CrewAI **Signal Gather** (RSS → signals → briefings) — branch
+`archive/signal_gather-platform`. See `docs/archive/README.md`.
 
 ## VPS environments
 
@@ -33,7 +38,7 @@
 | test2 | `https://agent-test2.particletico.com` | DB `agentic_test2`, own RAG |
 
 **Shared:** one Claude CLI login (`~/agent_bench/claude_home`), one Caddy.  
-**Hidden:** Postgres, RAG host ports, Redis/MinIO (test slots run minimal stack).
+**Hidden:** Postgres, RAG host ports (no Redis/MinIO on slim compose).
 
 ## Docs
 
