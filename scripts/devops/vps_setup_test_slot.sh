@@ -9,7 +9,7 @@ SLOT="${1:?Usage: $0 test1|test2 [branch]}"
 BRANCH="${2:-main}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/contabo_ed25519}"
 VPS_HOST="${VPS_HOST:-root@79.143.179.212}"
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 
 case "$SLOT" in
   test1)
