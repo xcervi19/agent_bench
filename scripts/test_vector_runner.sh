@@ -29,14 +29,19 @@ VECTORS_FILE="$REPO_ROOT/testing/vectors.json"
 TARGET_ENV=""
 FORCE=false
 RESUME=false
+SCHEDULE_FLAG=""
+SCHEDULE_INTERVAL=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --env)     TARGET_ENV="$2"; shift 2 ;;
     --force)   FORCE=true; shift ;;
     --resume)  RESUME=true; shift ;;
+    --schedule) SCHEDULE_FLAG=true; shift ;;
+    --no-schedule) SCHEDULE_FLAG=false; shift ;;
+    --schedule-interval-hours) SCHEDULE_INTERVAL="$2"; shift 2 ;;
     -h|--help)
-      echo "Usage: $0 --env test1|test2|prod [--force] [--resume]"
+      echo "Usage: $0 --env test1|test2|prod [--force] [--resume] [--schedule|--no-schedule] [--schedule-interval-hours N]"
       exit 0
       ;;
     *) echo "Unknown option: $1" >&2; exit 2 ;;
@@ -76,6 +81,14 @@ THRESHOLDS=$(jq -c '.vectors[0].thresholds // {}' "$VECTORS_FILE")
 REFRESH_CYCLES=$(jq -r '.vectors[0].refresh_cycles // 0' "$VECTORS_FILE")
 REFRESH_MAX_AGE=$(jq -r '.vectors[0].refresh_max_age_hours // 48' "$VECTORS_FILE")
 REFRESH_TIMEOUT=$(jq -r '.vectors[0].refresh_timeout_sec // 600' "$VECTORS_FILE")
+SCHEDULE_ENABLED=$(jq -r '.vectors[0].schedule_enabled // false' "$VECTORS_FILE")
+SCHEDULE_INTERVAL_HOURS=$(jq -r '.vectors[0].schedule_interval_hours // 1' "$VECTORS_FILE")
+if [ -n "$SCHEDULE_FLAG" ]; then
+  SCHEDULE_ENABLED="$SCHEDULE_FLAG"
+fi
+if [ -n "$SCHEDULE_INTERVAL" ]; then
+  SCHEDULE_INTERVAL_HOURS="$SCHEDULE_INTERVAL"
+fi
 
 # ── Run directory ────────────────────────────────────────────
 RESULTS_BASE="$REPO_ROOT/testing/results/$TARGET_ENV"
@@ -613,6 +626,47 @@ elif [ "$STEP" = "reported" ]; then
 fi
 
 # ═══════════════════════════════════════════════════════════════
+# STEP 5b: ENABLE SCHEDULER (optional, #22)
+# ═══════════════════════════════════════════════════════════════
+if [ "$STEP" = "collecting" ] && [ "$SCHEDULE_ENABLED" = "true" ]; then
+  log "━━ STEP 5b: Enable refresh scheduler (${SCHEDULE_INTERVAL_HOURS}h)..."
+
+  MON_STATUS=$(curl -sS "$API/v1/topics/$TOPIC_ID/monitor" \
+    -H "X-API-Key: $CLAUDE_AGENT_API_KEY" 2>/dev/null | jq -r '.status // "none"')
+  if [ "$MON_STATUS" != "active" ]; then
+    MON_CODE=$(curl -sS -o "$AGENT_LOG/monitor_for_schedule.json" -w "%{http_code}" \
+      -X POST "$API/v1/topics/$TOPIC_ID/monitor" \
+      -H "Content-Type: application/json" \
+      -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
+      -d "{\"max_age_hours\": $REFRESH_MAX_AGE}" 2>/dev/null)
+    if [ "$MON_CODE" -ge 400 ]; then
+      log "  ✗ Monitor required for schedule but POST failed (HTTP $MON_CODE)"
+      save_step "collecting" "{\"schedule_enabled\":false,\"schedule_error\":\"monitor post failed\"}"
+    else
+      log "  ✓ Monitoring started for scheduler"
+    fi
+  fi
+
+  if [ "$(get_field schedule_error)" = "" ]; then
+    SCH_CODE=$(curl -sS -o "$AGENT_LOG/schedule_response.json" -w "%{http_code}" \
+      -X PATCH "$API/v1/topics/$TOPIC_ID/monitor" \
+      -H "Content-Type: application/json" \
+      -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
+      -d "{\"schedule_enabled\": true, \"schedule_interval_hours\": $SCHEDULE_INTERVAL_HOURS}" 2>/dev/null)
+
+    if [ "$SCH_CODE" -lt 400 ]; then
+      NEXT_AT=$(jq -r '.next_refresh_at // "?"' "$AGENT_LOG/schedule_response.json" 2>/dev/null)
+      log "  ✓ Scheduler enabled (next_refresh_at=$NEXT_AT)"
+      save_step "collecting" "{\"schedule_enabled\":true,\"schedule_interval_hours\":$SCHEDULE_INTERVAL_HOURS,\"next_refresh_at\":\"$NEXT_AT\"}"
+    else
+      log "  ✗ Scheduler PATCH failed (HTTP $SCH_CODE)"
+      jq -r '.detail // .' "$AGENT_LOG/schedule_response.json" 2>/dev/null | tee -a "$LOG_FILE" || true
+      save_step "collecting" "{\"schedule_enabled\":false,\"schedule_error\":\"patch failed http $SCH_CODE\"}"
+    fi
+  fi
+fi
+
+# ═══════════════════════════════════════════════════════════════
 # STEP 6: COLLECT FULL EVENT LOG + BUILD EVALUATION
 # ═══════════════════════════════════════════════════════════════
 if [ "$STEP" = "collecting" ]; then
@@ -733,6 +787,18 @@ if [ "$STEP" = "collecting" ]; then
   REFRESH_DUR="${REFRESH_DUR:-0}"
   TOTAL_DUR=$((PLAN_DUR + DELIVER_DUR + REFRESH_DUR))
 
+  SCHEDULE_METRICS='{"enabled":false}'
+  if [ -s "$AGENT_LOG/schedule_response.json" ]; then
+    SCHEDULE_METRICS=$(jq -c '{
+      enabled: (.schedule_enabled // false),
+      interval_hours: .schedule_interval_hours,
+      next_refresh_at: .next_refresh_at
+    }' "$AGENT_LOG/schedule_response.json" 2>/dev/null || echo '{"enabled":false}')
+  elif [ "$SCHEDULE_ENABLED" = "true" ]; then
+    SCHED_ERR=$(get_field "schedule_error")
+    SCHEDULE_METRICS=$(jq -nc --arg err "${SCHED_ERR:-unknown}" '{enabled: false, error: $err}')
+  fi
+
   # Assemble evaluation.json
   jq -nc \
     --arg vid "$VID" \
@@ -750,6 +816,7 @@ if [ "$STEP" = "collecting" ]; then
     --argjson plan "$PLAN_METRICS" \
     --argjson deliver "$DELIVER_METRICS" \
     --argjson refresh "$REFRESH_METRICS" \
+    --argjson schedule "$SCHEDULE_METRICS" \
     '{
       vector_id: $vid,
       env: $env,
@@ -763,7 +830,8 @@ if [ "$STEP" = "collecting" ]; then
       events: $events,
       plan: $plan,
       deliver: $deliver,
-      refresh: $refresh
+      refresh: $refresh,
+      schedule: $schedule
     }' > "$EVAL_FILE"
 
   log "  ✓ evaluation.json written"
@@ -810,6 +878,18 @@ if [ -s "$QA_REPORT_FILE" ]; then
   jq -r '
     "  QA:       \(.passed | if . then "PASS" else "FAIL" end) (\(.summary.checks_total) checks)"
   ' "$QA_REPORT_FILE" 2>/dev/null
+fi
+
+if [ -s "$EVAL_FILE" ]; then
+  jq -r '
+    if .schedule.enabled then
+      "  Schedule: ON (\(.schedule.interval_hours // "?")h, next=\(.schedule.next_refresh_at // "?"))"
+    elif .schedule.error then
+      "  Schedule: FAILED (\(.schedule.error))"
+    else
+      empty
+    end
+  ' "$EVAL_FILE" 2>/dev/null
 fi
 
 echo

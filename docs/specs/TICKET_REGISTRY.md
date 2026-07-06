@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#26` (assign to the next new ticket; then bump this line)
+**Next available number:** `#36` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -19,18 +19,24 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 
 ## Active (executable)
 
-| # | File | Status | Blocks / unblocks |
-|---|------|--------|---------------------|
-| 16 | `docs/specs/active/signalgather_frontend_v1_16.md` | planned | User-facing V1 UI; needs #17 done |
-| 18 | `docs/specs/active/business_output_evaluation_18.md` | planned | Needs #15 PASS; pairs with #20, #21 |
-| 20 | `docs/specs/active/continuous_monitoring_evaluation_20.md` | planned | Needs #18, #21, **#22** |
-| 21 | `docs/specs/active/timeliness_channel_metrics_21.md` | planned | Feeds #15, #18, #20 |
-| 22 | `docs/specs/active/topic_refresh_scheduler_22.md` | planned | Blocks #16 (16c), #20 |
-| 23 | `docs/specs/active/trading_intelligence_evaluation_23.md` | in progress | Lane A framework; generalizes #18; needs #15 PASS |
-| 24 | `docs/specs/active/topic_user_ownership_24.md` | planned | Blocks #16 (user sessions); pairs with #22 |
+|| # | File | Status | Blocks / unblocks |
+||---|------|--------|---------------------|
+|| 16 | `docs/specs/active/signalgather_frontend_v1_16.md` | planned | User-facing V1 UI; needs #17 done |
+|| 18 | `docs/specs/active/business_output_evaluation_18.md` | planned | Needs #15 PASS; pairs with #20, #21 |
+|| 20 | `docs/specs/active/continuous_monitoring_evaluation_20.md` | planned | Needs #18, #21, **#22** |
+|| 21 | `docs/specs/active/timeliness_channel_metrics_21.md` | planned | Feeds #15, #18, #20 |
+|| 22 | `docs/specs/active/topic_refresh_scheduler_22.md` | planned | Blocks #16 (16c), #20 |
+|| 23 | `docs/specs/active/trading_intelligence_evaluation_23.md` | in progress | Lane A framework; generalizes #18; needs #15 PASS |
+|| 24 | `docs/specs/active/topic_user_ownership_24.md` | planned | Blocks #16 (user sessions); pairs with #22 |
+|| 29 | `docs/specs/active/source_whitelist_seed_29.md` | planned | Vytvořit minimální whitelist 50 entit (anchor pro agenta) |
+|| 30 | `docs/specs/active/coverage_playbooks_seed_30.md` | planned | Vytvořit 3 Playbooks (Írán, LNG, Ropa) pro Meta-RAG |
+|| 31 | `docs/specs/active/scraping_infrastructure_31.md` | planned | Nastavit `twscrape` a `Pyrogram` pro Twitter/Telegram |
+|| 32 | `docs/specs/active/source_discover_skill_32.md` | planned | Vytvořit `/source-discover` skill (MVP) |
+|| 33 | `docs/specs/active/plan_source_integration_33.md` | planned | Integrovat `/source-discover` do `newsfind-plan.md` |
+|| 34 | `docs/specs/active/topic_ops_table_frontend_34.md` | planned | **frontend** — topic ops table (user + admin); needs #16, #24, #22 |
+|| 35 | `docs/specs/active/graph_retrieval_layer_35.md` | planned | Grafová orchestrační vrstva retrievalu (v2); nadstavba nad #29/#30, po změření kvality |
 
 ---
-
 ## Done (shipped)
 
 | # | File | Shipped |

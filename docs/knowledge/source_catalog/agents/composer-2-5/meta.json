@@ -1,0 +1,9 @@
+{
+  "agent_slug": "composer-2-5",
+  "model_display_name": "Composer 2.5",
+  "created_at": "2026-07-04T16:30:00Z",
+  "updated_at": "2026-07-06T14:34:03Z",
+  "brief_version": 1,
+  "total_batches": 249,
+  "note": "FULL RUN COMPLETE: 1715 catalog slots + source_whitelist.json (50 entries)"
+}
