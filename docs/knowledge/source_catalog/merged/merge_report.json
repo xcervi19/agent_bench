@@ -1,0 +1,19 @@
+{
+  "input_catalogs": [
+    "../agents/claude-opus-4-8/catalog.json",
+    "../agents/claude-sonnet-4-6/catalog.json",
+    "../agents/composer-2-5/catalog.json",
+    "../agents/gpt-5-5/catalog.json"
+  ],
+  "agents": [
+    "claude-opus-4-8",
+    "claude-sonnet-4-6",
+    "composer-2-5",
+    "gpt-5-5"
+  ],
+  "raw_entries_considered": 4371,
+  "unique_keys": 1558,
+  "accepted": 652,
+  "needs_review": 1428,
+  "conflicts": 593
+}
