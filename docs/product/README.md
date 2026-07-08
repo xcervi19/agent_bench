@@ -12,7 +12,8 @@
 5. User **monitors** — periodic refresh for new news only (deltas, deduped).
 
 **API:** `POST /v1/topics`, SSE `/events`, `/proceed`, `/monitor`, `/refresh`, artifact routes.  
-**Public URL (prod):** `https://agent.particletico.com`
+**Public URL (prod):** `https://agent.particletico.com`  
+**Web UI:** `apps/signalgather_web/` — deploy to `app.particletico.com` (see app README)
 
 ## Shipped stack (main)
 
