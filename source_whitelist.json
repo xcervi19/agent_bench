@@ -1,402 +1,4882 @@
 [
   {
-    "entity": "US MARAD",
-    "domain": "maritime.dot.gov",
+    "entity": "Australian Border Force",
+    "domain": "abf.gov.au",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "LNG and crude export cargo documentation; Karratha, Darwin, Gladstone terminal declarations",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ADNOC",
+    "domain": "adnoc.ae",
+    "type": "official",
+    "category": "noc",
+    "notes": "Top priority; Ruwais, Fujairah, Jebel Ali",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Environment",
+    "domain": "ambiente.gob.ec",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Yasuní block 43",
+    "agreement_count": 4
+  },
+  {
+    "entity": "AMSA (Maritime Safety Authority)",
+    "domain": "amsa.gov.au",
     "type": "official",
     "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=1",
-    "source_agent": "composer-2-5"
+    "notes": "Dampier, Gladstone LNG",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ANH Colombia",
+    "domain": "anh.gov.co",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Petro: no new E&P licenses — bearish supply",
+    "agreement_count": 4
+  },
+  {
+    "entity": "API",
+    "domain": "api.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Weekly inventory (preview ahead of EIA)",
+    "agreement_count": 4
   },
   {
     "entity": "Saudi Aramco",
     "domain": "aramco.com",
     "type": "official",
     "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=2",
-    "source_agent": "composer-2-5"
+    "notes": "Highest priority — OSP (Official Selling Price) is the regional price signal",
+    "agreement_count": 4
   },
   {
-    "entity": "EIA",
-    "domain": "eia.gov",
+    "entity": "Ecuadorian Navy",
+    "domain": "armada.mil.ec",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=3",
-    "source_agent": "composer-2-5"
+    "notes": "Pacific coast patrol; Esmeraldas + Guayaquil port security; Galápagos maritime zone; FLOPEC tanker fleet coordination",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ASX",
+    "domain": "asx.com.au",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ASYAD Group",
+    "domain": "asyad.om",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Sohar/Duqm/Salalah; Duqm outside Hormuz",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Federal Foreign Office",
+    "domain": "auswaertiges-amt.de",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Germany Russia sanctions coordination; EU energy diplomacy; German Ostpolitik reversal (Zeitenwende 2022); Nord Stream 2 abandonment",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Banca d'Italia",
+    "domain": "bancaditalia.it",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "EUR zone; ECB primary; Italian energy import bill = BTP spread proxy; gas subsidy fiscal impact",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of Algeria",
+    "domain": "bank-of-algeria.dz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "DZD managed float; FX reserves backed by oil revenues; sanctions alignment with EU",
+    "agreement_count": 4
+  },
+  {
+    "entity": "National Bank of Ukraine",
+    "domain": "bank.gov.ua",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "UAH managed; IMF programme; FX reserves = energy import payment capacity; Russian asset freeze coordination (National Bank war bonds)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of Canada",
+    "domain": "bankofcanada.ca",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "CAD/USD affects WCS netback; Bank of Canada rate = oil sands CAPEX cost signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of England",
+    "domain": "bankofengland.co.uk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "GBP/USD; BoE rate = UK macro demand signal; BoE Financial Policy Committee energy sector stress tests; OFSI sanctions coordination",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of Guyana",
+    "domain": "bankofguyana.org.gy",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "GYD managed; Natural Resource Fund (NRF) oil revenue management; GYD appreciation from oil windfall = macroeconomic signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Banque de France",
+    "domain": "banque-france.fr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "EUR zone; ECB primary; French energy import bill vs current account; Banque de France energy inflation monitoring",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Banco de la República",
+    "domain": "banrep.gov.co",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "COP/USD; Colombia oil export revenue = major current account component; Banrep rate = macro demand signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Banco de México (Banxico)",
+    "domain": "banxico.org.mx",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Hacienda oil hedge is separate (SHCP)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bangladesh Bank",
+    "domain": "bb.org.bd",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "BDT; LNG import FX allocation; USD shortage = spot LNG procurement delay (2022 crisis); energy subsidy fiscal impact",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Banco Central do Brasil",
+    "domain": "bcb.gov.br",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "BRL/USD affects Petrobras USD debt servicing; Selic rate = energy CAPEX cost signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Ecuador",
+    "domain": "bce.fin.ec",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "USD dollarized economy; oil export revenue statistics; China debt overhang fiscal signal; BCRP-analog limited FX role",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of West African States (BCEAO)",
+    "domain": "bceao.int",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Regional central bank",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Chile",
+    "domain": "bcentral.cl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "CLP; copper export revenue FX; LNG import USD exposure; BCC energy price statistics; inflation linked to fuel price pass-through",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Mauritania",
+    "domain": "bcm.mr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "MRU managed; GTA oil/gas revenue management framework; NRF establishment precedent (Senegal/MR joint)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Reserve Bank of Peru",
+    "domain": "bcrp.gob.pe",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "PEN; Peru LNG export USD earnings; Petroperú subsidy fiscal impact; BCRP energy price statistics",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Banco de España",
+    "domain": "bde.es",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "EUR zone; ECB primary; Spanish energy import bill vs current account; Iberian Exception gas price cap (2022-2023) fiscal cost",
+    "agreement_count": 4
+  },
+  {
+    "entity": "BEAC (Central African)",
+    "domain": "beac.int",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "CEMAC CFA franc (XAF pegged to EUR); shared with Cameroon, CAR, Chad, Congo, Gabon; oil revenue recycling signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank Indonesia",
+    "domain": "bi.go.id",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "IDR weakness = Pertamina import subsidy pressure; BI rate = macro demand proxy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Banco Nacional de Angola",
+    "domain": "bna.ao",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "AOA/USD management; petrodollar reserves; oil revenue fiscal flow",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank Negara Malaysia",
+    "domain": "bnm.gov.my",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "MYR/USD affects LNG export revenue; BNM sanctions alignment with Western bloc",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of Israel",
+    "domain": "boi.org.il",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "ILS (shekel); war fiscal impact on energy investment; BofI energy sector briefings; NIS hedging for gas revenues",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of Japan",
+    "domain": "boj.or.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "JPY/USD; weak yen = higher JPY-denominated crude import cost = inflation pressure = policy signal; BOJ YCC policy (post-2024 normalisation)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of Jamaica",
+    "domain": "boj.org.jm",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "JMD; energy import bill FX pressure; NFE LNG USD payments; oil price pass-through inflation signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of Korea",
+    "domain": "bok.or.kr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "KRW/USD; Korea current account sensitive to energy import bill; BOK rate = macro demand signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of Thailand",
+    "domain": "bot.or.th",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "THB/USD management; Thai energy import subsidy fiscal impact; BOT rate = macro demand signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Deutsche Bundesbank",
+    "domain": "bundesbank.de",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "EUR zone; ECB primary; German energy import bill = current account signal; Bundesbank energy inflation tracking",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bursa Malaysia",
+    "domain": "bursamalaysia.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "cancilleria.gov.co",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Colombia-Venezuela normalisation (Petro 2022); FARC/ELN peace negotiations = pipeline security signal; US-Colombia sanctions alignment",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Azerbaijan",
+    "domain": "cbar.az",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "AZN managed peg; petrodollar inflow; SOFAZ (State Oil Fund) fiscal buffer = energy revenue management signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Bahrain",
+    "domain": "cbb.gov.bh",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "BHD (Bahraini dinar pegged to USD); oil revenue fiscal management; Saudi financial backstop context",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Egypt",
+    "domain": "cbe.org.eg",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "EGP devaluation (2022–2024); IMF programme; FX scarcity affects LNG imports",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Kuwait",
+    "domain": "cbk.gov.kw",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "KWD peg to basket; petrodollar reserves management",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Nigeria",
+    "domain": "cbn.gov.ng",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "NGN/USD devaluation (2023 Tinubu reform); petrodollar FX management",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Oman",
+    "domain": "cbo.gov.om",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "OMR peg to USD; manages oil revenue sovereign flows",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bank of Russia",
+    "domain": "cbr.ru",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "FX / oil revenue / sanctions",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Canada Border Services Agency (CBSA)",
+    "domain": "cbsa-asfc.gc.ca",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude export licensing; Canada-US border oil trade documentation",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Uzbekistan",
+    "domain": "cbu.uz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "UZS managed rate; energy export revenue management; Western sanctions alignment (moderate)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Trinidad and Tobago",
+    "domain": "central-bank.org.tt",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "TTD; hydrocarbon revenue Heritage Stabilisation Fund; energy-linked fiscal balance; gas plateau = CBTT reserve drawdown signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of the UAE",
+    "domain": "centralbank.ae",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "AED peg; petrodollar recycling; sanctions compliance (Iran re-export risk)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Canada Energy Regulator (CER)",
+    "domain": "cer-rec.gc.ca",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "AER (aer.ca) as provincial expansion — oil sands",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Cheniere Sabine Pass LNG",
+    "domain": "cheniere.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Feedgas = US LNG export proxy",
+    "agreement_count": 4
   },
   {
     "entity": "CME Group",
     "domain": "cmegroup.com",
-    "type": "data_feed",
+    "type": "official",
     "category": "exchange",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=4",
-    "source_agent": "composer-2-5"
+    "notes": "WTI, Henry Hub contract specs & settlements",
+    "agreement_count": 4
   },
   {
-    "entity": "US Treasury / OFAC",
-    "domain": "treasury.gov",
+    "entity": "CNMC",
+    "domain": "cnmc.es",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=301; rank=5",
-    "source_agent": "composer-2-5"
+    "notes": "CNMC regulates gas + electricity markets; upstream concessions under MITECO; Repsol Spanish upstream minimal; CNMC gas grid tariff decisions",
+    "agreement_count": 4
   },
   {
-    "entity": "ICE",
-    "domain": "theice.com",
-    "type": "data_feed",
-    "category": "exchange",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=6",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "IEA",
-    "domain": "iea.org",
-    "type": "official",
-    "category": "international_agency",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=7",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "OPEC",
-    "domain": "opec.org",
-    "type": "official",
-    "category": "international_agency",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=8",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "NIOC",
-    "domain": "nioc.ir",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=9",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Transneft",
-    "domain": "transneft.ru",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=10",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Iran Ports & Maritime Organization (PMO)",
-    "domain": "pmo.ir",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=11",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "QatarEnergy",
-    "domain": "qatarenergy.qa",
-    "type": "official",
-    "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=12",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "ADNOC",
-    "domain": "adnoc.ae",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=13",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "MPA Singapore",
-    "domain": "mpa.gov.sg",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=14",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Rosneft",
-    "domain": "rosneft.com",
+    "entity": "CNPC",
+    "domain": "cnpc.com.cn",
     "type": "official",
     "category": "noc",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=15",
-    "source_agent": "composer-2-5"
+    "notes": "Sinopec/CNOOC as expansion",
+    "agreement_count": 4
   },
   {
-    "entity": "Port of Rotterdam Authority",
-    "domain": "portofrotterdam.com",
+    "entity": "Chittagong Port Authority",
+    "domain": "cpa.gov.bd",
     "type": "official",
     "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=16",
-    "source_agent": "composer-2-5"
+    "notes": "FX crisis → spot LNG cancel",
+    "agreement_count": 4
   },
   {
-    "entity": "Suez Canal Authority",
-    "domain": "suezcanal.gov.eg",
+    "entity": "Caspian Pipeline Consortium (CPC)",
+    "domain": "cpc.ru",
     "type": "official",
     "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=17",
-    "source_agent": "composer-2-5"
+    "notes": "Kazakh main export route",
+    "agreement_count": 4
   },
   {
-    "entity": "Panama Canal Authority",
-    "domain": "pancanal.com",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=18",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "LOOP LLC",
-    "domain": "loopllc.com",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=19",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Saudi Ports Authority (Mawani)",
-    "domain": "mawani.gov.sa",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=20",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Port of Fujairah",
-    "domain": "fujairahport.ae",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=21",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "BOTAŞ",
-    "domain": "botas.gov.tr",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=22",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "NWS",
-    "domain": "weather.gov",
-    "type": "official",
-    "category": "weather",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=23",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "SOCAR",
-    "domain": "socar.az",
+    "entity": "Japan Customs (NACS)",
+    "domain": "customs.go.jp",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=24",
-    "source_agent": "composer-2-5"
+    "notes": "Monthly crude import data by source country; LNG import volumes; Japanese crude basket composition",
+    "agreement_count": 4
   },
   {
-    "entity": "U.S. Coast Guard",
-    "domain": "uscg.mil",
+    "entity": "Korea Customs Service",
+    "domain": "customs.go.kr",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=25",
-    "source_agent": "composer-2-5"
+    "notes": "Monthly crude import data by source; ~3 mb/d total; Saudi ~25%, Kuwait ~16%, UAE ~13%, US ~12%; Korea net product exporter; Ulsan/Yeosu/Daesan terminal declarations",
+    "agreement_count": 4
   },
   {
-    "entity": "BTC Pipeline",
-    "domain": "caspianpipeline.com",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=26",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "TANAP",
-    "domain": "tanap.com",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=27",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "US DOE",
-    "domain": "energy.gov",
+    "entity": "Thai Customs Department",
+    "domain": "customs.go.th",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=28",
-    "source_agent": "composer-2-5"
+    "notes": "Crude import declarations; Map Ta Phut (Rayong) terminal cargo; LNG Rayong FSRU import documentation",
+    "agreement_count": 4
   },
   {
-    "entity": "US FERC",
-    "domain": "ferc.gov",
+    "entity": "State Customs Committee",
+    "domain": "customs.gov.az",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=29",
-    "source_agent": "composer-2-5"
+    "notes": "BTC crude export declarations; Sangachal terminal cargo; SOCAR Turkey shipping documentation",
+    "agreement_count": 4
   },
   {
-    "entity": "Department of State",
-    "domain": "state.gov",
-    "type": "official",
-    "category": "diplomacy",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=30",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Customs and Border Protection (CBP)",
-    "domain": "cbp.gov",
+    "entity": "Customs Affairs",
+    "domain": "customs.gov.bh",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=31",
-    "source_agent": "composer-2-5"
+    "notes": "Refined product + crude export declarations; Sitra terminal cargo; BAPCO Trading export documentation",
+    "agreement_count": 4
   },
   {
-    "entity": "Moex",
-    "domain": "moex.com",
-    "type": "data_feed",
-    "category": "exchange",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=32",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Eurostat",
-    "domain": "ec.europa.eu",
+    "entity": "Egyptian Customs Authority",
+    "domain": "customs.gov.eg",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=33",
-    "source_agent": "composer-2-5"
+    "notes": "LNG and crude export documentation; SUMED throughput declarations",
+    "agreement_count": 4
   },
   {
-    "entity": "DGCX Dubai",
-    "domain": "dgcx.ae",
-    "type": "data_feed",
-    "category": "exchange",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=34",
-    "source_agent": "composer-2-5"
+    "entity": "Kuwait General Administration of Customs",
+    "domain": "customs.gov.kw",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude export documentation; Mina al-Ahmadi customs clearance",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Royal Malaysian Customs Department",
+    "domain": "customs.gov.my",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude and LNG export cargo declarations; Bintulu and Labuan terminal exports",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Nigeria Customs Service",
+    "domain": "customs.gov.ng",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude export liftings documentation; Bonny, Forcados, Brass cargo clearance",
+    "agreement_count": 4
+  },
+  {
+    "entity": "General Authority of Customs",
+    "domain": "customs.gov.qa",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "LNG and crude export documentation; Ras Laffan industrial zone customs",
+    "agreement_count": 4
   },
   {
     "entity": "Federal Customs Service (FTS)",
     "domain": "customs.gov.ru",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=35",
-    "source_agent": "composer-2-5"
+    "notes": "Export data classified since 2022 — cross-check CN/IN customs + AIS",
+    "agreement_count": 4
   },
   {
-    "entity": "Turkish Straits VTS",
-    "domain": "uab.gov.tr",
+    "entity": "Singapore Customs",
+    "domain": "customs.gov.sg",
     "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=36",
-    "source_agent": "composer-2-5"
+    "category": "government_regulator",
+    "notes": "Refinery product export declarations; crude import/re-export for entrepôt trade; LNG cargo documentation",
+    "agreement_count": 4
   },
   {
-    "entity": "GCPI (Iraq Ports)",
-    "domain": "scp.gov.iq",
+    "entity": "General Department of Vietnam Customs",
+    "domain": "customs.gov.vn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Bach Ho crude export declarations; Vung Tau terminal cargo; LNG import FSRU documentation; Dung Quat crude import",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Dalian Commodity Exchange",
+    "domain": "dce.com.cn",
+    "type": "official",
+    "category": "exchange",
+    "notes": "LPG, ethylene contracts",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Department of Foreign Affairs and Trade",
+    "domain": "dfat.gov.au",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Australia sanctions coordination with G7/Five Eyes; South China Sea freedom of navigation; AUKUS nuclear submarine program = regional signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "DIAN",
+    "domain": "dian.gov.co",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude export declarations; Cartagena + Coveñas + Buenaventura terminal cargo data",
+    "agreement_count": 4
+  },
+  {
+    "entity": "FPS Foreign Affairs",
+    "domain": "diplomatie.belgium.be",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Belgium EU sanctions compliance; Belgium hosts NATO HQ + EU Council = European energy security governance nexus; IUK Interconnector diplomacy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry for Europe and Foreign Affairs",
+    "domain": "diplomatie.gouv.fr",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "France permanent UNSC member; EU sanctions architecture co-driver; TotalEnergies Africa government relations umbrella; Mozambique LNG security diplomacy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Directemar (Maritime Authority)",
+    "domain": "directemar.cl",
     "type": "official",
     "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=37",
-    "source_agent": "composer-2-5"
+    "notes": "Quintero/Mejillones LNG",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Department of Mineral Fuels (DMF)",
+    "domain": "dmf.go.th",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Erawan/Bongkot",
+    "agreement_count": 4
+  },
+  {
+    "entity": "De Nederlandsche Bank",
+    "domain": "dnb.nl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "EUR zone; ECB primary; Dutch energy import bill; DNB financial stability reports (energy sector exposure)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Department of Environment",
+    "domain": "doe.gov.my",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Kertih petrochemical complex; offshore environmental permits; Pengerang Integrated Complex (PIC) EIA",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Chesapeake Bay LNG transit",
+    "domain": "dominionenergy.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Cove Point LNG Maryland ~5.25 mtpa (Dominion Energy op.); unique Atlantic coast location = EU proximity advantage; BP + Shell off-take; Chesapeake Bay navigation; feed gas from Appalachian/Marcellus",
+    "agreement_count": 4
+  },
+  {
+    "entity": "French Customs",
+    "domain": "douane.gouv.fr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude import declarations; Fos-sur-Mer + Dunkerque LNG cargo; Le Havre (Antifer) VLCC crude arrivals",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Douanes Algériennes",
+    "domain": "douane.gov.dz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude and LNG/LPG export documentation; Arzew cargo declarations",
+    "agreement_count": 4
+  },
+  {
+    "entity": "DP World — Jebel Ali Port",
+    "domain": "dpworld.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Largest man-made port",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ECMWF",
+    "domain": "ecmwf.int",
+    "type": "official",
+    "category": "weather",
+    "notes": "European medium-range model",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Ecology and Natural Resources",
+    "domain": "eco.gov.az",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "ACG offshore environmental compliance; Baku refinery emissions; Sangachal terminal EIA",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry Ecological Transition",
+    "domain": "ecologie.gouv.fr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "France LNG terminal policy (Dunkerque, Fos-sur-Mer); GRTgaz TSO regulation; nuclear fleet extension decisions (EDF Doel/Tihange); Mattei Plan-adjacent African energy diplomacy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ecopetrol",
+    "domain": "ecopetrol.com.co",
+    "type": "official",
+    "category": "noc",
+    "notes": "State ~89%; NYSE (EC) + BVC listed; ~730 kb/d crude; Castilla, Chichimene, Rubiales fields; Reficar Cartagena refinery (165 kb/d); quarterly = tier-1 Colombia supply signal; Petro licence freeze = structural decline outlook",
+    "agreement_count": 4
+  },
+  {
+    "entity": "EEX",
+    "domain": "eex.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "EU gas, power, EUA carbon",
+    "agreement_count": 4
+  },
+  {
+    "entity": "EIA",
+    "domain": "eia.gov",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "US agency, global reference; WPSR weekly petroleum status",
+    "agreement_count": 4
+  },
+  {
+    "entity": "EMA — Licensing",
+    "domain": "ema.gov.sg",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Singapore LNG and gas market regulation",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ENAP (Empresa Nacional del Petróleo)",
+    "domain": "enap.cl",
+    "type": "official",
+    "category": "noc",
+    "notes": "No crude production",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "energia.gob.cl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "LNG import policy; ENAP oversight; lithium nationalization framework (Boric 2023); IEA strategic reserve coordination",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "energy.go.th",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Thailand energy policy; petroleum concession approvals; MTJDA (Malaysia-Thailand JDA) coordination; LNG import framework",
+    "agreement_count": 4
+  },
+  {
+    "entity": "US DOE",
+    "domain": "energy.gov",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Strategic Petroleum Reserve policy & levels",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy and Energy Industries",
+    "domain": "energy.gov.tt",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Atlantic LNG governance; Heritage Petroleum oversight; bpTT PSA management; gas decline management policy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy and Natural Resources",
+    "domain": "enerji.gov.tr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Turkish energy policy; TürkAkım governance; Ceyhan BTC terminal operations; Sakarya offshore gas development approvals",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Eni",
+    "domain": "eni.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "African gas: Transmed/Algeria, Zohr/Egypt, Libya",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Danish Energy Agency",
+    "domain": "ens.dk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Tyra redevelopment",
+    "agreement_count": 4
+  },
+  {
+    "entity": "EPA",
+    "domain": "epa.gov",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "RFS, refinery compliance",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Equinor",
+    "domain": "equinor.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Petoro/Gassco as expansion; Troll/Johan Sverdrup",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy & Mineral Res. (ESDM)",
+    "domain": "esdm.go.id",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "ICP (Indonesian Crude Price) monthly publication; Indonesia OPEC observer; coal/gas/crude energy mix policy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "esteri.it",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Mattei Plan (Africa energy)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "exteriores.gob.es",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Spain-Algeria energy relations (Medgaz; Western Sahara dispute caused 2021-2022 diplomatic crisis disrupting GME pipeline); Gibraltar energy corridor diplomacy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Federal Reserve",
+    "domain": "federalreserve.gov",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Macro / rate policy context",
+    "agreement_count": 4
+  },
+  {
+    "entity": "FERC (LNG export authorization)",
+    "domain": "ferc.gov",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "LNG permit pause/resume",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Royal Danish Navy",
+    "domain": "forsvaret.dk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Danish Straits; shadow fleet transit",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Freeport LNG",
+    "domain": "freeportlng.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Feedgas = export proxy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Port of Fujairah",
+    "domain": "fujairahport.ae",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Verify FEDCom feed",
+    "agreement_count": 4
+  },
+  {
+    "entity": "GECF",
+    "domain": "gecf.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Gas Exporting Countries Forum",
+    "agreement_count": 4
+  },
+  {
+    "entity": "SENER Mexico",
+    "domain": "gob.mx/sener",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Mexican energy policy; Pemex subsidy; Dos Bocas refinery megaproject oversight",
+    "agreement_count": 4
+  },
+  {
+    "entity": "SRE (Foreign Affairs)",
+    "domain": "gob.mx/sre",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Mexico generally avoids aligning on Russia/Iran sanctions; energy sovereignty position",
+    "agreement_count": 4
+  },
+  {
+    "entity": "HM Treasury (sanctions list)",
+    "domain": "gov.uk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "OFSI (Treasury) sanctions enforcement as expansion",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Guyana Revenue Authority",
+    "domain": "gra.gov.gy",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude export documentation; FPSO cargo declarations; Liza crude export receipts (royalty tracking)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "IEA",
+    "domain": "iea.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Oil Market Report; OECD stocks; emergency stock coordination",
+    "agreement_count": 4
+  },
+  {
+    "entity": "IGU",
+    "domain": "igu.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "International Gas Union",
+    "agreement_count": 4
+  },
+  {
+    "entity": "IMO",
+    "domain": "imo.org",
+    "type": "official",
+    "category": "shipping",
+    "notes": "Maritime regulation, sanctions guidance",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Shanghai INE",
+    "domain": "ine.cn",
+    "type": "official",
+    "category": "exchange",
+    "notes": "INE crude oil futures (yuan-denominated)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Global Affairs Canada",
+    "domain": "international.gc.ca",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Canada implements Russia/Iran sanctions aligned with G7; Arctic sovereignty declarations",
+    "agreement_count": 4
+  },
+  {
+    "entity": "IOGP",
+    "domain": "iogp.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Oil & gas producers association",
+    "agreement_count": 4
+  },
+  {
+    "entity": "IRENA",
+    "domain": "irena.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Renewables context (Tier 2)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Jamaica Customs Agency",
+    "domain": "jacustoms.gov.jm",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude imports + product exports; NFE LNG FSRU cargo; Kingston Freeport terminal trade data",
+    "agreement_count": 4
+  },
+  {
+    "entity": "JMA",
+    "domain": "jma.go.jp",
+    "type": "official",
+    "category": "weather",
+    "notes": "Typhoon tracks (Asia LNG demand)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "JOGMEC",
+    "domain": "jogmec.go.jp",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "No true NOC; JOGMEC = state stockpiling",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "kemlu.go.id",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Indonesia non-aligned (ASEAN); South China Sea Natuna EEZ vs China; Malacca/Lombok/Makassar governance",
+    "agreement_count": 4
+  },
+  {
+    "entity": "State Revenue Committee (Customs)",
+    "domain": "kgd.gov.kz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "CPC-routed crude export declarations; Aktau port cargo documentation",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs (Wisma Putra)",
+    "domain": "kln.gov.my",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Malaysia non-aligned on sanctions; South China Sea EEZ (Spratly vs China); Malacca governance",
+    "agreement_count": 4
+  },
+  {
+    "entity": "KazMunayGas (KMG)",
+    "domain": "kmg.kz",
+    "type": "official",
+    "category": "noc",
+    "notes": "Tengiz/Kashagan; CPC (cpc.ru) export vulnerability",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Kuwait Ports Authority (KPA)",
+    "domain": "kpa.gov.kw",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Shuaiba industrial port; Mina al-Ahmadi crude terminal coordination",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Kuwait Petroleum Corporation (KPC)",
+    "domain": "kpc.com.kw",
+    "type": "official",
+    "category": "noc",
+    "notes": "KOC/KNPC/KOTC as expansion; Mina al-Ahmadi",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Kystverket coastal traffic",
+    "domain": "kystverket.no",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "North Sea weather closures; Hammerfest Arctic approach; VTS Stavanger and Bergen",
+    "agreement_count": 4
+  },
+  {
+    "entity": "LOOP LLC",
+    "domain": "loopllc.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Only US VLCC port",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Brazilian Navy",
+    "domain": "marinha.mil.br",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Santos Basin FPSO security; port weather closures; South Atlantic patrol",
+    "agreement_count": 4
+  },
+  {
+    "entity": "US MARAD Advisory",
+    "domain": "maritime.dot.gov",
+    "type": "official",
+    "category": "shipping",
+    "notes": "National maritime; geo-specific ports in Phase 3",
+    "agreement_count": 4
+  },
+  {
+    "entity": "MAS (Monetary Authority)",
+    "domain": "mas.gov.sg",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "SGD NEER managed float; MAS = combined central bank + financial regulator + commodity trading oversight; sanctions enforcement",
+    "agreement_count": 4
+  },
+  {
+    "entity": "UNMIG (Mining / hydrocarbons)",
+    "domain": "mase.gov.it",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Italy Mattei Plan (Africa energy diversification); ENI Piombino FSRU approval; gas storage policy; LNG import framework; post-2022 Russia gas replacement strategy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Saudi Ports Authority (Mawani)",
+    "domain": "mawani.gov.sa",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Ras Tanura / Yanbu / Jubail throughput",
+    "agreement_count": 4
+  },
+  {
+    "entity": "MCX India",
+    "domain": "mcxindia.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "India crude / natgas futures",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Environment",
+    "domain": "me.go.kr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Ulsan industrial complex air quality; refinery emissions (SK Energy, GS Caltex, S-OIL Onsan); ETS (Korean Emissions Trading Scheme)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of External Affairs",
+    "domain": "mea.gov.in",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "India's non-aligned sanctions stance = proxy for Indian Urals/Russian crude imports; Iran waiver history; Hormuz ~80% of Indian crude passes through",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Ecology and Environment",
+    "domain": "mee.gov.cn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Refinery emissions standards; Shandong teapot compliance; Blue Sky policy affects run rates",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy and Minerals",
+    "domain": "mem.gov.om",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Oman OPEC+ non-member but aligns with cuts voluntarily; export policy for Oman Blend",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Environment",
+    "domain": "menlhk.go.id",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Balikpapan refinery EIA; Tangguh LNG Papua environmental permits; offshore drilling compliance",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Environmental Protection and Natural Resources",
+    "domain": "mepr.gov.ua",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Wartime pipeline damage assessment; Kremenchuk refinery war damage monitoring; Ukrainian GTS integrity reporting",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Agency for Natural Resources and Energy (ANRE)",
+    "domain": "meti.go.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "JCC (Japan Crude Cocktail) pricing mechanism; METI monthly oil statistics (import volumes, stocks); coordinates IEA SPR release; fuel stockpile levels",
+    "agreement_count": 4
+  },
+  {
+    "entity": "UK Met Office",
+    "domain": "metoffice.gov.uk",
+    "type": "official",
+    "category": "weather",
+    "notes": "NW Europe demand weather",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "mev.gov.ua",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Ukraine energy war policy; gas import framework (LNG via Slovakia/Poland); wartime domestic production support; coal reserve management",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.go.th",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Thailand non-aligned (ASEAN); Kra Canal periodic diplomatic discussions; Myanmar border gas (PTTEP Zawtika field)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.gov.az",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "SOCAR Russian-gas re-export flag",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.gov.eg",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Suez Canal geopolitics; Gaza/Red Sea security (Houthi impact on SCA); Israel relations",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.gov.sg",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Singapore sanctions compliance (US/EU aligned); Malacca governance trilateral; ASEAN chair rotations",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.gov.tr",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Turkey-Russia energy pragmatism (TürkAkım, discounted crude); Bosphorus Montreux Convention enforcement; NATO membership vs Russia energy dependency; Ceyhan geopolitics",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.gov.ua",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Ukraine war = tier-1 European energy security driver; každé MFA UA prohlášení o ceasefire/counteroffensive = EU energy sentiment signal; sanctions package coordination",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.uz",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Non-aligned; G5 Central Asia format; Mirziyoyev pro-Western engagement; UZ-EU Enhanced Partnership; CAGP China supply security signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mid.ru",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Sanctions / price cap rhetoric",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Norwegian Environment Agency",
+    "domain": "miljodirektoratet.no",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Mongstad refinery compliance; NCS drilling permits; methane leakage reporting",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Mines and Energy",
+    "domain": "minenergia.gov.co",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Colombia energy policy (Petro era 2022+: new upstream licences frozen); ANH oversight; CAN Limón pipeline security coordination",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "minenergo.gov.ru",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Production policy; OPEC+; export taxes",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "minrel.gob.cl",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Argentina gas import dependency (pipeline vs LNG); lithium supply chain diplomacy; IEA membership; Trans-Andean pipeline bilateral treaties",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry for Ecological Transition (MITECO)",
+    "domain": "miteco.gob.es",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Spain LNG import policy; Enagas gas TSO regulation; Medgaz Algeria-Spain pipeline governance; CORES strategic reserve management",
+    "agreement_count": 4
+  },
+  {
+    "entity": "MLIT (Maritime Bureau)",
+    "domain": "mlit.go.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Tokyo Bay LNG terminal; Yokkaichi, Chiba crude terminals; Keihin industrial port complex; typhoon/earthquake port closure orders",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Climate Change and Environment",
+    "domain": "moccae.gov.ae",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Ruwais refinery compliance; COP28 host country policy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy and Infrastructure",
+    "domain": "moei.gov.ae",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "UAE OPEC+ quota coordination; Ruwais refinery policy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Oceans and Fisheries",
+    "domain": "mof.go.kr",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Ulsan Port (~1.9 mb/d refinery hub); Pyeongtaek LNG terminal; Incheon, Yeosu, Daesan; Korea largest ship recycling and shipbuilding (Hyundai HI, Samsung HI, DSME)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.go.jp",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Japan sanctions compliance (Russia Sakhalin-2 exemption maintained); Iran waiver history; METI export controls (dual-use energy equipment)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.go.kr",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Korea strict US sanctions follower; Iran crude waivers expired 2019; Russia import compliance; THAAD defence dependency on US",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.bh",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "US 5th Fleet host; Iran tension",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.kw",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Gulf diplomatic positioning; GCC solidarity signals",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.pk",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Pakistan-Russia energy diplomacy (discounted Russian crude via swap); Iran gas pipeline (IP pipeline stalled); China-Pakistan CPEC energy projects",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.qa",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Qatar as mediator (Hamas-Israel, Taliban); geopolitical balancing = Gulf stability signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.sa",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Iran/US diplomacy, regional statements",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.vn",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "South China Sea policy statements; US-VN strategic partnership energy; China CNOOC intimidation response; ASEAN energy diplomacy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Industry and Trade (MOIT)",
+    "domain": "moit.gov.vn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "PVN oversight; LNG import policy; downstream price regulation; energy security master plan (PDP8 2023)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Natural Resources and Environment",
+    "domain": "monre.gov.vn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Block licensing; SCS overlapping claims = MONRE permit delays; Ca Voi Xanh EIA; offshore environmental protection law",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Oil",
+    "domain": "moo.gov.kw",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Kuwait OPEC+ quota; coordinates KPC and KNPC policy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Petroleum",
+    "domain": "mop.ir",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "SHANA (shana.ir) faster channel; policy signal under sanctions",
+    "agreement_count": 4
+  },
+  {
+    "entity": "MOTIE (Ministry of Trade, Industry and Energy)",
+    "domain": "motie.go.kr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Korea energy policy; Iran crude waiver oversight; IEA SPR coordination; refinery industry support",
+    "agreement_count": 4
+  },
+  {
+    "entity": "MPA Singapore",
+    "domain": "mpa.gov.sg",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Bunker #1; Malacca",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Danish Environmental Protection Agency",
+    "domain": "mst.dk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "North Sea offshore EIA; Fredericia refinery compliance; Baltic Sea marine environment; NordStream sabotage environmental monitoring",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Mwani Qatar",
+    "domain": "mwani.com.qa",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Ras Laffan operated by QatarEnergy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Naftogaz",
+    "domain": "naftogaz.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Russian transit ended 2025; huge UGS; GTS Operator (tsoua.com) expansion",
+    "agreement_count": 4
+  },
+  {
+    "entity": "National Bank of Kazakhstan",
+    "domain": "nationalbank.kz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "KZT managed float; petrodollar inflow management; Western sanctions secondary risk monitoring",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Danmarks Nationalbank",
+    "domain": "nationalbanken.dk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "DKK (pegged to EUR); North Sea oil revenue fiscal statistics; energy price inflation tracking; Danish government pension fund (ATP) energy holdings",
+    "agreement_count": 4
+  },
+  {
+    "entity": "National Bank of Belgium",
+    "domain": "nbb.be",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "EUR zone; ECB primary; Belgian energy subsidy cost tracking; NBB financial stability energy sector exposure",
+    "agreement_count": 4
+  },
+  {
+    "entity": "National Bank of Poland",
+    "domain": "nbp.pl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "PLN/EUR/USD; Polish energy import bill vs current account; NBP rate = macro demand signal; Russian asset freeze coordination",
+    "agreement_count": 4
+  },
+  {
+    "entity": "National Energy Administration (NEA)",
+    "domain": "nea.gov.cn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "NDRC as pricing/SPR expansion",
+    "agreement_count": 4
+  },
+  {
+    "entity": "National Environment and Planning Agency",
+    "domain": "nepa.gov.jm",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "NFE FSRU Old Harbour Bay EIA; Petrojam Kingston refinery compliance; Kingston Harbour marine environment",
+    "agreement_count": 4
+  },
+  {
+    "entity": "NGX",
+    "domain": "ngxgroup.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "NHC",
+    "domain": "nhc.noaa.gov",
+    "type": "official",
+    "category": "weather",
+    "notes": "Gulf shut-in risk; tropical advisories",
+    "agreement_count": 4
+  },
+  {
+    "entity": "NIOC",
+    "domain": "nioc.ir",
+    "type": "official",
+    "category": "noc",
+    "notes": "Kharg Island loading; export strategy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "NOAA",
+    "domain": "noaa.gov",
+    "type": "official",
+    "category": "weather",
+    "notes": "US weather/climate parent",
+    "agreement_count": 4
+  },
+  {
+    "entity": "NOPSEMA",
+    "domain": "nopsema.gov.au",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "NOPTA (titles) as expansion; NWS/Gorgon/Wheatstone",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Nord Pool",
+    "domain": "nordpoolgroup.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Nordic/European power spot; gas demand proxy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Norges Bank",
+    "domain": "norges-bank.no",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Also manages GPFG sovereign fund",
+    "agreement_count": 4
+  },
+  {
+    "entity": "NSTA (UK North Sea)",
+    "domain": "nstauthority.co.uk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "North Sea decline; windfall tax (EPL)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "NUPRC",
+    "domain": "nuprc.gov.ng",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "NMDPRA (downstream) as expansion",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Oil",
+    "domain": "oil.gov.iq",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Federal production policy; OPEC+ compliance",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ONGC",
+    "domain": "ongcindia.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "IOC/BPCL/HPCL as expansion; Jamnagar private",
+    "agreement_count": 4
+  },
+  {
+    "entity": "OPEC",
+    "domain": "opec.org",
+    "type": "official",
+    "category": "social",
+    "notes": "MOMR; production compliance; OPEC+ decisions",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ORLEN",
+    "domain": "orlen.pl",
+    "type": "official",
+    "category": "noc",
+    "notes": "Lotos/PGNiG merger; Płock refinery; de-Russification",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Panama Canal Authority (ACP)",
+    "domain": "pancanal.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Draft/transit restrictions (drought)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "People's Bank of China",
+    "domain": "pbc.gov.cn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "CNY/USD rate affects crude import cost; PBOC stimulus signals = demand outlook; CNY crude settlement (Russia/Iran)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "PDVSA",
+    "domain": "pdvsa.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Official data unreliable — cross-check OPEC secondary + AIS (Jose)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Pemex",
+    "domain": "pemex.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Declining production + debt; Maya heavy; Dos Bocas",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Pertamina",
+    "domain": "pertamina.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Cilacap refining; Bontang LNG",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Petrobras",
+    "domain": "petrobras.com.br",
+    "type": "official",
+    "category": "noc",
+    "notes": "Pre-salt Búzios/Tupi; politically-driven pricing",
+    "agreement_count": 4
   },
   {
     "entity": "Petronas",
     "domain": "petronas.com",
     "type": "official",
-    "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=38",
-    "source_agent": "composer-2-5"
+    "category": "noc",
+    "notes": "Dual role operator+PSC regulator; Bintulu LNG",
+    "agreement_count": 4
   },
   {
-    "entity": "Novatek",
-    "domain": "novatek.ru",
+    "entity": "Petroperú",
+    "domain": "petroperu.com.pe",
+    "type": "official",
+    "category": "noc",
+    "notes": "Talara refinery troubles",
+    "agreement_count": 4
+  },
+  {
+    "entity": "PMO maritime traffic",
+    "domain": "pmo.ir",
     "type": "official",
     "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=39",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "DP World",
-    "domain": "dpworld.com",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=40",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "ZATCA (Customs)",
-    "domain": "zatca.gov.sa",
-    "type": "official",
-    "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=41",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "TPAO (Turkish Petroleum)",
-    "domain": "tpao.gov.tr",
-    "type": "official",
-    "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=42",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Saldanha Bay terminal",
-    "domain": "tnpa.co.za",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=43",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Suez Canal Economic Zone / Ports",
-    "domain": "sczone.gov.eg",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=44",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Rosmorport",
-    "domain": "rosmorport.ru",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=45",
-    "source_agent": "composer-2-5"
-  },
-  {
-    "entity": "Port of Corpus Christi",
-    "domain": "portofcc.com",
-    "type": "official",
-    "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=46",
-    "source_agent": "composer-2-5"
+    "notes": "Kharg / Bandar Abbas / Assaluyeh throughput",
+    "agreement_count": 4
   },
   {
     "entity": "Port Houston",
     "domain": "porthouston.com",
     "type": "official",
     "category": "infrastructure",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=47",
-    "source_agent": "composer-2-5"
+    "notes": "PADD3 core",
+    "agreement_count": 4
   },
   {
-    "entity": "Ministry of Defense (Royal Saudi Navy)",
-    "domain": "mod.gov.sa",
+    "entity": "Port Authority of Jamaica",
+    "domain": "portjam.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "New Fortress LNG",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Port of Antwerp-Bruges",
+    "domain": "portofantwerpbruges.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "ARA petchem; Zeebrugge LNG",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Port of Corpus Christi",
+    "domain": "portofcc.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Largest US crude export",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Port of Rotterdam Authority",
+    "domain": "portofrotterdam.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Largest EU oil port; ARA hub",
+    "agreement_count": 4
+  },
+  {
+    "entity": "PetroVietnam (PVN)",
+    "domain": "pvn.vn",
+    "type": "official",
+    "category": "noc",
+    "notes": "Dung Quat/Nghi Son; rising LNG",
+    "agreement_count": 4
+  },
+  {
+    "entity": "QatarEnergy",
+    "domain": "qatarenergy.qa",
+    "type": "official",
+    "category": "noc",
+    "notes": "LNG; North Field expansion; Ras Laffan",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Qatar Central Bank",
+    "domain": "qcb.gov.qa",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=48",
-    "source_agent": "composer-2-5"
+    "notes": "QAR peg to USD; manages Qatar Investment Authority petrodollar flows",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Reserve Bank of Australia",
+    "domain": "rba.gov.au",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "AUD/USD correlation with commodity prices; RBA rate = domestic gas demand proxy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Reserve Bank of India",
+    "domain": "rbi.org.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Rupee settlement for Russian oil",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Energy and Non-Renewable Natural Resources",
+    "domain": "recursosyenergia.gob.ec",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Ex-OPEC",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Rosnedra (Subsoil Use Agency)",
+    "domain": "rosnedra.gov.ru",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Licensing / subsoil use",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Rosprirodnadzor",
+    "domain": "rpn.gov.ru",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Environmental oversight",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Saudi Central Bank (SAMA)",
+    "domain": "sama.gov.sa",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "FX / sanctions linkage",
+    "agreement_count": 4
+  },
+  {
+    "entity": "State Bank of Pakistan",
+    "domain": "sbp.org.pk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "TIER-1 Pakistan signal: SBP FX reserves ($9-14B range) = payment capacity for LNG/crude imports; IMF programme adherence = energy import continuity signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "State Bank of Vietnam",
+    "domain": "sbv.gov.vn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "VND; oil revenue FX management; PVN USD-denominated crude export settlement; LNG import FX exposure",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Supreme Council for the Environment",
+    "domain": "sce.gov.bh",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "BAPCO Sitra refinery EIA; BMP environmental compliance; Arabian Gulf marine environment",
+    "agreement_count": 4
+  },
+  {
+    "entity": "SGX",
+    "domain": "sgx.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Freight/fuel derivatives",
+    "agreement_count": 4
+  },
+  {
+    "entity": "SKK Migas",
+    "domain": "skkmigas.go.id",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "TIER-1 Indonesia upstream signal; daily/monthly production data; ICP benchmark coordination; Masela LNG, Natuna Sea block awards",
+    "agreement_count": 4
+  },
+  {
+    "entity": "SOCAR",
+    "domain": "socar.az",
+    "type": "official",
+    "category": "noc",
+    "notes": "ACG, Shah Deniz; BTC/TANAP; EU gas diversification",
+    "agreement_count": 4
+  },
+  {
+    "entity": "SodM (State Supervision of Mines)",
+    "domain": "sodm.nl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Groningen closure 2023/24",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Sonangol",
+    "domain": "sonangol.co.ao",
+    "type": "official",
+    "category": "noc",
+    "notes": "Declining deepwater (Girassol, Kaombo)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "US Dept of State",
+    "domain": "state.gov",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Sanctions coordination; enforcement via OFAC (Treasury)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Suez Canal Authority (SCA)",
+    "domain": "suezcanal.gov.eg",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Transit stats, toll changes, disruptions",
+    "agreement_count": 4
+  },
+  {
+    "entity": "SUNAT (Customs)",
+    "domain": "sunat.gob.pe",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Peru LNG export cargo declarations (Pampa Melchorita); crude imports (Talara); Camisea condensate export documentation",
+    "agreement_count": 4
+  },
+  {
+    "entity": "TANAP (Trans-Anatolian Pipeline)",
+    "domain": "tanap.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Shah Deniz gas → TAP → EU",
+    "agreement_count": 4
+  },
+  {
+    "entity": "CBRT",
+    "domain": "tcmb.gov.tr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "TRY/USD; Turkish inflation (energy pass-through); TCMB rate = macro demand signal; Turkey FX reserves management",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ICE Endex (Amsterdam)",
+    "domain": "theice.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Murban benchmark; crude pricing here not ADX",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Norwegian Customs (Tolletaten)",
+    "domain": "toll.no",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Norwegian crude and gas export statistics; AES system data",
+    "agreement_count": 4
+  },
+  {
+    "entity": "TPAO",
+    "domain": "tpao.gov.tr",
+    "type": "official",
+    "category": "noc",
+    "notes": "Sakarya Black Sea gas; BOTAS (botas.gov.tr) as expansion",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Kozmino tank storage",
+    "domain": "transneft.ru",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "ESPO to Asia",
+    "agreement_count": 4
+  },
+  {
+    "entity": "UKMTO (Maritime Trade Ops)",
+    "domain": "ukmto.org",
+    "type": "official",
+    "category": "shipping",
+    "notes": "Real-time incident/GPS jamming",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "um.dk",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Danish Straits Russian crude monitoring; EU Russia sanctions coordination; Baltic Sea security (NordStream sabotage precedent); Greenland Arctic sovereignty",
+    "agreement_count": 4
+  },
+  {
+    "entity": "UBA – Umweltbundesamt",
+    "domain": "umweltbundesamt.de",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "German refinery emissions (Leuna, Gelsenkirchen, Karlsruhe, Schwedt); LNG FSRU environmental compliance; emissions trading (ETS) data",
+    "agreement_count": 4
+  },
+  {
+    "entity": "UNCTAD",
+    "domain": "unctad.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Review of Maritime Transport (Tier 2)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "US Coast Guard",
+    "domain": "uscg.mil",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Port closures (hurricane); NAVCEN in global shipping",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Vietnam Maritime Administration",
+    "domain": "vinamarine.gov.vn",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Thi Vai LNG",
+    "agreement_count": 4
+  },
+  {
+    "entity": "WMO",
+    "domain": "wmo.int",
+    "type": "official",
+    "category": "weather",
+    "notes": "Global meteorological coordination (Tier 2)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ZATCA (Customs)",
+    "domain": "zatca.gov.sa",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Customs / export data",
+    "agreement_count": 4
+  },
+  {
+    "entity": "German Customs",
+    "domain": "zoll.de",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude and LNG import declarations; Hamburg/Rostock/Brunsbüttel terminal cargo; BAFA (Federal Office for Economic Affairs) energy import data sub-feed",
+    "agreement_count": 4
+  },
+  {
+    "entity": "National Customs Service",
+    "domain": "aduana.cl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude import declarations; LNG import cargo (GNL Quintero + Mejillones); copper export data (energy demand proxy); methanol export (Punta Arenas)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Chilean Navy",
+    "domain": "armada.cl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Pacific coast patrol; GNL Quintero + Mejillones LNG terminal security; Magellan Strait transit monitoring (key LNG shipping route); Chilean Antarctic territorial waters",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Colombian Navy",
+    "domain": "armada.mil.co",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Caribbean + Pacific coast patrol; Cartagena/Coveñas port security; anti-drug ops proximity to crude export routes; verify armada.mil.co",
+    "agreement_count": 4
+  },
+  {
+    "entity": "B3 (Brasil Bolsa Balcão)",
+    "domain": "b3.com.br",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2; oil Brent-linked",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Venezuela",
+    "domain": "bcv.org.ve",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Hyperinflation; frozen US assets; USD/VES rate = economic collapse proxy; sanctions financial channel",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bolsa Mexicana de Valores (BMV)",
+    "domain": "bmv.com.mx",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "cancilleria.gob.ec",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "China debt renegotiation (CNPC/CNOOC access); Noboa government US re-alignment; OPEC exit geopolitics; Yasuní international pressure",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Customs and Excise Division",
+    "domain": "customs.gov.tt",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Atlantic LNG cargo export declarations; methanol + ammonia (Point Lisas) export documentation; Brighton crude terminal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "State Customs Service",
+    "domain": "customs.gov.ua",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Wartime trade data partially restricted; crude import declarations (Druzhba residual); LNG import via reverse flow documentation; verify customs.gov.ua wartime status",
+    "agreement_count": 4
+  },
+  {
+    "entity": "State Customs Committee",
+    "domain": "customs.uz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "CAGP gas transit declarations; LPG export data; Fergana Valley refinery product exports",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Zhengzhou Commodity Exchange",
+    "domain": "czce.com.cn",
+    "type": "official",
+    "category": "exchange",
+    "notes": "PTA, methanol contracts",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "diplomatie.gouv.sn",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Senegal pro-Western; GTA cross-border governance with Mauritania (OMRG); France historically dominant (now diversifying); Faye 2024 = energy contract renegotiation signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Department of Environment",
+    "domain": "doe.gov.bd",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Moheshkhali FSRU EIA; Bay of Bengal offshore EIA; Chittagong refinery (ERL) compliance; cyclone disaster risk",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Department of Environment",
+    "domain": "doe.ir",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Verify domain via /source-discover",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Dubai Customs",
+    "domain": "dubaicustoms.gov.ae",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Re-export hub",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Environment Authority",
+    "domain": "ea.gov.om",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Sohar and Duqm refinery compliance; verify ea.gov.om belongs to Environment Authority",
+    "agreement_count": 4
+  },
+  {
+    "entity": "EEAA",
+    "domain": "eeaa.gov.eg",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Cairo refinery compliance; Ain Sokhna industrial zone environmental monitoring",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Egyptian Exchange (EGX)",
+    "domain": "egx.com.eg",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of the Environment",
+    "domain": "env.go.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Refinery emissions standards; LNG regasification environmental permits; carbon credits",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Euronext Paris",
+    "domain": "euronext.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial; Norwegian gas trades on TTF/hubs",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Federal Board of Revenue (Customs)",
+    "domain": "fbr.gov.pk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude import declarations; Karachi Port Trust cargo documentation; LNG FSRU Port Qasim arrivals",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign and CARICOM Affairs",
+    "domain": "foreign.gov.tt",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "TT-Venezuela Columbus Basin gas relations; US-TT LNG diplomacy; CARICOM energy cooperation; bpTT UK bilateral anchor",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Norwegian Coast Guard (Kystvakten)",
+    "domain": "forsvaret.no",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Verify specific Kystvakten page",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Indonesia Stock Exchange (IDX)",
+    "domain": "idx.co.id",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Kazakhstan Stock Exchange (KASE)",
+    "domain": "kase.kz",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Korea Exchange (KRX)",
+    "domain": "krx.co.kr",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial; Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs and Foreign Trade",
+    "domain": "mfaft.gov.jm",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "PetroCaribe winding down; US-JM energy relations (NFE); CARICOM LNG diplomacy; Venezuela PDVSA Petrojam stake",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "minfor.gov.gy",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Essequibo dispute with VE",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mirex.gov.ao",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Verify domain",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.bd",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "India-Bangladesh power interconnect; Myanmar Bay of Bengal boundary; US Chevron Bibiyana relations; LNG supplier diversification diplomacy",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Muscat Stock Exchange",
+    "domain": "msx.om",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2; Oman crude via DME",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Nigerian Navy",
+    "domain": "navy.mil.ng",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude theft interdiction = supply signal",
+    "agreement_count": 4
+  },
+  {
+    "entity": "National Board of Revenue (Customs)",
+    "domain": "nbr.gov.bd",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "LNG import FSRU cargo declarations; Chittagong port trade data; product import documentation",
+    "agreement_count": 4
+  },
+  {
+    "entity": "National Center for Environmental Compliance (NCEC)",
+    "domain": "ncec.gov.sa",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Verify domain via /source-discover",
+    "agreement_count": 4
+  },
+  {
+    "entity": "NEA (National Environment Agency)",
+    "domain": "nea.gov.sg",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Jurong Island industrial complex air quality; Shell Bukom and ExxonMobil environmental compliance; Singapore carbon tax (SGD 25/tonne 2024)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Nigerian Ports Authority",
+    "domain": "nigerianports.gov.ng",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Bonny, Brass, Escravos, Qua Iboe port authority; VLCC loading scheduling",
+    "agreement_count": 4
+  },
+  {
+    "entity": "NNPC Limited",
+    "domain": "nnpcgroup.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Bonny, Forcados, Qua Iboe; frequent force majeure",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Novatek",
+    "domain": "novatek.ru",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Yamal LNG Trains 1–3 ~16.5 mtpa (Novatek 50.1%+TotalEnergies 20%+CNPC 20%+Silk Road Fund 9.9%); Arctic LNG 2 sanctioned (2023); Sabetta port ice-breaking; summer → Atlantic diversions; winter → NSR+ARC7 tankers to Asia",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Uzbekneftegaz JSC",
+    "domain": "ung.uz",
+    "type": "official",
+    "category": "noc",
+    "notes": "Net gas importer from Russia since 2023 (role reversal)",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bahrain Bourse",
+    "domain": "bahrainbourse.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Bolsa de Valores de Colombia",
+    "domain": "bvc.com.co",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial; Tier 2",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Libya",
+    "domain": "cbl.gov.ly",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Oil revenue distribution dispute; CBL split",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Central Bank of Sudan",
+    "domain": "cbos.gov.sd",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "War",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Guyana Defence Force Coast Guard",
+    "domain": "gdf.mil.gy",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Essequibo/VE tension",
+    "agreement_count": 4
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.gov.tm",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Verify domain",
+    "agreement_count": 4
+  },
+  {
+    "entity": "SENIAT",
+    "domain": "seniat.gob.ve",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Unstable government site",
+    "agreement_count": 4
+  },
+  {
+    "entity": "ACER",
+    "domain": "acer.europa.eu",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "EU energy regulators cooperation agency",
+    "agreement_count": 3
+  },
+  {
+    "entity": "AD Ports Group",
+    "domain": "adports.ae",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Fujairah as Phase 3 geo target",
+    "agreement_count": 3
+  },
+  {
+    "entity": "ANLA",
+    "domain": "anla.gov.co",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Reficar Cartagena environmental compliance; pipeline EIA (Cano Limón, OCENSA); fracking moratorium enforcement",
+    "agreement_count": 3
+  },
+  {
+    "entity": "ANPG",
+    "domain": "anpg.co.ao",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Concessionaire; licensing rounds",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Hydrocarbons Regulation and Control Agency (ARCH)",
+    "domain": "arch.gob.ec",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Block licensing; ITT Block 43 suspension orders; Repsol Tivacuno; Andes Petroleum (CNPC+CNOOC) Tarapoa; ARCH force majeure declarations = primary supply disruption signal",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Bakamla (Coast Guard)",
+    "domain": "bakamla.go.id",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Sunda/Lombok straits",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Baltic Exchange",
+    "domain": "balticexchange.com",
+    "type": "official",
+    "category": "shipping",
+    "notes": "Freight indices (BDTI/BCTI tanker)",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Customs and Excise (DJBC)",
+    "domain": "beacukai.go.id",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude import declarations; LNG cargo export documentation from Bontang and Tangguh",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Dutch Customs",
+    "domain": "belastingdienst.nl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Bureau of Meteorology",
+    "domain": "bom.gov.au",
+    "type": "official",
+    "category": "weather",
+    "notes": "Australian LNG operations; cyclone season NW Shelf",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Borsa Istanbul",
+    "domain": "borsaistanbul.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Verify active energy futures; Turkey TurkStream linkage",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Borsa Italiana",
+    "domain": "borsaitaliana.it",
+    "type": "official",
+    "category": "exchange",
+    "notes": "ENI equity signal (major market cap); SNAM listed; Saipem (oilfield services); Italian energy sector proxy",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ceyhan tank storage",
+    "domain": "botas.gov.tr",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "BTC + TANAP western terminus Turkey; Turkish gas grid (Russian TurkStream); BOTAŞ = Turkey's pipeline operator = context for Bosphorus vs pipeline transit split",
+    "agreement_count": 3
+  },
+  {
+    "entity": "BSEE (offshore safety)",
+    "domain": "bsee.gov",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "GoM platform safety/shut-in; BOEM/FERC as expansion",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Bundesnetzagentur (energy regulator)",
+    "domain": "bundesnetzagentur.de",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Storage fill, FSRU send-out — highest value data; THE hub expansion",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Environment and Climate Change Canada",
+    "domain": "canada.ca",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Verify exact ECCC sub-path",
+    "agreement_count": 3
+  },
+  {
+    "entity": "CAPP",
+    "domain": "capp.ca",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Canadian crude + NatGas output; oil sands data",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Central Bank of Iraq",
+    "domain": "cbi.iq",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "USD auctions / sanctions linkage",
+    "agreement_count": 3
+  },
+  {
+    "entity": "CBI – Central Bank of Iran",
+    "domain": "cbi.ir",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "FX / oil revenue / sanctions linkage",
+    "agreement_count": 3
+  },
+  {
+    "entity": "CBIC / DGCIS (trade stats)",
+    "domain": "cbic.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Russian Urals discount signal",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Customs and Border Protection (CBP)",
+    "domain": "cbp.gov",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Export controls via BIS; LNG auth via DOE FECM/FERC",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Combined Maritime Forces (CMF)",
+    "domain": "combinedmaritimeforces.com",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "CTF-151 counter-piracy + CTF-153 Red Sea security; multinational naval escort; press releases = Houthi engagement signal; Operation Prosperity Guardian coordination",
+    "agreement_count": 3
+  },
+  {
+    "entity": "CRE (energy regulator)",
+    "domain": "cre.fr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Environment",
+    "domain": "csb.gov.tr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Tupras Kirikkale, Izmit, Aliaga, Batman refineries; BOTAS pipeline environmental compliance; Sakarya offshore EIA",
+    "agreement_count": 3
+  },
+  {
+    "entity": "General Admin of Customs (GACC)",
+    "domain": "customs.gov.cn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Key for Russia/Iran crude destination data",
+    "agreement_count": 3
+  },
+  {
+    "entity": "DIMAR / Maritime Authority",
+    "domain": "dimar.mil.co",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "DWD",
+    "domain": "dwd.de",
+    "type": "official",
+    "category": "weather",
+    "notes": "European gas demand; Germany heating season",
+    "agreement_count": 3
+  },
+  {
+    "entity": "EBN – Energy Beheer Nederland",
+    "domain": "ebn.nl",
+    "type": "official",
+    "category": "noc",
+    "notes": "State E&P participant",
+    "agreement_count": 3
+  },
+  {
+    "entity": "EU Sanctions (Russian gas linkage)",
+    "domain": "ec.europa.eu",
+    "type": "official",
+    "category": "social",
+    "notes": "EU 6th sanctions package (Dec 2022) pipeline crude exemption for landlocked CEE states; Hungary/Slovakia/Czech exemptions; derogation review = supply uncertainty signal",
+    "agreement_count": 3
+  },
+  {
+    "entity": "FPS Economy",
+    "domain": "economie.fgov.be",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Belgian energy policy; LNG import framework; Fluxys TSO regulation; nuclear lifetime extension (Doel 4 + Tihange 3 to 2035) = LNG demand signal",
+    "agreement_count": 3
+  },
+  {
+    "entity": "EU Energy",
+    "domain": "energy.ec.europa.eu",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "EU energy policy, sanctions, storage mandates",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Energy & Mines",
+    "domain": "energy.gov.dz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Algeria OPEC+ quota coordination; Sonatrach gas pipeline contracts to EU",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Energy Institute",
+    "domain": "energyinst.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Annual Statistical Review (formerly BP); global benchmark",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Cushing tank farm terminals",
+    "domain": "enterpriseproducts.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Echo pipeline (Permian→Houston); VLCC Battleground dock ~1.2 mb/d; LPG propane/butane largest US exporter; Mont Belvieu fractionation; earnings = Permian export outlook",
+    "agreement_count": 3
+  },
+  {
+    "entity": "EPA Guyana",
+    "domain": "epaguyana.org",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Stabroek FPSO environmental permits; oil spill risk (shallow water); ExxonMobil EIA compliance; EPA Guyana approval = FPSO deployment gate",
+    "agreement_count": 3
+  },
+  {
+    "entity": "EPDK (Energy Market Regulator)",
+    "domain": "epdk.gov.tr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "EPDK regulates Turkish energy market; upstream and downstream licensing; Tupras (Turkish refining, ~28 mb/y) oversight",
+    "agreement_count": 3
+  },
+  {
+    "entity": "FuelsEurope",
+    "domain": "fuelseurope.eu",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "EU refinery utilisation; product supply statistics",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Gabon Oil Company (GOC)",
+    "domain": "gabonoil.ga",
+    "type": "official",
+    "category": "noc",
+    "notes": "State NOC; equity in Gabon blocks; TotalEnergies + Perenco = operators; Rabi, Torpido, Gamba fields; Dussafu offshore (BW Energy); GOC OSP = Gabon blend benchmark",
+    "agreement_count": 3
+  },
+  {
+    "entity": "GIIGNL",
+    "domain": "giignl.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "LNG importers group; annual report",
+    "agreement_count": 3
+  },
+  {
+    "entity": "ASEA",
+    "domain": "gob.mx/asea",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Pemex refinery safety compliance; offshore platform inspections; Dos Bocas environmental permits",
+    "agreement_count": 3
+  },
+  {
+    "entity": "CNH (Hydrocarbons Commission)",
+    "domain": "gob.mx/cnh",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Weakened by reforms; data value may decline",
+    "agreement_count": 3
+  },
+  {
+    "entity": "MINEM (Ministry of Energy and Mines)",
+    "domain": "gob.pe/minem",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Itamaraty (Foreign Affairs)",
+    "domain": "gov.br/mre",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "BRICS energy diplomacy; Venezuela/Cuba relations; US sanctions alignment",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "government.nl",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Netherlands EU sanctions compliance; Dutch hosting of ICJ + ICC = international energy dispute venue; Shell/TotalEnergies Dutch parent domicile implications",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Turkish Customs",
+    "domain": "gumruk.gov.tr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude import declarations; Ceyhan crude re-export documentation; Turkish Straits transit cargo",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Heritage Petroleum",
+    "domain": "heritagepetroleum.co.tt",
+    "type": "official",
+    "category": "noc",
+    "notes": "Legacy onshore + Trinmar shallow offshore (~50 kb/d crude+condensate); gas supply via bpTT → NGC → Atlantic LNG chain; Heritage OSP = TT crude benchmark",
+    "agreement_count": 3
+  },
+  {
+    "entity": "IAEA",
+    "domain": "iaea.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Nuclear; Iran JCPOA / sanctions linkage",
+    "agreement_count": 3
+  },
+  {
+    "entity": "IBAMA",
+    "domain": "ibama.gov.br",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Equatorial Margin offshore licence blocking (2022–2024); IBAMA decision = long-term supply gate",
+    "agreement_count": 3
+  },
+  {
+    "entity": "International Chamber of Shipping",
+    "domain": "ics-shipping.org",
+    "type": "official",
+    "category": "shipping",
+    "notes": "Industry sanctions compliance positions; port restrictions",
+    "agreement_count": 3
+  },
+  {
+    "entity": "IEF",
+    "domain": "ief.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Producer-consumer dialogue; hosts JODI",
+    "agreement_count": 3
+  },
+  {
+    "entity": "IMF",
+    "domain": "imf.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Commodity price context (Tier 2)",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Dept of Industry, Science & Resources",
+    "domain": "industry.gov.au",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "ADGSM export mechanism",
+    "agreement_count": 3
+  },
+  {
+    "entity": "INTERTANKO",
+    "domain": "intertanko.com",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Tanker owners; transit risk advisories",
+    "agreement_count": 3
+  },
+  {
+    "entity": "IRICA (Iran Customs)",
+    "domain": "irica.gov.ir",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Export licensing; sanitised data under sanctions; destination obfuscation",
+    "agreement_count": 3
+  },
+  {
+    "entity": "ISPRA",
+    "domain": "isprambiente.gov.it",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "ENI Sannazzaro, Taranto, Porto Marghera refinery compliance; Piombino FSRU environmental monitoring; Ravenna offshore EIA",
+    "agreement_count": 3
+  },
+  {
+    "entity": "JODI",
+    "domain": "jodidata.org",
+    "type": "data_feed",
+    "category": "international_agency",
+    "notes": "Joint Organisations Data Initiative — oil & gas balances",
+    "agreement_count": 3
+  },
+  {
+    "entity": "JPX / TOCOM",
+    "domain": "jpx.co.jp",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Japan energy futures",
+    "agreement_count": 3
+  },
+  {
+    "entity": "KNMI",
+    "domain": "knmi.nl",
+    "type": "official",
+    "category": "weather",
+    "notes": "ARA region, North Sea; Rotterdam port weather",
+    "agreement_count": 3
+  },
+  {
+    "entity": "KNOC",
+    "domain": "knoc.co.kr",
+    "type": "official",
+    "category": "noc",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Karachi Port Trust",
+    "domain": "kpt.gov.pk",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Primary Pakistan crude/LNG import port; VLCC Karachi South Asia hub; Port Qasim (industrial) = Engro FSRU terminal",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Peruvian Navy",
+    "domain": "marina.mil.pe",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Peru LNG Pampa Melchorita offshore security; Callao port patrol; Pacific coast SLOC; Peru-Ecuador maritime boundary",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Norwegian Meteorological Institute",
+    "domain": "met.no",
+    "type": "official",
+    "category": "weather",
+    "notes": "Hammerfest LNG, NCS operations; North Sea storm",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.gov.ir",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "JCPOA status proxy; Hormuz threat rhetoric; tier-1 geopolitical signal for Brent",
+    "agreement_count": 3
+  },
+  {
+    "entity": "MIBGAS",
+    "domain": "mibgas.es",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Iberian gas benchmark",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "minenergy.gov.az",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Azerbaijan energy export policy; BTC/TANAP governance coordination; Sakarya-adjacent Southern Gas Corridor expansion approvals",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "minenergy.uz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Uzbekistan energy reform (Mirziyoyev era); IOC entry approvals (TotalEnergies, Shell, Lukoil); upstream licensing coordination",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Mines and Hydrocarbons",
+    "domain": "mmh.gob.gq",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "OPEC member (2017+); upstream licensing; GEPetrol oversight; EGLNG governance",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Natural Resources and Environment",
+    "domain": "mnre.go.th",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Oil and Environment",
+    "domain": "moe.gov.bh",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "GCC OPEC+ associate; BAPCO oversight; Abu Saafa shared field governance; BMP expansion policy",
+    "agreement_count": 3
+  },
+  {
+    "entity": "MOEX (Urals marker)",
+    "domain": "moex.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Urals/ESPO domestic Russian benchmark",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.iq",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "US presence, Iran influence",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Petroleum and Natural Gas",
+    "domain": "mopng.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "PPAC (ppac.gov.in) as data expansion",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Cancillería – Ministry of Foreign Affairs",
+    "domain": "mppre.gob.ve",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Key for sanctions-relief / license signal",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Maritime Safety Admin (MSA)",
+    "domain": "msa.gov.cn",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Qingdao/Ningbo/Dalian",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Science, Energy and Technology",
+    "domain": "mset.gov.jm",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "USCG NAVCEN",
+    "domain": "navcen.uscg.gov",
+    "type": "official",
+    "category": "shipping",
+    "notes": "US navigation advisories",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Nilepet (South Sudan)",
+    "domain": "nilepet.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "State NOC; Blocks 3/7 (Dar Petroleum: CNPC 41%+Petronas 40%+Nilepet 8%); Blocks 1/2/4 (ONGC+Petronas+CNPC); ~150 kb/d; Dar Blend OSP = SS crude benchmark; 100% exports via Sudan GNPOC pipeline",
+    "agreement_count": 3
+  },
+  {
+    "entity": "NOC – National Oil Corporation",
+    "domain": "noc.ly",
+    "type": "official",
+    "category": "noc",
+    "notes": "Sole reliable source; Es Sider/Ras Lanuf/Sharara force majeure",
+    "agreement_count": 3
+  },
+  {
+    "entity": "OCIMF",
+    "domain": "ocimf.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Tanker safety; war-risk / terminal guidance",
+    "agreement_count": 3
+  },
+  {
+    "entity": "OECD",
+    "domain": "oecd.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Macro / trade context (Tier 2)",
+    "agreement_count": 3
+  },
+  {
+    "entity": "OGDC (Oil & Gas Development Company)",
+    "domain": "ogdcl.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "OQ",
+    "domain": "oq.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "State holding (merged Oman Oil + Orpic 2019); manages Oman LNG stakes; OQ Trading sets OSPs for DME settlement",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Oslo Bors",
+    "domain": "oslobors.no",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Equinor, Aker BP listed; NCS E&P sector sentiment; Norwegian shipping equities",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Port Authority of Trinidad and Tobago",
+    "domain": "patnt.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Point Fortin LNG jetties (Atlantic LNG 4 trains); Brighton crude terminal; Port of Spain general cargo; LNG carrier scheduling = HH parity signal",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Petrojam (refining) / PCJ",
+    "domain": "pcj.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Upstream exploration licenses (no commercial finds); energy security diversification; biofuel mandate; solar/LNG transition oversight; NFE relationship management",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Petroleum Development Oman (PDO)",
+    "domain": "pdo.co.om",
+    "type": "official",
+    "category": "noc",
+    "notes": "OQ as expansion; Mina al-Fahal loading",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Perupetro",
+    "domain": "perupetro.com.pe",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Camisea gas; Peru LNG export",
+    "agreement_count": 3
+  },
+  {
+    "entity": "BAPEX / Petrobangla",
+    "domain": "petrobangla.org.bd",
+    "type": "official",
+    "category": "noc",
+    "notes": "Declining domestic gas",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Petroleum and Mineral Resources",
+    "domain": "petroleum.gov.eg",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Egypt OPEC observer; LNG export policy (Idku/Damietta); domestic gas allocation vs export balance",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Port of Gdańsk / Gdynia",
+    "domain": "portgdansk.pl",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Druzhba replacement crude import",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Port of Baku",
+    "domain": "portofbaku.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Middle Corridor transit",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Puertos del Estado",
+    "domain": "puertos.es",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "6 LNG regasification terminals (~40% EU capacity); Barcelona, Huelva, Cartagena, Sagunto, Bilbao, Mugardos; Algeciras Bay = largest EU container port + Gibraltar Strait VLCC transit hub",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Energy (OED)",
+    "domain": "regjeringen.no",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Climate & Green Growth",
+    "domain": "rijksoverheid.nl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Groningen gas field closure policy (2024); Dutch LNG diversification; Rotterdam Gate terminal expansion; North Sea licensing policy",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Royal Oman Police Coast Guard",
+    "domain": "rop.gov.om",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Customs under ROP; Mina al-Fahal and Salalah port documentation",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Rosmorport",
+    "domain": "rosmorport.ru",
+    "type": "official",
+    "category": "shipping",
+    "notes": "Novorossiysk / Primorsk / Ust-Luga / Kozmino",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Rosneft",
+    "domain": "rosneft.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Largest producer; Transneft/Gazprom/Novatek as expansion sub-entities",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "rree.gob.pe",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Peru LNG export diplomacy (Spain, Mexico, South Korea, Japan buyers); Bolivia gas relations; IEA associate membership",
+    "agreement_count": 3
+  },
+  {
+    "entity": "SAT / Aduanas",
+    "domain": "sat.gob.mx",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude export documentation; Pemex PMI cargo declarations",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Sonatrach",
+    "domain": "sonatrach.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "EU gas (Medgaz/Transmed); Hassi R'Mel; Arzew/Skikda LNG",
+    "agreement_count": 3
+  },
+  {
+    "entity": "SPIMEX",
+    "domain": "spimex.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Commodity exchange — domestic fuel / export benchmark (not MOEX)",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Israel Tax Authority (Customs)",
+    "domain": "taxes.gov.il",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Gas export declarations via EMG sub-sea pipeline; product exports via Haifa + Ashdod; TAMAR → Egypt Arish pipeline documentation",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Trade (Russian oil transit)",
+    "domain": "ticaret.gov.tr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "TMX Group",
+    "domain": "tmx.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "NGX (AECO gas hub) as expansion",
+    "agreement_count": 3
+  },
+  {
+    "entity": "TOCOM / Osaka Exchange",
+    "domain": "tocom.or.jp",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Energy futures Japan; Dubai crude",
+    "agreement_count": 3
+  },
+  {
+    "entity": "OFAC (Treasury)",
+    "domain": "treasury.gov",
+    "type": "official",
+    "category": "social",
+    "notes": "New OFAC designations = shadow fleet reduction; waiver grants = supply increase; SDN expansion = P&I withdrawal = vessel decommission from shadow fleet; US election cycle = enforcement intensity signal",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Energy Regulatory Office (URE)",
+    "domain": "ure.gov.pl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Polish domestic gas licensing; URE gas tariff decisions; PKN Orlen upstream (Norway North Sea + domestic ~18 kb/d)",
+    "agreement_count": 3
+  },
+  {
+    "entity": "NOAA / NWS Houston",
+    "domain": "weather.gov",
+    "type": "official",
+    "category": "weather",
+    "notes": "Forecasts, warnings",
+    "agreement_count": 3
+  },
+  {
+    "entity": "SAWS (South African Weather Service)",
+    "domain": "weathersa.co.za",
+    "type": "official",
+    "category": "weather",
+    "notes": "Cape Storms (roaring forties) = Saldanha port closure; winter storm system tracking; Table Bay anchorage conditions; Cape Point weather extremes",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Agenzia delle Dogane",
+    "domain": "adm.gov.it",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude import declarations; Trieste, Augusta, Brindisi terminal cargo; TAP gas import metering",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Boursa Kuwait",
+    "domain": "boursakuwait.com.kw",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial, Tier 2",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Royal Netherlands Navy",
+    "domain": "defensie.nl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "North Sea patrol; North Sea offshore platform security; Den Helder naval base; verify defensie.nl/marine sub-path",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Directorate General of Hydrocarbons",
+    "domain": "dghindia.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Upstream block awards (OALP rounds); KG Basin deep water monitoring; production data validation",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Customs Senegal (DGD)",
+    "domain": "douanes.sn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "DME / Gulf Mercantile",
+    "domain": "dubaimerc.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Oman crude benchmark; rebranded to Gulf Mercantile Exchange — verify domain",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Petroleum and Energy",
+    "domain": "energie.gouv.sn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Verify domain",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Equasis",
+    "domain": "equasis.org",
+    "type": "data_feed",
+    "category": "shipping",
+    "notes": "Vessel registry; verify access model",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "foreignaffairs.gov.ng",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Verify domain",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Indian Navy",
+    "domain": "indiannavy.nic.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Arabian Sea patrol; Hormuz tanker escort; Mumbai High platform security; verify indiannavy.nic.in vs mod.gov.in",
+    "agreement_count": 3
+  },
+  {
+    "entity": "INEA",
+    "domain": "inea.gob.ve",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Jose terminal PDVSA-operated; verify domain",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Iraq Stock Exchange (ISX)",
+    "domain": "isx-iq.net",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial exchange, Tier 2 — not crude pricing",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mae.gov.dz",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Verify domain; Morocco tension (GME closed 2021)",
+    "agreement_count": 3
   },
   {
     "entity": "Republic of Singapore Navy",
     "domain": "mindef.gov.sg",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=200; rank=49",
-    "source_agent": "composer-2-5"
+    "notes": "Eastern Singapore Strait patrol; VLCC Singapore Strait bottleneck (~15nm width); Changi Naval Base US basing; MALSINDO trilateral patrol; verify rsn.mindef.gov.sg domain",
+    "agreement_count": 3
   },
   {
-    "entity": "Islamic Republic of Iran Customs (IRICA)",
-    "domain": "irica.gov.ir",
+    "entity": "MIREMPET",
+    "domain": "mirempet.gov.ao",
     "type": "official",
     "category": "government_regulator",
-    "notes": "composer-2-5 catalog seed; curl=fail; rank=50",
-    "source_agent": "composer-2-5"
+    "notes": "Angola post-OPEC-exit (2023) independent production policy; verify MIREMPET domain vs minpet.gov.ao",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Maritime Enforcement Agency (MMEA)",
+    "domain": "mmea.gov.my",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Dark fleet STS interdiction; Malacca",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Nasdaq Copenhagen",
+    "domain": "nasdaq.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Nordic power / freight derivatives",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Royal Thai Navy",
+    "domain": "navy.mi.th",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Gulf of Thailand patrol; Kra Canal advocacy (Malacca bypass geosignal); HTMS Chakri Naruebet; verify navy.mi.th vs navy.go.th",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Republic of Korea Navy",
+    "domain": "navy.mil.kr",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Strait of Korea patrol; US-Korea naval exercises; Ulsan port security; verify navy.mil.kr vs rokn.mil.kr",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Pakistan Navy",
+    "domain": "paknavy.gov.pk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Arabian Sea patrol; Karachi Port security; Gwadar Port (CPEC, China-operated) naval access; verify paknavy.gov.pk",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Port Authority of Thailand",
+    "domain": "port.co.th",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Royal Navy",
+    "domain": "royalnavy.mod.uk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "North Sea offshore platform security; Hormuz tanker escort ops (Operation Kipion); AUKUS submarine programme; verify royalnavy.mod.uk domain",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Saudi Exchange (Tadawul)",
+    "domain": "saudiexchange.sa",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Financial exchange, Tier 2 — crude pricing via Aramco OSP not here",
+    "agreement_count": 3
+  },
+  {
+    "entity": "Danish Customs (Skat)",
+    "domain": "skat.dk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 3
+  },
+  {
+    "entity": "SNPC (Société Nationale des Pétroles du Congo)",
+    "domain": "snpc.cg",
+    "type": "official",
+    "category": "noc",
+    "notes": "Djeno Blend; oil-backed debt",
+    "agreement_count": 3
+  },
+  {
+    "entity": "SENAE (Aduana)",
+    "domain": "aduana.gob.ec",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Crude export declarations (Balao + Esmeraldas terminals); SOTE + OCP pipeline cargo; China-encumbered crude pre-sale tracking",
+    "agreement_count": 2
+  },
+  {
+    "entity": "AFPM",
+    "domain": "afpm.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "US refinery run rates; turnaround schedules",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ALNAFT",
+    "domain": "alnaft.dz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ALNAFT",
+    "domain": "alnaft.gov.dz",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "ARH (regulation authority) as expansion",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ANP",
+    "domain": "anp.gov.br",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Monthly field-level production data; licensing rounds; pre-salt transfer of rights",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ANTAQ (National Waterway Transport Agency)",
+    "domain": "antaq.gov.br",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Santos, Angra dos Reis, São Sebastião port authority; FPSO tender vessel coordination",
+    "agreement_count": 2
+  },
+  {
+    "entity": "APN / Peru LNG (Pampa Melchorita)",
+    "domain": "apn.gob.pe",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Only LNG export terminal in S. America",
+    "agreement_count": 2
+  },
+  {
+    "entity": "APPEA",
+    "domain": "appea.com.au",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Australian upstream production; LNG export statistics",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ARERA",
+    "domain": "arera.it",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "PSV gas hub",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Bapco Energies",
+    "domain": "bapco.net",
+    "type": "official",
+    "category": "noc",
+    "notes": "Sitra refinery; Abu Safah shared w/ SA",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Bapco Energies (incl. Bapco, Tatweer)",
+    "domain": "bapcoenergies.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Bahrain Defence Force Naval",
+    "domain": "bdf.bh",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Fed Ministry Economic Affairs & Climate (BMWK)",
+    "domain": "bmwk.de",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Germany LNG diversification policy (5 FSRUs 2022–2024); Rosneft Deutschland trustee seizure; PCK Schwedt crude supply; Russian gas replacement strategy",
+    "agreement_count": 2
+  },
+  {
+    "entity": "US BOEM",
+    "domain": "boem.gov",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "GoM shut-in orders (Cat3+ hurricane); lease sales determine long-term supply trend",
+    "agreement_count": 2
+  },
+  {
+    "entity": "BTC Co (BP-operated)",
+    "domain": "bp.com",
+    "type": "official",
+    "category": "company",
+    "notes": "Bypasses RU+Hormuz+Bospor",
+    "agreement_count": 2
+  },
+  {
+    "entity": "BTC Pipeline (Caspian Pipeline)",
+    "domain": "caspianpipeline.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Canadian Coast Guard",
+    "domain": "ccg-gcc.gc.ca",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Copernicus Climate",
+    "domain": "climate.copernicus.eu",
+    "type": "data_feed",
+    "category": "weather",
+    "notes": "EU reanalysis / climate data (Tier 2)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "China Meteorological Admin",
+    "domain": "cma.gov.cn",
+    "type": "official",
+    "category": "weather",
+    "notes": "China demand weather",
+    "agreement_count": 2
+  },
+  {
+    "entity": "CNE (Comisión Nacional de Energía)",
+    "domain": "cne.cl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "LNG import license regulation; electricity price node (gas parity); IEA strategic fuel reserve; grid decarbonization 2050; spot LNG tender oversight",
+    "agreement_count": 2
+  },
+  {
+    "entity": "National Hydrocarbons Commission (CNH)",
+    "domain": "cnh.gob.cl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Bangladesh Coast Guard",
+    "domain": "coastguard.gov.bd",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Bay of Bengal patrol; Moheshkhali FSRU security; Chittagong port approaches; cyclone protocol coordination; Myanmar maritime boundary",
+    "agreement_count": 2
+  },
+  {
+    "entity": "BIS / OFAC (export controls)",
+    "domain": "commerce.gov",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "UN COMTRADE",
+    "domain": "comtrade.un.org",
+    "type": "data_feed",
+    "category": "international_agency",
+    "notes": "Bilateral trade flows (lagged)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "UN Comtrade",
+    "domain": "comtradeplus.un.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "CONCAWE",
+    "domain": "concawe.eu",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "EU refining technical body (Tier 2)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "NOAA CPC",
+    "domain": "cpc.ncep.noaa.gov",
+    "type": "official",
+    "category": "weather",
+    "notes": "HDD/CDD outlooks — gas demand driver",
+    "agreement_count": 2
+  },
+  {
+    "entity": "CREG (energy regulator)",
+    "domain": "creg.be",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Fluxys as expansion",
+    "agreement_count": 2
+  },
+  {
+    "entity": "US Naval Forces Central Command (5th Fleet)",
+    "domain": "cusnc.navy.mil",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "HM Customs Gibraltar",
+    "domain": "customs.gi",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "DCCEEW",
+    "domain": "dcceew.gov.au",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "DGCX (Dubai crude marker)",
+    "domain": "dgcx.ae",
+    "type": "official",
+    "category": "exchange",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "DGPC (Directorate General of Petroleum Concessions)",
+    "domain": "dgpc.gov.pk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Directorate General of Shipping",
+    "domain": "dgshipping.gov.in",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Paradip, Haldia, Mundra, JNPT, Vizag VLCC terminal oversight; Major Ports Authority parallel authority",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "diplomatie.gouv.cg",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Danish Maritime Authority",
+    "domain": "dma.dk",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Dutch Customs",
+    "domain": "douane.nl",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Rotterdam crude import declarations; ARA product barge export documentation; Gate LNG terminal cargo",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Eurostat (energy)",
+    "domain": "ec.europa.eu/eurostat",
+    "type": "data_feed",
+    "category": "international_agency",
+    "notes": "EU energy statistics",
+    "agreement_count": 2
+  },
+  {
+    "entity": "EGPC",
+    "domain": "egpc.com.eg",
+    "type": "official",
+    "category": "noc",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Economy (energy division)",
+    "domain": "ekonomi.gov.my",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Energy portfolio under Ministry of Economy since 2023; PETRONAS reports directly to Prime Minister's office",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Environmental Management Authority",
+    "domain": "ema.co.tt",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Point Fortin terminal EIA; Petrotrin Pointe-à-Pierre legacy refinery cleanup; offshore Columbus Basin EIA; Atlantic LNG flaring compliance",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Environmental Management Authority",
+    "domain": "ema.gov.tt",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "EMSA",
+    "domain": "emsa.europa.eu",
+    "type": "official",
+    "category": "shipping",
+    "notes": "EU maritime safety, vessel tracking",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Danish Maritime Authority / Energinet",
+    "domain": "energinet.dk",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Gas transit; Baltic",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "energo.gov.kz",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Kazakhstan OPEC+ quota coordination; CPC pipeline allotment; upstream licensing (dual with upstream_regulator)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Petroleum Commissioner (Ministry of Energy)",
+    "domain": "energy.economy.gov.il",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "energy.gov.sa",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Sets Saudi OPEC+ quota target; Abdulaziz bin Salman statements price-moving",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ENTSOG",
+    "domain": "entsog.eu",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "EU gas TSO network; transparency platform flows",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Environment",
+    "domain": "environnement.gouv.sn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Environment Public Authority",
+    "domain": "epa.org.kw",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "EUMETSAT",
+    "domain": "eumetsat.int",
+    "type": "official",
+    "category": "weather",
+    "notes": "Satellite meteorology (Tier 2)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Eurogas",
+    "domain": "eurogas.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "EU gas industry association",
+    "agreement_count": 2
+  },
+  {
+    "entity": "UAE Federal Customs",
+    "domain": "fcsc.gov.ae",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Belgian Customs (FOD Financiën)",
+    "domain": "fin.belgium.be",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "fmprc.gov.cn",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Royal Norwegian Navy",
+    "domain": "forsvar.no",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "GEPetrol (National Oil Company)",
+    "domain": "gepetrol.gq",
+    "type": "official",
+    "category": "noc",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Guyana Geology and Mines Commission",
+    "domain": "ggmc.gov.gy",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Upstream regulator; Stabroek Block (11B barrels recoverable); 6 FPSOs planned by 2030; Liza Phase 1+2+Payara+Yellowtail FPSOs; monthly production reporting",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Gibraltar Port Authority",
+    "domain": "gibport.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Gibraltar Port Authority",
+    "domain": "gibraltarport.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Bunker hub #3 Europe",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Gas Infrastructure Europe",
+    "domain": "gie.eu",
+    "type": "data_feed",
+    "category": "international_agency",
+    "notes": "Daily EU gas storage fill levels",
+    "agreement_count": 2
+  },
+  {
+    "entity": "GISIS IMO",
+    "domain": "gisis.imo.org",
+    "type": "data_feed",
+    "category": "international_agency",
+    "notes": "Flag state, ship status; dark fleet screening",
+    "agreement_count": 2
+  },
+  {
+    "entity": "SEMAR / ASIPONA ports",
+    "domain": "gob.mx/semar",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "SEMAR runs navy + ports",
+    "agreement_count": 2
+  },
+  {
+    "entity": "APN (National Port Authority)",
+    "domain": "gob.pe/apn",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "MINAM (Ministry of Environment)",
+    "domain": "gob.pe/minam",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ANP",
+    "domain": "gov.br/anp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Production & block auction data — key",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Mines & Energy (MME)",
+    "domain": "gov.br/mme",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Receita Federal",
+    "domain": "gov.br/receitafederal",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Environmental Protection",
+    "domain": "gov.il",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Leviathan/Tamar/Karish; conflict shut-in risk",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Environmental Protection",
+    "domain": "gov.il/en/departments/epa",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "gov.il/en/departments/ministry_of_energy",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "gov.il/mfa",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "gov.pl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Verify gov.pl sub-path",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "gov.pl/web/diplomacy",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Climate and Environment",
+    "domain": "gov.pl/web/klimat",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Foreign, Commonwealth & Development Office",
+    "domain": "gov.uk/fcdo",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Italian Coast Guard",
+    "domain": "guardiacostiera.gov.it",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Directorate General of Sea Transportation",
+    "domain": "hubla.dephub.go.id",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Balikpapan, Cilacap, Dumai, Tuban port approaches; Lombok and Makassar Strait VLCC transit oversight",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Hydrocarbon Unit (Energy Division)",
+    "domain": "hud.gov.bd",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Hydrocarbons Licensing",
+    "domain": "hydrocarbures.ga",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Hydrocarbons",
+    "domain": "hydrocarbures.gouv.cg",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ICE",
+    "domain": "ice.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Brent; TTF gas via ICE Endex",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Israeli Navy",
+    "domain": "idf.il",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Leviathan + Tamar + Karish platform protection; Hamas naval threat; Hezbollah precision missile threat; Eilat Red Sea blockade (Houthi); Mediterranean SLOC",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ILT / Rijkswaterstaat",
+    "domain": "ilent.nl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "INMET – Brazilian Institute of Meteorology",
+    "domain": "inmet.gov.br",
+    "type": "official",
+    "category": "weather",
+    "notes": "Petrobras FPSO offshore weather; Santos Basin",
+    "agreement_count": 2
+  },
+  {
+    "entity": "IPAA – Independent Petroleum Association of America",
+    "domain": "ipaa.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "US independents; shale production outlook",
+    "agreement_count": 2
+  },
+  {
+    "entity": "IPIECA",
+    "domain": "ipieca.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Environmental / social body (Tier 2)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "IRICA (Iran Customs Administration)",
+    "domain": "irica.ir",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Official export figures opaque under sanctions — cross-check AIS",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Jamaica Defence Force Coast Guard",
+    "domain": "jdf.gov.jm",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Japan Coast Guard",
+    "domain": "kcg.go.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Climate, Energy & Utilities",
+    "domain": "kefm.dk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "North Sea licensing; Tyra field governance; Baltic Pipe policy; EU energy security coordination; Danish Straits transit policy",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Kıyı Emniyeti (fog/current closures)",
+    "domain": "kiyiemniyeti.gov.tr",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Bosphorus/Dardanelles transit; tanker delays",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Netherlands Coastguard",
+    "domain": "kustwacht.nl",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "LME",
+    "domain": "lme.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Energy-correlated metals: aluminium, copper",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Empresa Pública Fluvial / Maritime Authority",
+    "domain": "maritima.gob.ec",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Grand Port Marseille-Fos",
+    "domain": "marseille-port.fr",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Fos-Lavéra crude + LNG",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Maryland Port Administration",
+    "domain": "maryland.gov",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Environment & Climate Change",
+    "domain": "mecc.gov.qa",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Meteo France",
+    "domain": "meteofrance.com",
+    "type": "official",
+    "category": "weather",
+    "notes": "European gas demand; French LNG terminal impact",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.gov.cn",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "China's stance on Iran/Russia sanctions = proxy for dark fleet legitimacy; Taiwan Strait risk premium signal",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mfa.gov.kz",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Kazakhstan balances Russia-West; OPEC+ compliance signalling; Trans-Caspian pipeline diplomacy (alternative to CPC/Novorossiysk)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Turkish State Meteorological Service",
+    "domain": "mgm.gov.tr",
+    "type": "official",
+    "category": "weather",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Environment Angola",
+    "domain": "minamb.gov.ao",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Environmental compliance for Soyo LNG and Lobito refinery (under construction)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "MIT – Ministry of Infrastructure and Transport",
+    "domain": "mit.gov.it",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Trieste (largest Italian crude import port; ~50 mb/y via Trans-Alpine pipeline); Augusta Sicily (refining hub); Brindisi; Strait of Sicily tanker routes",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Environment (MMA)",
+    "domain": "mma.gob.cl",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "MME – Ministry of Mines and Energy",
+    "domain": "mme.gov.br",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Brazilian energy policy; LNG import terminals; ethanol/biofuel policy affecting refinery margin",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Energy and Industry",
+    "domain": "mme.gov.qa",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "LNG plant and refinery environmental compliance; Ras Laffan industrial city",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Natural Resources",
+    "domain": "mnr.gov.cn",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Upstream block licences; offshore concession awards; resource reserve announcements",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Royal Saudi Navy",
+    "domain": "mod.gov.sa",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Env, Forest & Climate",
+    "domain": "moef.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Refinery environmental clearances; ONGC offshore EIA; Visakhapatnam refinery compliance",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Energy",
+    "domain": "moenergy.gov.sa",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "OPEC+ quota rhetoric; production policy",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.ae",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs",
+    "domain": "mofa.gov.om",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Foreign Affairs (MOFAIC)",
+    "domain": "mofaic.gov.ae",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Abraham Accords 2020; Iran normalisation 2023; Yemen proxy war; Gulf risk premium signal",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Transneft (RU) / MOL (HU)",
+    "domain": "mol.hu",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Danube/Bratislava/Százhalombatta refineries",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Energy (Petroleum Division)",
+    "domain": "mop.gov.pk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Power, Energy & Mineral Res",
+    "domain": "mpemr.gov.bd",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Gas depletion crisis management; FSRU LNG procurement tenders; power-gas demand policy; load-shedding directives",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Natural Resources Canada",
+    "domain": "natural-resources.canada.ca",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Sabine-Neches channel traffic",
+    "domain": "navigationdistrict.org",
+    "type": "official",
+    "category": "shipping",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Royal Australian Navy",
+    "domain": "navy.gov.au",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "NW Shelf offshore platform security; Darwin maritime patrol; AUKUS submarine basing (Perth); South China Sea freedom of navigation ops",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Israeli Navy",
+    "domain": "navy.idf.il",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Bangladesh Navy",
+    "domain": "navy.mil.bd",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "NCM (National Center of Meteorology)",
+    "domain": "ncm.ae",
+    "type": "official",
+    "category": "weather",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Saudi National Center for Meteorology",
+    "domain": "ncm.gov.sa",
+    "type": "official",
+    "category": "weather",
+    "notes": "Gulf weather; Hormuz storm / haboob ops impact",
+    "agreement_count": 2
+  },
+  {
+    "entity": "NESREA",
+    "domain": "nesrea.gov.ng",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Nodal Exchange",
+    "domain": "nodalexchange.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "National Oil & Gas Authority (NOGA)",
+    "domain": "noga.gov.bh",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Upstream licensing; Awali field; Abu Saafa PSA with Saudi Aramco; Khuff gas reservoir; BGP exploration permits",
+    "agreement_count": 2
+  },
+  {
+    "entity": "NOPTA – National Offshore Petroleum Titles Administrator",
+    "domain": "nopta.gov.au",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Manages ~300 offshore petroleum titles; production data via OPGGS reports; NW Shelf well completions = Woodside leading indicator; Scarborough EIS",
+    "agreement_count": 2
+  },
+  {
+    "entity": "NOSDRA (oil spill) / NESREA",
+    "domain": "nosdra.gov.ng",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Niger Delta oil spill database; spill = pipeline theft/vandalism proxy; Force Majeure trigger signal",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Norwegian Petroleum Directorate",
+    "domain": "npd.no",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Daily field-level production data (factpages.npd.no); unique global transparency; tier-1 NCS signal",
+    "agreement_count": 2
+  },
+  {
+    "entity": "NRCan – Natural Resources Canada",
+    "domain": "nrcan.gc.ca",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Canadian energy policy; TMX export licence; LNG Canada permits; oil sands royalty framework",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Novorossiysk Commercial Sea Port",
+    "domain": "nvr-port.ru",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "OEFA",
+    "domain": "oefa.gob.pe",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "TGP pipeline spill enforcement (multiple Amazon incidents); Block 192 Loreto contamination; Peru LNG terminal EIA; OEFA fine/shutdown order = force majeure signal",
+    "agreement_count": 2
+  },
+  {
+    "entity": "OGRA (Oil & Gas Regulatory Authority)",
+    "domain": "ogra.org.pk",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "FX/IMF crisis → spot LNG cancel",
+    "agreement_count": 2
+  },
+  {
+    "entity": "PACA Oman (Met / aviation weather)",
+    "domain": "paca.gov.om",
+    "type": "official",
+    "category": "weather",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Pakistan EPA",
+    "domain": "pak-epa.org",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Petroecuador",
+    "domain": "petroecuador.ec",
+    "type": "official",
+    "category": "noc",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Petroleum Resources",
+    "domain": "petroleumresources.gov.ng",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "PetroSA",
+    "domain": "petrosa.co.za",
+    "type": "official",
+    "category": "noc",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Petrosen",
+    "domain": "petrosen.sn",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Sangomar first oil 2024 (Woodside)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Saudi Meteorology (Red Sea)",
+    "domain": "pme.gov.sa",
+    "type": "official",
+    "category": "weather",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Port Autonome de Pointe-Noire",
+    "domain": "port-pointenoire.cg",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Port Autonome de Dakar",
+    "domain": "portdakar.sn",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "GTA LNG shared with MR",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Port Autonome de Dakar",
+    "domain": "portdedakar.sn",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Port Freeport",
+    "domain": "portfreeport.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ARA tank / product terminals",
+    "domain": "portofamsterdam.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Port of Djibouti",
+    "domain": "portofdjibouti.dj",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "General Organisation of Sea Ports",
+    "domain": "ports.gov.bh",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Israel Ports Company",
+    "domain": "ports.org.il",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Port of Owendo / Libreville",
+    "domain": "portsgabon.ga",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Ministry of Power, Energy and Mineral Resources",
+    "domain": "powerdivision.gov.bd",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "PTTEP (PTT Exploration and Production)",
+    "domain": "pttep.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "PTT PCL",
+    "domain": "pttplc.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Gulf of Thailand gas decline; rising LNG",
+    "agreement_count": 2
+  },
+  {
+    "entity": "ReCAAP ISC (piracy) + MPA Singapore",
+    "domain": "recaap.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Busiest oil chokepoint",
+    "agreement_count": 2
+  },
+  {
+    "entity": "SARS (Customs)",
+    "domain": "sars.gov.za",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "GCPI southern port traffic",
+    "domain": "scp.gov.iq",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "SCZone storage",
+    "domain": "sczone.gov.eg",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "SEMAR (Mexican Navy)",
+    "domain": "semar.gob.mx",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Gulf of Mexico platform security; Cayo Arcas VLCC approach corridor; hurricane response",
+    "agreement_count": 2
+  },
+  {
+    "entity": "SENAE (Customs)",
+    "domain": "senae.gob.ec",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Strategic Fuel Fund (Saldanha storage)",
+    "domain": "sff.org.za",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Turkish Coast Guard",
+    "domain": "sg.gov.tr",
+    "type": "official",
+    "category": "diplomacy",
+    "notes": "Turkish Straits security",
+    "agreement_count": 2
+  },
+  {
+    "entity": "NIOC (via SHANA)",
+    "domain": "shana.ir",
+    "type": "official",
+    "category": "official_social",
+    "notes": "SHANA = ministry news agency",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Shanghai Futures Exchange",
+    "domain": "shfe.com.cn",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Fuel oil, bitumen contracts",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Oman Maritime Security Centre",
+    "domain": "sm.gov.om",
+    "type": "official",
+    "category": "shipping",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Norwegian Offshore Directorate",
+    "domain": "sodir.no",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Transparent monthly production data — high value",
+    "agreement_count": 2
+  },
+  {
+    "entity": "SOMO (State Oil Marketing Org)",
+    "domain": "somooil.gov.iq",
+    "type": "official",
+    "category": "noc",
+    "notes": "Top priority — Basra Medium/Heavy OSP; export marketer",
+    "agreement_count": 2
+  },
+  {
+    "entity": "SPE",
+    "domain": "spe.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Reserve estimation methodology; technical context",
+    "agreement_count": 2
+  },
+  {
+    "entity": "SUMED Pipeline",
+    "domain": "sumed.org.eg",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Tatweer Petroleum (upstream operator)",
+    "domain": "tatweerpetroleum.com",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Transport Canada",
+    "domain": "tc.canada.ca",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "TFEX",
+    "domain": "tfex.co.th",
+    "type": "official",
+    "category": "exchange",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "TGE (Polish Power Exchange)",
+    "domain": "tge.pl",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Gas/power",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Saldanha Bay terminal",
+    "domain": "tnpa.co.za",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Trinidad and Tobago Coast Guard",
+    "domain": "ttcoastguard.gov.tt",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Turkish Straits VTS (UAB)",
+    "domain": "uab.gov.tr",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "USACE Galveston",
+    "domain": "usace.army.mil",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Houston Ship Channel (46ft), Mississippi River navigation; dredging/closure = export constraint",
+    "agreement_count": 2
+  },
+  {
+    "entity": "WCO – World Customs Organization",
+    "domain": "wcoomd.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "HS code standards; sanctions export compliance",
+    "agreement_count": 2
+  },
+  {
+    "entity": "MSS (Meteorological Service SG)",
+    "domain": "weather.gov.sg",
+    "type": "official",
+    "category": "weather",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "World Bank (Pink Sheet)",
+    "domain": "worldbank.org",
+    "type": "data_feed",
+    "category": "international_agency",
+    "notes": "Monthly commodity price data (Pink Sheet)",
+    "agreement_count": 2
+  },
+  {
+    "entity": "WPC Energy",
+    "domain": "wpcenergy.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "",
+    "agreement_count": 2
+  },
+  {
+    "entity": "Federal Waterways and Shipping",
+    "domain": "wsv.de",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Wilhelmshaven (FSRU + crude import); Brunsbüttel (FSRU); Rostock; Hamburg crude product arrivals; Kiel Canal transit monitoring",
+    "agreement_count": 2
   }
 ]

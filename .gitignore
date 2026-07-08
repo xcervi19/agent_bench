@@ -23,6 +23,7 @@ testing/results/
 testing/.env.test1
 testing/.env.test2
 .cursor/
+claude_agent_fe/.claude/worktrees/
 oil_gas_knowledge/
 corpus/L1_raw/
 corpus/L2_text/

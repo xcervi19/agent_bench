@@ -1,0 +1,12 @@
+{
+  "agents": [
+    "claude-opus-4-8",
+    "claude-sonnet-4-6",
+    "composer-2-5",
+    "gpt-5-5"
+  ],
+  "unique_domains": 1347,
+  "accepted": 613,
+  "whitelist_size": 610,
+  "resolved_name_conflicts": 596
+}
