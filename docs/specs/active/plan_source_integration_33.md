@@ -1,8 +1,8 @@
 # Plan Source Integration — #33
 
-**Status:** planned  
+**Status:** superseded (by #36)  
 **Lane:** Platform / Agent Skills  
-**Goal:** Upravit `newsfind-plan.md`, aby používal `/source-discover` skill.
+**Goal:** ~~Upravit `newsfind-plan.md`, aby používal `/source-discover` skill.~~ → See #36 `hybrid_pipeline_orchestration_36.md`.
 
 ## Cíl
 
@@ -22,4 +22,4 @@ Agent potřebuje vědět, kam se má podívat, než začne generovat obecné Web
 ## Poznámky
 
 - Tento ticket závisí na #29 (Whitelist) a #32 (Skill).
-- Neřeší automatickou validaci objevených zdrojů (ta je mimo scope MVP).
+- **Superseded by #36** — implement source discovery as a Python pre-stage in `pipeline.py`, not as agent-inline skill calls in `newsfind-plan.md`.

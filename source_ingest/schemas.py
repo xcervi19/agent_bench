@@ -30,6 +30,8 @@ class ChunkFilters(BaseModel):
     category: str = "energy_education"
     commodity: str | None = "crude_oil"
     region: str | None = None
+    document_type: str | None = None
+    use_for: list[str] = Field(default_factory=list)
 
 
 class ChunkArtifact(BaseModel):

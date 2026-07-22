@@ -55,6 +55,6 @@ Mirrors L1 folder structure with `.txt` extension. Report: `L2_manifest.json`.
 
 | Old | L1 bucket |
 |-----|-----------|
-| `artifacts/oil_rag_sources/` | `official_web/` |
+| `artifacts/rag_corpus/` (legacy: `oil_rag_sources/`) | `official_web/` |
 | `oil_gas_knowledge/` | `licensed_books/` |
 | `local_knowledge_sources/oil101.txt` | `reference/oil101.txt` |

@@ -229,7 +229,7 @@ Chunk only (no .env needed):
 
 cd /Users/karel.cervicek/Documents/projects/agent_bench
 uv run python -m source_ingest.from_collected \
-  --sources-dir artifacts/oil_rag_sources \
+  --sources-dir artifacts/rag_corpus \
   --chunks-dir artifacts/chunks \
   --skip-slug oil101
 
@@ -238,7 +238,7 @@ uv run python -m source_ingest.from_collected \
 export PYTHONPATH="libs:."
 source .env   # if vars are export lines there
 uv run python -m source_ingest.from_collected \
-  --sources-dir artifacts/oil_rag_sources \
+  --sources-dir artifacts/rag_corpus \
   --chunks-dir artifacts/chunks \
   --skip-slug oil101 \
   --ingest \

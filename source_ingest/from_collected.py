@@ -59,10 +59,15 @@ def book_from_path(path: Path, meta: dict, slug: str) -> BookMeta:
 
 
 def filters_from_meta(meta: dict) -> ChunkFilters:
+    use_for = meta.get("use_for") or []
+    if isinstance(use_for, str):
+        use_for = [use_for]
     return ChunkFilters(
         category=category_from_meta(meta),
         commodity=meta.get("commodity") or "crude_oil",
         region=meta.get("region"),
+        document_type=meta.get("document_type"),
+        use_for=[str(u) for u in use_for],
     )
 
 
@@ -91,7 +96,7 @@ def main() -> None:
     ap.add_argument(
         "--sources-dir",
         type=Path,
-        default=root / "artifacts/oil_rag_sources",
+        default=root / "artifacts/rag_corpus",
     )
     ap.add_argument(
         "--chunks-dir",
@@ -159,6 +164,9 @@ def main() -> None:
                     "collector_tier": meta.get("tier"),
                     "collector_tags": meta.get("tags"),
                     "source_url": meta.get("url"),
+                    "label_assignment": meta.get("label_assignment"),
+                    "document_type": meta.get("document_type"),
+                    "use_for": meta.get("use_for") or [],
                 },
             )
             print(f"ok {slug} chunks={n_chunks} document_id={doc_id}")

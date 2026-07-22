@@ -2,8 +2,33 @@
 
 _Update this file as work progresses. The agent reads it every session to understand current context._
 
-**Ticket numbers:** `docs/specs/TICKET_REGISTRY.md` (next: **#26**).  
+**Ticket numbers:** `docs/specs/TICKET_REGISTRY.md` (next: **#37**).  
 **How to create / prioritize tickets:** `AGENT.md` → Creating a new ticket, Build queue.
+
+---
+
+## Build queue — Platform / Data (source pipeline)
+
+_Order for improving search reliability and grounding. Separate from the V1 UI queue below; execute when platform work is the priority._
+
+| Order | Ticket | Why now | Unblocks |
+|------|--------|---------|----------|
+| 1 | **#30** Coverage playbooks seed | Meta-RAG strategy (“where to look first”) for source discovery | #32, #36 |
+| 2 | **#32** `/source-discover` (Python core + optional skill) | Deterministic whitelist + playbook lookup module | #36 |
+| 3 | **#36** Hybrid pipeline orchestration | Python pre-stages + thin plan agent; fixes unreliable search orchestration | P2/P3 eval (#18/#23), deliver quality |
+| 4 | **#31** Scraping infrastructure | Social channel reads; hooks into #36 `execute_search` | Live social in deliver/refresh |
+| — | **#33** Plan source integration | **Superseded by #36** — do not implement separately | — |
+| later | **#35** Graph retrieval layer | v2 after #36 MVP measured | Precision on relational topics |
+
+**Parallel:** #31 can start alongside #30/#32; wire into #36 when both ship. **#29** whitelist is mostly done (`source_whitelist.json`); finish commit + top-20 sign-off.
+
+**Dependency sketch (platform):**
+
+```
+#29 (whitelist, mostly done) ──► #30 (playbooks) ──► #32 (discover module) ──► #36 (hybrid pipeline)
+                                                      └──► #31 (scraping, parallel) ──► #36 hooks
+#35 (graph) — after #36 quality baseline
+```
 
 ---
 

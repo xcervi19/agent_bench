@@ -54,7 +54,7 @@ See `oil_rag_collector/README.md` and `docs/knowledge/oil_rag_source_strategy.md
 
 ```bash
 uv run python -m source_ingest.from_collected \
-  --sources-dir artifacts/oil_rag_sources \
+  --sources-dir artifacts/rag_corpus \
   --chunks-dir artifacts/chunks \
   --skip-slug oil101
 ```

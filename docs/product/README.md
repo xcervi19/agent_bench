@@ -22,6 +22,7 @@
 | `apps/rag_adhoc` | RAG search during **plan**; `documents`/`events` models |
 | `libs/agentic_core` | Auth/DB layer for **#24** |
 | `source_ingest` / `oil_rag_collector` | RAG corpus ops (not user-facing) |
+| `source_crawler` | Extensible crawl/download foundation — see `docs/architecture/source_crawler.md` and operator guide `docs/architecture/source_acquisition_pipeline.md` |
 | `libs/eval_framework` | Lane A quality evaluation (#23) |
 
 ## Archived (not on main)
@@ -44,5 +45,7 @@ CrewAI **Signal Gather** (RSS → signals → briefings) — branch
 
 - Testing: `testing/app_testing_scenario.md`
 - Architecture: `docs/specs/done/agentic_search_claude_code_architecture.md`
+- Source crawler: `docs/architecture/source_crawler.md`
+- Source acquisition pipeline: `docs/architecture/source_acquisition_pipeline.md`
 - VPS ops: `docs/ops/vps.md`
 - Business: `docs/specs/business_requirements/business_requirements.md`

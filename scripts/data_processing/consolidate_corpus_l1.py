@@ -11,7 +11,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "corpus" / "L1_raw"
-WEB_SRC = REPO / "artifacts" / "oil_rag_sources"
+WEB_SRC = REPO / "artifacts" / "rag_corpus"
+if not WEB_SRC.is_dir():
+    WEB_SRC = REPO / "artifacts" / "oil_rag_sources"  # legacy
 DESK_SRC = REPO / "oil_gas_knowledge"
 REF_SRC = REPO / "local_knowledge_sources" / "oil101.txt"
 SKIP_SUFFIX = {".meta.json"}
