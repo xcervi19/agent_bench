@@ -13,20 +13,19 @@ _Order for improving search reliability and grounding. Separate from the V1 UI q
 
 | Order | Ticket | Why now | Unblocks |
 |------|--------|---------|----------|
-| 1 | **#30** Coverage playbooks seed | Meta-RAG strategy (“where to look first”) for source discovery | #32, #36 |
-| 2 | **#32** `/source-discover` (Python core + optional skill) | Deterministic whitelist + playbook lookup module | #36 |
-| 3 | **#36** Hybrid pipeline orchestration | Python pre-stages + thin plan agent; fixes unreliable search orchestration | P2/P3 eval (#18/#23), deliver quality |
-| 4 | **#31** Scraping infrastructure | Social channel reads; hooks into #36 `execute_search` | Live social in deliver/refresh |
+| 1 | **#32** `/source-discover` (Python core + optional skill) | Deterministic whitelist + playbook lookup module | #36 |
+| 2 | **#36** Hybrid pipeline orchestration | Python pre-stages + thin plan agent; fixes unreliable search orchestration | P2/P3 eval (#18/#23), deliver quality |
+| 3 | **#31** Scraping infrastructure | Social channel reads; hooks into #36 `execute_search` | Live social in deliver/refresh |
 | — | **#33** Plan source integration | **Superseded by #36** — do not implement separately | — |
 | later | **#35** Graph retrieval layer | v2 after #36 MVP measured | Precision on relational topics |
 
-**Parallel:** #31 can start alongside #30/#32; wire into #36 when both ship. **#29** whitelist is mostly done (`source_whitelist.json`); finish commit + top-20 sign-off.
+**Shipped:** **#30** coverage playbooks (55 markdown + RAG ingest). **Parallel:** #31 alongside #32; wire into #36 when both ship. **#29** whitelist is mostly done (`source_whitelist.json`); finish commit + top-20 sign-off.
 
 **Dependency sketch (platform):**
 
 ```
-#29 (whitelist, mostly done) ──► #30 (playbooks) ──► #32 (discover module) ──► #36 (hybrid pipeline)
-                                                      └──► #31 (scraping, parallel) ──► #36 hooks
+#29 (whitelist, mostly done) ──► #30 (playbooks, done) ──► #32 (discover module) ──► #36 (hybrid pipeline)
+                                                              └──► #31 (scraping, parallel) ──► #36 hooks
 #35 (graph) — after #36 quality baseline
 ```
 
@@ -141,6 +140,7 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 | What | Date | Spec |
 |---|---|---|
+| **#30 Coverage playbooks seed** — 55 playbooks in `local_knowledge_sources/playbooks/`; ingest `document_type=playbook`; Meta-RAG ready (pipeline wiring = #32/#36) | Jul 23, 2026 | `docs/specs/done/coverage_playbooks_seed_30.md` |
 | **#25 Slim main — archive legacy stack** — tag `archive/pre-slim-2026`, branch `archive/signal_gather-platform`; removed `signal_gather` + CrewAI deps; slim compose | Jun 16, 2026 | `docs/specs/done/slim_main_archive_25.md` |
 | **#15 Application verification** — `qa_rules.json`, extended gate (16 checks), `tests/qa/`, fixtures; V001 `test1/latest` `qa_report.json` PASS; stage checks fixed for spaced NDJSON | Jun 2, 2026 | `docs/specs/done/newsfind_application_verification_15.md` |
 | **#17 Backend V1 pilot-ready** — `GET /v1/topics` deployed; vector run QA PASS on test1; Lane B smoke (concurrent ✅, webhook+HMAC ✅, cancel mid-run ⚠️ gap); 2 harness bugs fixed | Jun 2, 2026 | `docs/specs/done/pilot_ops_v1_17.md` |
