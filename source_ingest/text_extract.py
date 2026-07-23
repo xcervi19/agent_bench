@@ -73,7 +73,51 @@ def pdf_to_text(path: Path) -> str:
     return text
 
 
+def epub_to_text(path: Path) -> str:
+    import ebooklib
+    from ebooklib import epub
+
+    book = epub.read_epub(str(path), options={"ignore_ncx": True})
+    parts: list[str] = []
+    seen: set[str] = set()
+
+    for idref, _linear in book.spine:
+        item = book.get_item_with_id(idref)
+        if item is None or item.get_type() != ebooklib.ITEM_DOCUMENT:
+            continue
+        name = item.get_name() or idref
+        if name in seen:
+            continue
+        seen.add(name)
+        raw = item.get_content()
+        if not raw:
+            continue
+        chapter = html_to_text(raw.decode("utf-8", errors="replace"))
+        if chapter:
+            parts.append(chapter)
+
+    if not parts:
+        for item in book.get_items_of_type(ebooklib.ITEM_DOCUMENT):
+            name = item.get_name() or item.get_id() or ""
+            if name in seen:
+                continue
+            seen.add(name)
+            raw = item.get_content()
+            if not raw:
+                continue
+            chapter = html_to_text(raw.decode("utf-8", errors="replace"))
+            if chapter:
+                parts.append(chapter)
+
+    text = "\n\n".join(parts).strip()
+    if not text:
+        raise ValueError(f"no text extracted from EPUB: {path}")
+    return text
+
+
 def detect_kind(raw_bytes: bytes, suffix: str) -> str:
+    if suffix == ".epub":
+        return "epub"
     head = raw_bytes[:16].lstrip()
     if head.startswith(b"%PDF"):
         return "pdf"
@@ -96,6 +140,8 @@ def extract_text(path: Path) -> str:
     kind = detect_kind(raw_bytes, suffix)
     if kind == "pdf":
         return pdf_to_text(path)
+    if kind == "epub":
+        return epub_to_text(path)
     if kind == "html":
         return html_to_text(raw_bytes.decode("utf-8", errors="replace"))
     if kind == "json":

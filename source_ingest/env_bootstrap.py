@@ -23,9 +23,28 @@ def load_dotenv_file(path: Path) -> None:
             os.environ[key] = val
 
 
+def _read_env_value(path: Path, key: str) -> str | None:
+    if not path.is_file():
+        return None
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, val = line.partition("=")
+        if k.strip() == key:
+            return val.strip().strip('"').strip("'")
+    return None
+
+
 def bootstrap_for_ingest(repo_root: Path) -> None:
     load_dotenv_file(repo_root / ".env")
+    load_dotenv_file(repo_root / ".env.local")
     load_dotenv_file(repo_root / ".env.examplesmall")
+
+    # Prefer laptop→VPS tunnel URL (127.0.0.1:5433) over docker hostname from .env.local.
+    tunnel_db = _read_env_value(repo_root / ".env.examplesmall", "DATABASE_URL")
+    if tunnel_db and "127.0.0.1" in tunnel_db:
+        os.environ["DATABASE_URL"] = tunnel_db
 
     db = os.environ.get("DATABASE_URL") or os.environ.get("RAG_ADHOC_DATABASE_URL")
     if not db:
@@ -34,6 +53,13 @@ def bootstrap_for_ingest(repo_root: Path) -> None:
             "(postgresql+asyncpg:// user:pass@host:port/db)"
         )
     os.environ["DATABASE_URL"] = db
+    if not os.environ.get("OPENAI_API_KEY"):
+        # Fall back to .env.local explicitly (may have been skipped if empty earlier).
+        key = _read_env_value(repo_root / ".env.local", "OPENAI_API_KEY") or _read_env_value(
+            repo_root / ".env.examplesmall", "OPENAI_API_KEY"
+        )
+        if key:
+            os.environ["OPENAI_API_KEY"] = key
     if not os.environ.get("OPENAI_API_KEY"):
         raise SystemExit("Set OPENAI_API_KEY before running ingest.")
 

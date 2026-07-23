@@ -13,7 +13,7 @@ from .schemas import BookMeta, ChunkFilters
 from .text_extract import extract_text
 
 SKIP_NAMES = frozenset({"collection_manifest.json", "sources_registry.json"})
-CONTENT_SUFFIXES = {".pdf", ".html", ".json", ".txt"}
+CONTENT_SUFFIXES = {".pdf", ".html", ".json", ".txt", ".epub"}
 
 
 def repo_root() -> Path:

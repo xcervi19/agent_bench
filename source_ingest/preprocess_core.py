@@ -12,6 +12,7 @@ from .chunk_builder import (
 
 
 def normalize_raw_text(raw: str) -> str:
+    raw = raw.replace("\x00", "")
     raw = raw.replace("\r\n", "\n").replace("\r", "\n")
     raw = re.sub(r"[ \t]+\n", "\n", raw)
     raw = re.sub(r"\n{3,}", "\n\n", raw)
@@ -30,6 +31,8 @@ def write_preprocess_artifacts(
     max_chars: int,
     overlap_chars: int,
     entities_extra: dict | None = None,
+    prefix_hint: str | None = None,
+    main_zone_only: bool = True,
 ) -> tuple[UUID, int]:
     normalized = normalize_raw_text(raw_text)
     if len(normalized) < 200:
@@ -44,6 +47,8 @@ def write_preprocess_artifacts(
         max_chars=max_chars,
         overlap_chars=overlap_chars,
     )
+    if main_zone_only:
+        packed = [pk for pk in packed if pk.content_zone == "main"]
     if not packed:
         raise ValueError(f"no chunks produced: {source_path}")
 
@@ -58,6 +63,7 @@ def write_preprocess_artifacts(
                 author=book.author,
                 part=pk.part,
                 chapter_raw=pk.chapter_raw,
+                prefix_hint=prefix_hint,
             )
             art = ChunkArtifact(
                 chunk_index=idx,

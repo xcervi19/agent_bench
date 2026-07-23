@@ -9,7 +9,7 @@ import shutil
 from datetime import date
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 OUT = REPO / "corpus" / "L1_raw"
 WEB_SRC = REPO / "artifacts" / "rag_corpus"
 if not WEB_SRC.is_dir():
@@ -18,7 +18,7 @@ DESK_SRC = REPO / "oil_gas_knowledge"
 REF_SRC = REPO / "local_knowledge_sources" / "oil101.txt"
 SKIP_SUFFIX = {".meta.json"}
 SKIP_NAMES = {"collection_manifest.json", "sources_registry.json"}
-DESK_SKIP_SUFFIX = {".epub", ".dmg", ".7z"}
+DESK_SKIP_SUFFIX = {".dmg", ".7z"}
 
 
 def slugify(value: str, max_len: int = 100) -> str:
@@ -82,7 +82,7 @@ def copy_desk() -> list[dict]:
             continue
         if path.suffix.lower() in DESK_SKIP_SUFFIX:
             continue
-        if path.suffix.lower() not in {".pdf", ".txt"}:
+        if path.suffix.lower() not in {".pdf", ".txt", ".epub"}:
             continue
         if "oil 101" in path.name.lower() and path.suffix.lower() == ".pdf":
             continue

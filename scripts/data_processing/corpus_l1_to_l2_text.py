@@ -10,7 +10,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
@@ -18,7 +18,7 @@ from source_ingest.preprocess_core import normalize_raw_text
 from source_ingest.text_extract import extract_text
 
 SKIP_NAMES = {".meta.json"}
-CONTENT_SUFFIXES = {".pdf", ".html", ".json", ".txt"}
+CONTENT_SUFFIXES = {".pdf", ".html", ".json", ".txt", ".epub"}
 
 
 def l2_path_for(l1_path: Path, l1_root: Path, l2_root: Path) -> Path:

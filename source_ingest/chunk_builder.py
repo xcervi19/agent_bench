@@ -188,8 +188,12 @@ def build_embedding_prefix(
     author: str,
     part: str | None,
     chapter_raw: str | None,
+    prefix_hint: str | None = None,
 ) -> str:
-    bits = [f"Source: {book_title}" + (f" ({author})" if author else "")]
+    bits: list[str] = []
+    if prefix_hint:
+        bits.append(prefix_hint.strip())
+    bits.append(f"Source: {book_title}" + (f" ({author})" if author else ""))
     if part:
         bits.append(f"Part: {part}")
     if chapter_raw:

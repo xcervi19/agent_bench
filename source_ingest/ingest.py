@@ -46,6 +46,14 @@ def main() -> None:
 
     lines = chunks_path.read_text(encoding="utf-8").strip().splitlines()
     artifacts = [json.loads(line) for line in lines if line.strip()]
+    # Book RAG policy: never embed toc / front_matter / appendix.
+    artifacts = [
+        a
+        for a in artifacts
+        if (a.get("content_zone") or "main") == "main"
+    ]
+    if not artifacts:
+        raise SystemExit(f"No main-zone chunks to ingest under {artifact_dir}")
 
     from source_ingest.env_bootstrap import bootstrap_for_ingest
 
@@ -79,6 +87,9 @@ def main() -> None:
         s3_key = f"local:{book['book_slug']}:{document_id}"
         norm_path = artifact_dir / "normalized.txt"
         doc_content = norm_path.read_text(encoding="utf-8") if norm_path.is_file() else None
+        if doc_content is not None:
+            # Postgres rejects NUL (0x00) in text/varchar.
+            doc_content = doc_content.replace("\x00", "")
 
         with tenant_scope(args.tenant_id):
             async with session_scope() as db:
@@ -102,7 +113,9 @@ def main() -> None:
             with tenant_scope(args.tenant_id):
                 async with session_scope() as db:
                     for art in batch:
-                        summary = f"{art['prefix']}\n\n{art['body']}".strip()
+                        summary = (
+                            f"{art['prefix']}\n\n{art['body']}".strip().replace("\x00", "")
+                        )
                         vec = embed(summary)
                         loc = art["location"]
                         ent = {

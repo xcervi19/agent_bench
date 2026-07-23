@@ -21,6 +21,7 @@ dependencies = [
     "prometheus-client>=0.20",
     "openai>=1.40",
     "pypdf>=5.0",
+    "ebooklib>=0.18",
 ]
 
 [project.optional-dependencies]
@@ -53,3 +54,4 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+pythonpath = ["."]

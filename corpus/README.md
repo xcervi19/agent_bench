@@ -19,7 +19,7 @@
 ```
 L1_raw/
   official_web/     tier_{n}/{domain}/{source_id}.ext
-  licensed_books/   {slug}.pdf|.txt
+  licensed_books/   {slug}.pdf|.txt|.epub
   reference/        oil101.txt
 ```
 
