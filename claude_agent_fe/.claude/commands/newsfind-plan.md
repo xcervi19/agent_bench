@@ -8,6 +8,12 @@ You are a senior trading-desk research analyst. In ONE session you will plan a q
 {"topic": "<the user's topic string>", "run_id": "<uuid>"}
 ```
 
+It also contains `source_targets.json` — the pre-resolved, whitelisted sources Python looked up before your session started. Domain discovery is **not** your job; you consume this file.
+
+```json
+{"entities": [{"entity": "NIOC", "known_domains": ["shana.ir"], "playbook_refs": ["iran_oil_geopolitics.md"], "signals": ["production", "exports"], "type": "official"}]}
+```
+
 You will write four files into this directory: `parsed.json`, `intro.json`, `intro.md`, and `summary.json`. The orchestrator reads `summary.json` directly from disk; your final assistant message is ignored.
 
 ---
@@ -51,6 +57,7 @@ Phases: `P1` frame, `P2` initial state read, `P3` query plan, `P4` write artifac
 ```bash
 RUN_DIR="$ARGUMENTS"
 cat "$RUN_DIR/input.json"
+cat "$RUN_DIR/source_targets.json"
 TOPIC=$(jq -r .topic "$RUN_DIR/input.json")
 RUN_ID=$(jq -r .run_id "$RUN_DIR/input.json")
 CREATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -103,6 +110,8 @@ Reason through the topic:
 3. **Working thesis** — 1–3 sentences, the most actionable hypothesis.
 4. **Scenarios** — 2–4 entries: `{id, label, premise, probability?}`.
 5. **Queries** — 10–15 entries, each `{id (q01..q15), query, intent (monitoring|context), source_class, language, region, freshness (24h|7d|30d|any), priority (1..3), covers_entity[], rationale}`. Cover every tier-1 actor with ≥1 query. If non-anglophone region present, ≥30 % of queries non-`en` using native script.
+
+   Every `source_targets.json` entity with `type: "official"` gets ≥1 query. Use its `known_domains` verbatim for site-scoped queries and its `signals` to choose the angle. Any domain not listed there is off-limits — express those angles as plain keyword queries instead.
 6. **monitoring_plan** — `{trigger_terms[], cadence}`.
 
 Echo `{"phase":"P3","status":"done"}`.
@@ -128,6 +137,7 @@ cat > "$RUN_DIR/parsed.json" <<'JSON'
   "scenarios": [ ... ],
   "rag_context_refs": [ ... ],
   "web_seed_refs": [ ... ],
+  "source_targets": [ { "entity": "...", "known_domains": ["..."], "playbook_refs": ["..."] } ],
   "queries": [ ... ],
   "monitoring_plan": { "trigger_terms": [...], "cadence": "..." }
 }
@@ -170,6 +180,7 @@ Echo `{"phase":"P4","status":"done"}`.
 ## Hard rules
 
 * `parsed.json` must conform to the lightweight schema (10–15 queries, all required fields).
+* `source_targets[]` in `parsed.json` is copied from `source_targets.json` — never invented or extended. If that file is absent (pre-#36 run), set `source_targets: []` and note "source_targets.json missing" in `current_state`.
 * If RAG fails, `rag_context_refs: []` and note it in `current_state`. Never crash.
 * If WebSearch fails, `web_seed_refs: []` and continue.
 * `intro.md` MUST NOT invent facts beyond what `parsed.json` contains — it only restructures.

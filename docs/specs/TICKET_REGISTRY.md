@@ -30,7 +30,6 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 || 24 | `docs/specs/active/topic_user_ownership_24.md` | planned | Blocks #16 (user sessions); pairs with #22 |
 || 29 | `docs/specs/active/source_whitelist_seed_29.md` | mostly done | Whitelist shipped (`source_whitelist.json` 610 entries); commit + top-20 sign-off remaining |
 || 31 | `docs/specs/active/scraping_infrastructure_31.md` | planned | Nastavit `twscrape` a `Pyrogram` pro Twitter/Telegram |
-|| 32 | `docs/specs/active/source_discover_skill_32.md` | planned | Vytvořit `/source-discover` skill (MVP) |
 || 33 | `docs/specs/active/plan_source_integration_33.md` | superseded | **Superseded by #36** — agent-inline source-discover in plan replaced by Python pre-stage |
 || 34 | `docs/specs/active/topic_ops_table_frontend_34.md` | planned | **frontend** — topic ops table (user + admin); needs #16, #24, #22 |
 || 35 | `docs/specs/active/graph_retrieval_layer_35.md` | planned | Grafová orchestrační vrstva retrievalu (v2); nadstavba nad #29/#30, po změření kvality |
@@ -41,6 +40,7 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 
 | # | File | Shipped |
 |---|------|---------|
+| 32 | `docs/specs/done/source_discover_skill_32.md` | 2026-07-23 |
 | 30 | `docs/specs/done/coverage_playbooks_seed_30.md` | 2026-07-23 |
 | 25 | `docs/specs/done/slim_main_archive_25.md` | 2026-06-16 |
 | 10 | `docs/specs/done/rag_main_corpus_highest_roi_10.md` | 2026-05 |

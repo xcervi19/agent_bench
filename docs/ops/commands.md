@@ -151,6 +151,16 @@ scripts/test_vector_runner.sh --env test1
 
 ---
 
+## Source discover (#32)
+
+```bash
+# Whitelist + local playbooks → known_sources / source_targets JSON (no LLM)
+uv run python -m apps.claude_agent.sources "NIOC"
+uv run pytest tests/sources/test_discover.py -q
+```
+
+---
+
 ## Local Knowledge Ingest
 
 ```bash

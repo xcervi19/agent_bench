@@ -79,7 +79,7 @@ Search via `rag_adhoc` with filter/query intent for `document_type: playbook` (w
 ## Known gaps
 
 - Authoring RAG query step was unavailable from the Cursor host (`rag_adhoc` Docker DNS); drafts noted that in Changelog and used whitelist + desk logic.
-- Automated **source_discover** that queries playbook RAG before `/newsfind-plan` is **#32 / #36** — playbooks are in DB but not yet a mandatory pipeline stage.
+- Automated **source_discover** module shipped as **#32** (local playbook files, not RAG filter). Pipeline pre-stage before `/newsfind-plan` remains **#36**.
 - Enumerated A–H backlog is **55** files (plan text said “~52”).
 
 ---

@@ -1,4 +1,4 @@
-# Hybrid Pipeline Orchestration — #36
+ # Hybrid Pipeline Orchestration — #36
 
 **Status:** planned  
 **Lane:** Platform / Backend  
@@ -30,10 +30,9 @@ Reuse the artifact + fingerprint pattern from `apps/claude_agent/orchestrator.py
 
 ### In scope
 
-1. **`source_discover` Python module** (`apps/claude_agent/sources/discover.py` or `scripts/source_discover.py`):
-   - Load `source_whitelist.json` (repo root).
-   - Query playbook RAG (`document_type: playbook`) for topic/entity matches.
-   - Output `source_targets.json`:
+1. **Wire `source_discover`** (module shipped in #32: `apps/claude_agent/sources/discover.py`):
+   - Call `discover_sources(topic)` (whitelist + local playbooks; no LLM).
+   - Write `source_targets.json` from `result["source_targets"]`:
 
      ```json
      {
@@ -93,7 +92,7 @@ Reuse the artifact + fingerprint pattern from `apps/claude_agent/orchestrator.py
 |--------|--------------|
 | **#29** Source whitelist | **Required** — `source_whitelist.json` must exist and be loaded by Python |
 | **#30** Coverage playbooks | **Required** — at least one playbook ingested for RAG lookup |
-| **#32** `/source-discover` skill | **Optional overlap** — core logic should live in Python; skill may wrap the same module for Cursor/dev use |
+| **#32** `/source-discover` | **Done** — use `apps.claude_agent.sources.discover_sources`; skill wraps CLI |
 | **#31** Scraping infrastructure | **Soft dependency** — scrape stage plugs in later |
 | **#33** Plan source integration | **Superseded** — do not implement agent-inline `/source-discover` in `newsfind-plan.md`; use Python pre-stage instead |
 
@@ -106,13 +105,36 @@ Reuse the artifact + fingerprint pattern from `apps/claude_agent/orchestrator.py
 
 ## Acceptance criteria
 
-- [ ] `source_discover` Python module exists and is callable without an LLM.
-- [ ] `run_plan` pipeline path invokes `source_discover` **before** the plan agent; `source_targets.json` is written to the run dir.
-- [ ] `/newsfind-plan` reads `source_targets.json`; `parsed.json` includes `source_targets[]` (entity, known_domains, playbook_refs).
-- [ ] Plan agent prompt no longer instructs open-ended domain discovery — it consumes pre-resolved targets.
-- [ ] SSE events include `source_discover` stage in the plan leg.
-- [ ] Offline tests pass for whitelist filtering and pipeline pre-stage wiring.
+- [x] `source_discover` Python module exists and is callable without an LLM. *(#32)*
+- [x] `run_plan` pipeline path invokes `source_discover` **before** the plan agent; `source_targets.json` is written to the run dir.
+- [x] `/newsfind-plan` reads `source_targets.json`; `parsed.json` includes `source_targets[]` (entity, known_domains, playbook_refs).
+- [x] Plan agent prompt no longer instructs open-ended domain discovery — it consumes pre-resolved targets.
+- [x] SSE events include `source_discover` stage in the plan leg.
+- [x] Offline tests pass for whitelist filtering and pipeline pre-stage wiring.
 - [ ] Changes versioned in Git; `STATUS.md` Build queue updated.
+
+## Topic resolution (added during implementation)
+
+`discover_sources(query)` from #32 is an **entity** resolver: the query must be a
+substring or token-subset of a whitelist entity name. Feeding it a topic sentence
+returned zero entities (`"NIOC crude exports under sanctions"` → 0), while a single
+broad token overshot (`"crude"` → 231). The `topic_parse` stage the pipeline sketch
+marks optional was therefore mandatory in practice.
+
+Resolved **without an LLM** (`discover_sources_for_topic`):
+
+1. `entities_named_in` — a whitelist entity is selected when its significant name
+   tokens are a subset of the topic's. Parenthetical suffixes (`AMSA (Maritime Safety
+   Authority)`) also match on the head name; 176/610 entries carry one.
+2. `playbooks_for_topic` — playbooks ranked by inverse document frequency of shared
+   filename tokens, so `hormuz` (1 playbook) outweighs `exports` (many). Top 3 by
+   topic, plus up to 3 that list an already-named entity — this is what pulls
+   `iran_oil_geopolitics.md` in for a NIOC topic where the stem shares no token.
+
+Known limit: sibling playbooks sharing a generic token still appear
+(`strait_of_gibraltar.md` for a Hormuz topic, via `strait`). Bounded at 6 playbooks
+and left as noise the plan agent can ignore rather than over-tuned lexically. Revisit
+with `facets.json` (LLM) only if measured recall demands it.
 
 ## Implementation notes
 
@@ -121,6 +143,11 @@ Reuse the artifact + fingerprint pattern from `apps/claude_agent/orchestrator.py
 - Playbook RAG: use existing `RAG_BASE_URL` / tenant env vars (same as `newsfind-plan` Phase 2).
 - Fingerprint/cache: include whitelist hash + playbook corpus version in plan-stage fingerprint when caching is added.
 - Keep backward compatibility: if `source_targets.json` is missing (old runs), plan agent falls back with a logged warning.
+
+## Architecture
+
+Two-level orchestration model (Python conductor + agent CLI SDK):  
+`docs/architecture/agent_orchestration.md`
 
 ## Related files
 

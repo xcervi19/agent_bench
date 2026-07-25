@@ -88,6 +88,7 @@ curl -N -X POST "$API/v1/agent/stream" \
 | Long-term vision + domain language | `docs/specs/business_requirements/business_requirements.md` |
 | Shipped product surface (V1) | `docs/product/README.md` |
 | Source crawler architecture | `docs/architecture/source_crawler.md` |
+| Agent orchestration (Python + CLI SDK) | `docs/architecture/agent_orchestration.md` |
 | Platform architecture (legacy) | `docs/archive/framework_legacy.md` |
 | Implemented capabilities (ground truth) | `docs/specs/done/*.md` |
 | Planned / in-flight executable tasks | `docs/specs/active/*.md` |

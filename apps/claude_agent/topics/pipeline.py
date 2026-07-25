@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import uuid
@@ -10,6 +11,7 @@ from sqlalchemy import update
 from ..config import ClaudeAgentSettings
 from ..runner import stream_claude
 from ..schemas import RunRequest
+from ..sources.discover import discover_sources_for_topic
 from .db import session_scope
 from .models import Topic, TopicEvent
 from .webhooks import deliver_event
@@ -56,6 +58,20 @@ async def set_state(topic_id: uuid.UUID, new_state: str, *, error: str | None = 
     await emit(topic_id, "state.changed", {"from": old, "to": new_state, "error": error})
 
 
+async def run_source_discover(topic_id: uuid.UUID, topic: str, out_dir: Path) -> None:
+    await emit(topic_id, "stage.started", {"stage": "source_discover"})
+    result = await asyncio.to_thread(discover_sources_for_topic, topic)
+    targets = result["source_targets"]
+    (out_dir / "source_targets.json").write_text(
+        json.dumps(targets, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    await emit(topic_id, "stage.finished", {
+        "stage": "source_discover",
+        "entities": len(targets["entities"]),
+        "playbook_refs": result["playbook_refs"],
+    })
+
+
 async def run_plan(topic_id: uuid.UUID, topic: str, settings: ClaudeAgentSettings) -> None:
     plan_run_id = str(uuid.uuid4())
     hash_ = topic_id_hash(topic)
@@ -71,6 +87,14 @@ async def run_plan(topic_id: uuid.UUID, topic: str, settings: ClaudeAgentSetting
         row.topic_id_hash = hash_
 
     await set_state(topic_id, STATE_PLANNING)
+    try:
+        await run_source_discover(topic_id, topic, out_dir)
+    except (OSError, ValueError) as exc:
+        error = f"source_discover failed: {exc}"
+        await emit(topic_id, "error", {"stage": "source_discover", "error": error})
+        await set_state(topic_id, STATE_FAILED, error=error)
+        return
+
     summary = await _run_slash(topic_id, leg="plan", command="/newsfind-plan", args=str(out_dir), settings=settings)
     if summary is None:
         return
