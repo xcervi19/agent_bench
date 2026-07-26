@@ -15,6 +15,34 @@ export API="https://agent-test1.particletico.com"
 export TOPIC="Hormuz strait closure options to lower price"
 ```
 
+### Authenticate (#24)
+
+Topics are owned per user. Pick one path and reuse `$AUTH` in every call below.
+
+**A — user JWT (product path):**
+
+```bash
+curl -fsS -X POST "$API/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"pilot@example.com","password":"pilot-password","tenant_id":"00000000-0000-0000-0000-000000000001"}'
+
+TOKEN=$(curl -fsS -X POST "$API/auth/jwt/login" \
+  -d "username=pilot@example.com&password=pilot-password" | jq -r .access_token)
+export AUTH="Authorization: Bearer $TOKEN"
+```
+
+`GET /v1/topics` now returns only this user's topics; another user's `TOPIC_ID`
+returns `404` on every route.
+
+**B — service key (harness/ops path):** requires
+`CLAUDE_AGENT_ALLOW_SERVICE_KEY_BYPASS=true` on the slot.
+
+```bash
+export AUTH="X-API-Key: $CLAUDE_AGENT_API_KEY"
+```
+
+Add `-H "$AUTH"` to each curl below.
+
 ---
 
 ## 1. Start a topic

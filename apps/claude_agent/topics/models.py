@@ -14,6 +14,9 @@ class Topic(TopicsBase):
     __tablename__ = "topics"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # FK -> users.id lives in the DB (migration 0006); users is on a different
+    # declarative Base, so it is not declared here.
+    owner_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     topic: Mapped[str] = mapped_column(Text, nullable=False)
     state: Mapped[str] = mapped_column(String(32), nullable=False)
     topic_id_hash: Mapped[str] = mapped_column(String(64), nullable=False)

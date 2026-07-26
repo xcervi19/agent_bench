@@ -97,7 +97,16 @@ def build_app() -> FastAPI:
 
     app.include_router(router)
     if settings.database_url:
+        from .auth import bootstrap_auth_env
+
+        bootstrap_auth_env()
+
+        from agentic_core.api import build_auth_routers
+
         from .topics.routes import router as topics_router
+
+        for auth_router in build_auth_routers():
+            app.include_router(auth_router)
         app.include_router(topics_router)
     return app
 

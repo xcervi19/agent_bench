@@ -70,6 +70,15 @@ class ClaudeAgentSettings(BaseSettings):
         default="",
         description="If set, requests must send matching X-API-Key header.",
     )
+    allow_service_key_bypass: bool = Field(
+        default=True,
+        description=(
+            "Topic API (#24): when true, X-API-Key callers act as a service role "
+            "with access to every topic (ops smoke, eval harness). When api_key is "
+            "empty this leaves the topic API open, as it was before ownership. Set "
+            "false in product mode so only a user JWT is accepted."
+        ),
+    )
 
     log_level: str = Field(default="INFO")
     app_env: str = Field(default="local")

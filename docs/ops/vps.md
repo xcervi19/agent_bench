@@ -49,6 +49,27 @@ Compose project name: `agent_bench`.
 
 Slim compose (#25): no `api`/`worker`/`scheduler`/Redis/MinIO. Legacy stack on `archive/signal_gather-platform`.
 
+### Topic API auth (#24)
+
+Every `/v1/topics/*` route resolves a caller and scopes data to it. Two paths:
+
+| Path | Header | Access |
+|---|---|---|
+| Product (user) | `Authorization: Bearer <jwt>` | only topics whose `owner_user_id` is that user |
+| Ops / harness | `X-API-Key: $CLAUDE_AGENT_API_KEY` | every topic (service role) |
+
+- Login/register are mounted on `claude_agent` when `CLAUDE_AGENT_DATABASE_URL` is
+  set: `POST /auth/register`, `POST /auth/jwt/login`, `GET /users/me`.
+- `JWT_SECRET` must match across services that issue tokens for the same users.
+- **Service key bypass:** `CLAUDE_AGENT_ALLOW_SERVICE_KEY_BYPASS` (default `true`).
+  Keeps `scripts/test_vector_runner.sh`, VPS smoke and CI working. Set to `false`
+  on a product slot so only user JWTs are accepted. With bypass on and
+  `CLAUDE_AGENT_API_KEY` empty, the topic API stays open (pre-#24 behavior).
+- Topics created by the service key have `owner_user_id = NULL` and are visible
+  only to service-key callers — including topics created before the migration.
+- Scheduled refreshes (#22) run server-side and stay attached to the topic owner,
+  so a reconnecting user sees updates only for their own topics.
+
 ### Topic refresh scheduler (#22)
 
 The Newsfind auto-refresh scheduler runs **in-process inside `claude_agent`** (an

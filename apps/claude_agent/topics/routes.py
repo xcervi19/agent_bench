@@ -5,11 +5,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..auth import CurrentPrincipal, Principal
 from ..config import ClaudeAgentSettings, get_settings
 from .db import session_scope
 from .models import Topic, TopicEvent, TopicRefreshDelta, TopicSubscription, TopicWebhook
@@ -61,29 +63,34 @@ class UpdateMonitorBody(BaseModel):
     schedule_interval_hours: int | None = Field(default=None, ge=1)
 
 
-def _require_api_key(
-    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
-    x_api_key: Annotated[str | None, Header(alias="X-API-Key")] = None,
-) -> None:
-    if not settings.api_key:
-        return
-    if x_api_key != settings.api_key:
-        raise HTTPException(status_code=401, detail="invalid X-API-Key")
+router = APIRouter(prefix="/v1/topics", tags=["topics"])
 
 
-router = APIRouter(prefix="/v1/topics", tags=["topics"], dependencies=[Depends(_require_api_key)])
+async def _owned(s: AsyncSession, topic_id: uuid.UUID, principal: Principal) -> Topic:
+    """Load a topic the principal may access. 404 hides other users' topics."""
+    row = await s.get(Topic, topic_id)
+    if row is None or not (principal.is_service or row.owner_user_id == principal.user_id):
+        raise HTTPException(status_code=404, detail="topic not found")
+    return row
+
+
+async def _load_topic(topic_id: uuid.UUID, principal: Principal) -> Topic:
+    async with session_scope() as s:
+        return await _owned(s, topic_id, principal)
 
 
 @router.post("", status_code=status.HTTP_202_ACCEPTED)
 async def create_topic(
     body: CreateTopicBody,
     background: BackgroundTasks,
+    principal: CurrentPrincipal,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ) -> dict[str, Any]:
     new_id = uuid.uuid4()
     async with session_scope() as s:
         s.add(Topic(
             id=new_id,
+            owner_user_id=principal.user_id,
             topic=body.topic,
             state=STATE_PLANNING,
             topic_id_hash=topic_id_hash(body.topic),
@@ -94,7 +101,12 @@ async def create_topic(
 
 
 @router.get("")
-async def list_topics(limit: int = 50, offset: int = 0, state: str | None = None) -> dict[str, Any]:
+async def list_topics(
+    principal: CurrentPrincipal,
+    limit: int = 50,
+    offset: int = 0,
+    state: str | None = None,
+) -> dict[str, Any]:
     if limit < 1 or limit > 200:
         raise HTTPException(status_code=422, detail="limit must be between 1 and 200")
     if offset < 0:
@@ -102,6 +114,8 @@ async def list_topics(limit: int = 50, offset: int = 0, state: str | None = None
 
     async with session_scope() as s:
         stmt = select(Topic)
+        if not principal.is_service:
+            stmt = stmt.where(Topic.owner_user_id == principal.user_id)
         if state:
             stmt = stmt.where(Topic.state == state)
         rows = (await s.execute(
@@ -122,11 +136,9 @@ async def list_topics(limit: int = 50, offset: int = 0, state: str | None = None
 
 
 @router.get("/{topic_id}")
-async def get_topic(topic_id: uuid.UUID) -> dict[str, Any]:
+async def get_topic(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
     async with session_scope() as s:
-        row = await s.get(Topic, topic_id)
-        if row is None:
-            raise HTTPException(status_code=404, detail="topic not found")
+        row = await _owned(s, topic_id, principal)
         return {
             "id": str(row.id),
             "topic": row.topic,
@@ -153,12 +165,11 @@ def _actions(state: str) -> list[str]:
 async def proceed(
     topic_id: uuid.UUID,
     background: BackgroundTasks,
+    principal: CurrentPrincipal,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ) -> dict[str, Any]:
     async with session_scope() as s:
-        row = await s.get(Topic, topic_id)
-        if row is None:
-            raise HTTPException(status_code=404, detail="topic not found")
+        row = await _owned(s, topic_id, principal)
         if row.state != STATE_PLANNED:
             raise HTTPException(status_code=409, detail=f"cannot proceed from state={row.state}")
     background.add_task(run_deliver, topic_id, settings)
@@ -166,11 +177,9 @@ async def proceed(
 
 
 @router.post("/{topic_id}/cancel", status_code=status.HTTP_202_ACCEPTED)
-async def cancel(topic_id: uuid.UUID) -> dict[str, Any]:
+async def cancel(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
     async with session_scope() as s:
-        row = await s.get(Topic, topic_id)
-        if row is None:
-            raise HTTPException(status_code=404, detail="topic not found")
+        row = await _owned(s, topic_id, principal)
         if row.state in (STATE_REPORTED, STATE_FAILED, STATE_CANCELLED):
             return {"accepted": True, "state": row.state}
     await set_state(topic_id, STATE_CANCELLED)
@@ -178,11 +187,11 @@ async def cancel(topic_id: uuid.UUID) -> dict[str, Any]:
 
 
 @router.post("/{topic_id}/subscribe", status_code=status.HTTP_201_CREATED)
-async def subscribe(topic_id: uuid.UUID, body: WebhookBody) -> dict[str, Any]:
+async def subscribe(
+    topic_id: uuid.UUID, body: WebhookBody, principal: CurrentPrincipal
+) -> dict[str, Any]:
     async with session_scope() as s:
-        row = await s.get(Topic, topic_id)
-        if row is None:
-            raise HTTPException(status_code=404, detail="topic not found")
+        await _owned(s, topic_id, principal)
         sub = TopicWebhook(topic_id=topic_id, url=str(body.url), secret=body.secret)
         s.add(sub)
         await s.flush()
@@ -253,6 +262,7 @@ def _monitor_payload(sub: TopicSubscription) -> dict[str, Any]:
 async def start_monitoring(
     topic_id: uuid.UUID,
     body: MonitorBody,
+    principal: CurrentPrincipal,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ) -> dict[str, Any]:
     """Enable continuous monitoring on a reported topic.
@@ -262,9 +272,7 @@ async def start_monitoring(
     refreshes the query plan but does not duplicate subscriptions.
     """
     async with session_scope() as s:
-        row = await s.get(Topic, topic_id)
-        if row is None:
-            raise HTTPException(status_code=404, detail="topic not found")
+        row = await _owned(s, topic_id, principal)
         if row.state != STATE_REPORTED:
             raise HTTPException(
                 status_code=409,
@@ -326,8 +334,9 @@ async def start_monitoring(
 
 
 @router.get("/{topic_id}/monitor")
-async def get_monitoring(topic_id: uuid.UUID) -> dict[str, Any]:
+async def get_monitoring(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
     async with session_scope() as s:
+        await _owned(s, topic_id, principal)
         sub = (await s.execute(
             select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
         )).scalar_one_or_none()
@@ -340,6 +349,7 @@ async def get_monitoring(topic_id: uuid.UUID) -> dict[str, Any]:
 async def update_monitoring(
     topic_id: uuid.UUID,
     body: UpdateMonitorBody,
+    principal: CurrentPrincipal,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ) -> dict[str, Any]:
     """Update monitoring settings — notably turn the auto-refresh schedule on/off.
@@ -348,6 +358,7 @@ async def update_monitoring(
     (either supplied here or already stored).
     """
     async with session_scope() as s:
+        await _owned(s, topic_id, principal)
         sub = (await s.execute(
             select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
         )).scalar_one_or_none()
@@ -390,8 +401,9 @@ async def update_monitoring(
 
 
 @router.delete("/{topic_id}/monitor", status_code=status.HTTP_200_OK)
-async def stop_monitoring(topic_id: uuid.UUID) -> dict[str, Any]:
+async def stop_monitoring(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
     async with session_scope() as s:
+        await _owned(s, topic_id, principal)
         sub = (await s.execute(
             select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
         )).scalar_one_or_none()
@@ -406,6 +418,7 @@ async def stop_monitoring(topic_id: uuid.UUID) -> dict[str, Any]:
 async def trigger_refresh(
     topic_id: uuid.UUID,
     background: BackgroundTasks,
+    principal: CurrentPrincipal,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ) -> dict[str, Any]:
     """Trigger one refresh cycle. Idempotent if a refresh is already running.
@@ -414,6 +427,7 @@ async def trigger_refresh(
     SSE for `refresh.started` / `refresh.completed` events.
     """
     async with session_scope() as s:
+        await _owned(s, topic_id, principal)
         sub = (await s.execute(
             select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
         )).scalar_one_or_none()
@@ -430,7 +444,10 @@ async def trigger_refresh(
 
 
 @router.get("/{topic_id}/deltas")
-async def get_deltas(topic_id: uuid.UUID, limit: int = 50) -> dict[str, Any]:
+async def get_deltas(
+    topic_id: uuid.UUID, principal: CurrentPrincipal, limit: int = 50
+) -> dict[str, Any]:
+    await _load_topic(topic_id, principal)
     items = await list_deltas(topic_id, limit=limit)
     return {"deltas": items, "count": len(items)}
 
@@ -439,9 +456,11 @@ async def get_deltas(topic_id: uuid.UUID, limit: int = 50) -> dict[str, Any]:
 async def get_delta(
     topic_id: uuid.UUID,
     seq: int,
+    principal: CurrentPrincipal,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ):
     async with session_scope() as s:
+        topic_row = await _owned(s, topic_id, principal)
         row = (await s.execute(
             select(TopicRefreshDelta).where(
                 TopicRefreshDelta.topic_id == topic_id,
@@ -450,7 +469,6 @@ async def get_delta(
         )).scalar_one_or_none()
         if row is None:
             raise HTTPException(status_code=404, detail="delta not found")
-        topic_row = await s.get(Topic, topic_id)
     delta_path = (
         Path(settings.state_dir) / "news" / topic_row.topic_id_hash / "runs" / row.run_id / "delta.json"
     )
@@ -488,7 +506,11 @@ def _build_queries_from_disk(
 
 
 @router.get("/{topic_id}/events")
-async def events(topic_id: uuid.UUID, request: Request, from_seq: int = 0):
+async def events(
+    topic_id: uuid.UUID, request: Request, principal: CurrentPrincipal, from_seq: int = 0
+):
+    await _load_topic(topic_id, principal)
+
     async def gen():
         last = from_seq
         while True:
@@ -537,14 +559,6 @@ def _sse(seq: int, event_type: str, payload: dict[str, Any]) -> str:
 # ---- artifact serving ------------------------------------------------------
 
 
-async def _load_topic(topic_id: uuid.UUID) -> Topic:
-    async with session_scope() as s:
-        row = await s.get(Topic, topic_id)
-        if row is None:
-            raise HTTPException(status_code=404, detail="topic not found")
-        return row
-
-
 def _artifact(settings: ClaudeAgentSettings, hash_: str, run_id: str | None, filename: str) -> Path:
     if not run_id:
         raise HTTPException(status_code=404, detail=f"{filename} not produced yet")
@@ -555,43 +569,49 @@ def _artifact(settings: ClaudeAgentSettings, hash_: str, run_id: str | None, fil
 
 
 @router.get("/{topic_id}/parsed")
-async def get_parsed(topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
-    row = await _load_topic(topic_id)
+async def get_parsed(topic_id: uuid.UUID, principal: CurrentPrincipal,
+                     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
+    row = await _load_topic(topic_id, principal)
     return FileResponse(str(_artifact(settings, row.topic_id_hash, row.plan_run_id, "parsed.json")),
                         media_type="application/json")
 
 
 @router.get("/{topic_id}/intro")
-async def get_intro(topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
-    row = await _load_topic(topic_id)
+async def get_intro(topic_id: uuid.UUID, principal: CurrentPrincipal,
+                    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
+    row = await _load_topic(topic_id, principal)
     return FileResponse(str(_artifact(settings, row.topic_id_hash, row.plan_run_id, "intro.json")),
                         media_type="application/json")
 
 
 @router.get("/{topic_id}/intro.md")
-async def get_intro_md(topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
-    row = await _load_topic(topic_id)
+async def get_intro_md(topic_id: uuid.UUID, principal: CurrentPrincipal,
+                       settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
+    row = await _load_topic(topic_id, principal)
     return FileResponse(str(_artifact(settings, row.topic_id_hash, row.plan_run_id, "intro.md")),
                         media_type="text/markdown; charset=utf-8")
 
 
 @router.get("/{topic_id}/news")
-async def get_news(topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
-    row = await _load_topic(topic_id)
+async def get_news(topic_id: uuid.UUID, principal: CurrentPrincipal,
+                   settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
+    row = await _load_topic(topic_id, principal)
     return FileResponse(str(_artifact(settings, row.topic_id_hash, row.deliver_run_id, "news.json")),
                         media_type="application/json")
 
 
 @router.get("/{topic_id}/report")
-async def get_report(topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
-    row = await _load_topic(topic_id)
+async def get_report(topic_id: uuid.UUID, principal: CurrentPrincipal,
+                     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
+    row = await _load_topic(topic_id, principal)
     return FileResponse(str(_artifact(settings, row.topic_id_hash, row.deliver_run_id, "report.json")),
                         media_type="application/json")
 
 
 @router.get("/{topic_id}/report.md")
-async def get_report_md(topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
-    row = await _load_topic(topic_id)
+async def get_report_md(topic_id: uuid.UUID, principal: CurrentPrincipal,
+                        settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
+    row = await _load_topic(topic_id, principal)
     return FileResponse(str(_artifact(settings, row.topic_id_hash, row.deliver_run_id, "report.md")),
                         media_type="text/markdown; charset=utf-8")
 
@@ -600,10 +620,12 @@ async def get_report_md(topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSett
 async def get_delta_news(
     topic_id: uuid.UUID,
     seq: int,
+    principal: CurrentPrincipal,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ):
     """Serve news.json (searched sources + dedup stats) from a refresh run."""
     async with session_scope() as s:
+        topic_row = await _owned(s, topic_id, principal)
         delta = (await s.execute(
             select(TopicRefreshDelta).where(
                 TopicRefreshDelta.topic_id == topic_id,
@@ -612,7 +634,6 @@ async def get_delta_news(
         )).scalar_one_or_none()
         if delta is None:
             raise HTTPException(status_code=404, detail="delta not found")
-        topic_row = await s.get(Topic, topic_id)
     news_path = (
         Path(settings.state_dir) / "news" / topic_row.topic_id_hash
         / "runs" / delta.run_id / "news.json"
@@ -626,10 +647,12 @@ async def get_delta_news(
 async def get_delta_report(
     topic_id: uuid.UUID,
     seq: int,
+    principal: CurrentPrincipal,
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ):
     """Serve report.md from a refresh run."""
     async with session_scope() as s:
+        topic_row = await _owned(s, topic_id, principal)
         delta = (await s.execute(
             select(TopicRefreshDelta).where(
                 TopicRefreshDelta.topic_id == topic_id,
@@ -638,7 +661,6 @@ async def get_delta_report(
         )).scalar_one_or_none()
         if delta is None:
             raise HTTPException(status_code=404, detail="delta not found")
-        topic_row = await s.get(Topic, topic_id)
     report_path = (
         Path(settings.state_dir) / "news" / topic_row.topic_id_hash
         / "runs" / delta.run_id / "report.md"
