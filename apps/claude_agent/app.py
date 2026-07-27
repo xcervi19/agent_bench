@@ -68,6 +68,30 @@ def _warn_on_disabled_pipeline_commands(settings: ClaudeAgentSettings) -> None:
         )
 
 
+def _warn_on_open_topic_api(settings: ClaudeAgentSettings) -> None:
+    """Shout when /v1/topics/* is readable with no credentials at all.
+
+    `_service_key_accepted` treats an empty `api_key` as "accept everyone" while
+    the bypass is on, so a config slip that blanks the key turns every caller
+    into the service principal — which sees *all* topics, not just its own. That
+    happened on prod: `environment:` in docker-compose overrode the key from
+    env_file with "". Nothing failed, nothing 500'd; the API simply answered
+    strangers. Boot-time noise is the cheapest place to catch it.
+    """
+    if not settings.database_url:  # topic API not mounted at all
+        return
+    if settings.allow_service_key_bypass and not settings.api_key:
+        structlog.get_logger("claude_agent").error(
+            "claude_agent.topic_api_unauthenticated",
+            hint=(
+                "service-key bypass is on with an empty CLAUDE_AGENT_API_KEY: every "
+                "anonymous caller is the service role and can read all topics. Set "
+                "CLAUDE_AGENT_API_KEY, or CLAUDE_AGENT_ALLOW_SERVICE_KEY_BYPASS=false "
+                "for a product deployment."
+            ),
+        )
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     settings = get_settings()
@@ -79,6 +103,7 @@ async def _lifespan(app: FastAPI):
         allowed_commands=settings.allowed_commands,
     )
     _warn_on_disabled_pipeline_commands(settings)
+    _warn_on_open_topic_api(settings)
 
     app.state.scheduler = None
     if settings.database_url and settings.scheduler_enabled:

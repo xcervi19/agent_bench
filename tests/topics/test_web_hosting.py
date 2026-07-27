@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from apps.claude_agent.app import _mount_cors, _mount_web
+from apps.claude_agent.app import _mount_cors, _mount_web, _warn_on_open_topic_api
 from apps.claude_agent.config import ClaudeAgentSettings
 
 INDEX = "<!doctype html><title>SignalGather</title>"
@@ -149,3 +149,43 @@ def test_traversal_outside_dist_falls_back_to_index(dist, tmp_path):
 
 def test_api_routes_unaffected_by_spa_mount(dist):
     assert TestClient(_app(web_dist=str(dist))).get("/healthz").json() == {"status": "ok"}
+
+
+# ---- open-topic-API guard --------------------------------------------------
+#
+# Regression guard for a live prod exposure: docker-compose's `environment:`
+# overrode CLAUDE_AGENT_API_KEY from env_file with "", and an empty key plus the
+# default bypass made every anonymous caller the service principal.
+
+
+def _emitted(capsys, **over) -> str:
+    """structlog here uses PrintLoggerFactory, so the record lands on stdout."""
+    capsys.readouterr()
+    _warn_on_open_topic_api(_settings(**over))
+    return capsys.readouterr().out
+
+
+def test_warns_when_key_empty_and_bypass_on(capsys):
+    out = _emitted(capsys, database_url="postgresql+asyncpg://x/y", api_key="")
+    assert "topic_api_unauthenticated" in out
+
+
+def test_silent_when_a_key_is_set(capsys):
+    out = _emitted(capsys, database_url="postgresql+asyncpg://x/y", api_key="secret")
+    assert "topic_api_unauthenticated" not in out
+
+
+def test_silent_when_bypass_is_off(capsys):
+    out = _emitted(
+        capsys,
+        database_url="postgresql+asyncpg://x/y",
+        api_key="",
+        allow_service_key_bypass=False,
+    )
+    assert "topic_api_unauthenticated" not in out
+
+
+def test_silent_when_topic_api_is_not_mounted(capsys):
+    """No database_url means /v1/topics/* never mounts — nothing to expose."""
+    out = _emitted(capsys, database_url="", api_key="")
+    assert "topic_api_unauthenticated" not in out

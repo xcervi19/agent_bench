@@ -52,7 +52,12 @@ services:
     environment:
       CLAUDE_AGENT_WORKSPACE_DIR: /workspace/claude_agent_fe
       CLAUDE_AGENT_LOG_LEVEL: ${CLAUDE_AGENT_LOG_LEVEL:-INFO}
-      CLAUDE_AGENT_API_KEY: ${CLAUDE_AGENT_API_KEY:-}
+      # CLAUDE_AGENT_API_KEY is deliberately NOT listed here. `environment:`
+      # overrides `env_file:`, so `${CLAUDE_AGENT_API_KEY:-}` silently replaced
+      # the key from apps/claude_agent/.env with "" whenever the root .env did
+      # not define it — and an empty key plus the default service-key bypass
+      # makes the whole topic API readable without credentials. Let env_file own
+      # it; to override per host, set it in apps/claude_agent/.env.
       CLAUDE_AGENT_DEFAULT_MODEL: ${CLAUDE_AGENT_DEFAULT_MODEL:-}
       CLAUDE_AGENT_ALLOW_FREEFORM_PROMPTS: ${CLAUDE_AGENT_ALLOW_FREEFORM_PROMPTS:-false}
       CLAUDE_AGENT_STATE_DIR: ${CLAUDE_AGENT_STATE_DIR:-/state}
