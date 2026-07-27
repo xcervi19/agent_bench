@@ -75,7 +75,10 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
   - Tests: 178 frontend (vitest) + 12 backend (`tests/topics/test_web_hosting.py`); typecheck, lint, build green.
 - **What's missing — the whole live verification.** No part of 16b/16c has ever run against a real report or a real refresh cycle: Docker was unavailable in the build environment, so only the static `/app` mount was smoke-tested locally. The highest-risk unknowns are (a) whether the agent actually emits well-formed widgets after the prompt change, (b) whether `[s01]` citations match `news.json` ids in practice, and (c) monitoring, which also depends on #22 being live.
 - **Also:** set `CLAUDE_AGENT_ALLOW_SERVICE_KEY_BYPASS=false` on any slot used as a real product surface — with the harness default an unauthenticated browser is the service role and sees every topic.
-- **Next step:** Deploy `claude_agent` to test1 (the image now builds the UI), then work `testing/ui_smoke_16.md` end to end — §7b (widgets), §7d (monitoring/deltas), §5 (reconnect) and §11 (responsive) are what unit tests cannot close.
+- **DEPLOYED TO PROD 2026-07-27** (commit `1672fe9`, `agent.particletico.com`): image builds the SPA, `/app` serves it over HTTPS, anonymous `/v1/topics` is 401, service key still 200, `readyz` ready. Deployed to **prod rather than test1** deliberately — test1's RAG corpus is empty (0 documents vs 141 on prod), so the RAG-grounded plan stage cannot be exercised there at all.
+- **Two problems surfaced by the deploy, both fixed:** the anonymous-read exposure above, and `/newsfind-topic-parse` missing from prod's `CLAUDE_AGENT_ALLOWED_COMMANDS` (which would have silently degraded #38's grounding leg — caught by the boot warning added in this same work).
+- **Still not exercised:** no topic has been run end to end on the new build. `CLAUDE_AGENT_SCHEDULER_ENABLED=false` on prod, so 16c's *scheduled* refresh path cannot be tested there until that is flipped (no subscription currently has `schedule_enabled`, so flipping it is safe); manual refresh works.
+- **Next step:** work `testing/ui_smoke_16.md` end to end against `https://agent.particletico.com/app` — §7b (widgets), §7d (monitoring/deltas), §5 (reconnect) and §11 (responsive) are what unit tests cannot close.
 
 ### Topic refresh scheduler (#22)
 - **Spec:** `docs/specs/active/topic_refresh_scheduler_22.md`
@@ -124,6 +127,12 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 ---
 
 ## Known Bugs
+
+### RESOLVED 2026-07-27 — topic API was readable without credentials on prod
+- **Symptom:** `GET https://agent.particletico.com/v1/topics` returned all 6 topics to any caller, no credentials.
+- **Cause:** `docker-compose.yml` listed `CLAUDE_AGENT_API_KEY: ${CLAUDE_AGENT_API_KEY:-}` under `environment:`, which **overrides `env_file:`**. The root `.env` never defined it, so the key set in `apps/claude_agent/.env` was replaced with `""`. `_service_key_accepted` treats an empty key as "accept everyone" while the bypass is on, so every anonymous request became the service principal — which by design sees every topic. Nothing failed or 500'd; the API just answered strangers.
+- **Fixed:** commit `1672fe9` — the key is no longer passed through `environment:` (env_file owns it), and `_warn_on_open_topic_api` logs an error at boot if the combination recurs. Prod remediated live before the commit.
+- **Watch for:** the same `${VAR:-}` override pattern on any other secret in `docker-compose.yml`.
 
 ### RAG env vars dropped on container recreate
 - **Symptom:** `rag_context_refs: []` + `"RAG unavailable — no .env configuration found"`
