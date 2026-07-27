@@ -129,7 +129,7 @@ Write `news.json`:
 Read the `news.json` you just wrote. For the survivors:
 
 * `summary_md` — ≤200 words. What is genuinely new? Cite `[s01]`. Note any `monitoring_plan.trigger_terms` that were hit.
-* `report.md` — single section `## Refresh delta (<today_iso>)` with 2–6 bullets, each citing 1–2 sources. End with one-line "Trigger terms hit: …" or "No trigger terms hit."
+* `report.md` — single section `## Refresh delta (<today_iso>)` with 2–6 bullets, each citing 1–2 sources. End with one-line "Trigger terms hit: …" or "No trigger terms hit." If one source clearly drives the cycle, add a `news-card` widget for it (see `.claude/widgets.md`); otherwise plain markdown.
 * `thesis_status` — `unchanged` is fine if nothing material moved. Use `supported|weakened|invalidated` only if the new sources directly speak to the working thesis.
 
 Write `delta.json`:

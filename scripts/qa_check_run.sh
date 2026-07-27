@@ -25,6 +25,7 @@ RULES_FILE="$REPO_ROOT/testing/qa_rules.json"
 MIN_SOURCES=""
 MIN_FINDINGS=""
 MIN_CITATIONS=""
+MIN_WHITELIST_RATIO=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -52,6 +53,10 @@ while [[ $# -gt 0 ]]; do
       MIN_CITATIONS="${2:-}"
       shift 2
       ;;
+    --min-whitelist-ratio)
+      MIN_WHITELIST_RATIO="${2:-}"
+      shift 2
+      ;;
     -h|--help)
       cat <<'EOF'
 Usage: scripts/qa_check_run.sh --run-dir <path> [--out <path>] [--rules <path>]
@@ -63,6 +68,10 @@ Options:
   --min-sources     Override deliver.sources_total minimum
   --min-findings    Override deliver.key_findings_count minimum
   --min-citations   Override deliver.unique_citations minimum
+  --min-whitelist-ratio
+                    Override grounding.whitelist_source_ratio minimum (0..1)
+
+Checks marked severity "warning" are reported but do not fail the gate.
 EOF
       exit 0
       ;;
@@ -98,12 +107,17 @@ if [[ -f "$RULES_FILE" ]]; then
   [[ -z "$MIN_SOURCES" ]]   && MIN_SOURCES=$(jq -r '.thresholds.min_sources // empty' "$RULES_FILE" 2>/dev/null || true)
   [[ -z "$MIN_FINDINGS" ]]  && MIN_FINDINGS=$(jq -r '.thresholds.min_findings // empty' "$RULES_FILE" 2>/dev/null || true)
   [[ -z "$MIN_CITATIONS" ]] && MIN_CITATIONS=$(jq -r '.thresholds.min_citations // empty' "$RULES_FILE" 2>/dev/null || true)
+  [[ -z "$MIN_WHITELIST_RATIO" ]] && MIN_WHITELIST_RATIO=$(jq -r '.thresholds.min_whitelist_ratio // empty' "$RULES_FILE" 2>/dev/null || true)
   ETS=$(jq -r '.expected_terminal_state // empty' "$RULES_FILE" 2>/dev/null || true)
   [[ -n "$ETS" ]] && EXPECTED_TERMINAL_STATE="$ETS"
 fi
 MIN_SOURCES="${MIN_SOURCES:-5}"
 MIN_FINDINGS="${MIN_FINDINGS:-2}"
 MIN_CITATIONS="${MIN_CITATIONS:-3}"
+# Deliberately low: the whitelist holds primary sources, and a healthy report
+# also leans on wire services and specialist outlets that are not on it. This
+# floor only asserts that grounding reached the output at all.
+MIN_WHITELIST_RATIO="${MIN_WHITELIST_RATIO:-0.15}"
 
 EVAL_FILE="$RUN_DIR/evaluation.json"
 EVENTS_FILE="$RUN_DIR/agent_log/events_full.ndjson"
@@ -132,12 +146,18 @@ tool_errors=0
 sources_total=0
 key_findings_count=0
 unique_citations=0
+whitelist_ratio=0
+source_target_entities=0
+SOURCE_DISCOVER_RAN=false
 
 if [[ "$HAS_EVAL" == "true" ]]; then
   tool_errors=$(jq -r '.events.tool_errors // 0' "$EVAL_FILE" 2>/dev/null || echo 0)
   sources_total=$(jq -r '.deliver.sources_total // 0' "$EVAL_FILE" 2>/dev/null || echo 0)
   key_findings_count=$(jq -r '.deliver.key_findings_count // 0' "$EVAL_FILE" 2>/dev/null || echo 0)
   unique_citations=$(jq -r '.deliver.unique_citations // 0' "$EVAL_FILE" 2>/dev/null || echo 0)
+  whitelist_ratio=$(jq -r '.grounding.whitelist_source_ratio // 0' "$EVAL_FILE" 2>/dev/null || echo 0)
+  source_target_entities=$(jq -r '.grounding.source_target_entities // 0' "$EVAL_FILE" 2>/dev/null || echo 0)
+  SOURCE_DISCOVER_RAN=$(jq -r '.grounding.source_discover_ran // false' "$EVAL_FILE" 2>/dev/null || echo false)
 fi
 
 # ── Lifecycle: terminal state ───────────────────────────────────────────────
@@ -222,6 +242,10 @@ jq -n \
   --argjson sources_total "$sources_total" \
   --argjson key_findings_count "$key_findings_count" \
   --argjson unique_citations "$unique_citations" \
+  --argjson whitelist_ratio "$whitelist_ratio" \
+  --argjson min_whitelist_ratio "$MIN_WHITELIST_RATIO" \
+  --argjson source_target_entities "$source_target_entities" \
+  --argjson source_discover_ran "$SOURCE_DISCOVER_RAN" \
   --argjson cited_count "$CITED_COUNT" \
   --argjson state_reported "$STATE_REPORTED" \
   --argjson state_failed "$STATE_FAILED" \
@@ -236,7 +260,7 @@ jq -n \
     run_dir: $run_dir,
     generated_at: $generated_at,
     rules_file: $rules_file,
-    thresholds: {min_sources: $min_sources, min_findings: $min_findings, min_citations: $min_citations},
+    thresholds: {min_sources: $min_sources, min_findings: $min_findings, min_citations: $min_citations, min_whitelist_ratio: $min_whitelist_ratio},
     checks: [
       {id: "artifact_evaluation_json",      category: "artifact",    severity: "error", pass: $has_eval,        actual: $eval_file},
       {id: "artifact_events_full_ndjson",   category: "artifact",    severity: "error", pass: $has_events,      actual: $events_file},
@@ -253,13 +277,18 @@ jq -n \
       {id: "no_error_terminal",             category: "lifecycle",   severity: "error", pass: ($state_failed | not), actual: $final_state},
       {id: "stage_progression_plan",        category: "invariant",   severity: "error", pass: $stage_plan},
       {id: "stage_progression_deliver",     category: "invariant",   severity: "error", pass: $stage_deliver},
+      {id: "stage_progression_source_discover", category: "invariant", severity: "warning", pass: $source_discover_ran, actual: $source_discover_ran},
+      {id: "source_targets_resolved",       category: "grounding",   severity: "warning",  pass: ($source_target_entities > 0), actual: $source_target_entities, expected_min: 1},
+      {id: "whitelist_source_ratio",        category: "grounding",   severity: "warning",  pass: ($whitelist_ratio >= $min_whitelist_ratio), actual: $whitelist_ratio, expected_min: $min_whitelist_ratio},
       {id: "citation_integrity",            category: "invariant",   severity: "error", pass: $citation_ok, actual: {cited: $cited_count, unresolved: $citation_missing}}
     ]
   }
-  | .failed_checks = [.checks[] | select(.pass == false) | .id]
+  | .failed_checks = [.checks[] | select(.pass == false and .severity == "error") | .id]
+  | .warnings = [.checks[] | select(.pass == false and .severity == "warning") | .id]
   | .summary = {
       checks_total: (.checks | length),
       checks_failed: (.failed_checks | length),
+      checks_warned: (.warnings | length),
       passed: ((.failed_checks | length) == 0)
     }
   | .passed = .summary.passed
@@ -267,6 +296,12 @@ jq -n \
 
 PASSED=$(jq -r '.passed' "$OUT_FILE")
 FAILED=$(jq -r '.summary.checks_failed' "$OUT_FILE")
+WARNED=$(jq -r '.summary.checks_warned' "$OUT_FILE")
+
+if [[ "$WARNED" != "0" ]]; then
+  echo "QA WARN ($WARNED warnings)"
+  jq -r '.warnings[]' "$OUT_FILE" | sed 's/^/ ~ /'
+fi
 
 if [[ "$PASSED" == "true" ]]; then
   echo "QA PASS ($FAILED failed checks)"

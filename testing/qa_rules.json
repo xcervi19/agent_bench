@@ -1,10 +1,11 @@
 {
   "schema_version": "1.0.0",
-  "description": "Ticket #15 — machine-readable technical verification rules for a finished Newsfind run. Consumed by scripts/qa_check_run.sh (gate) and tests/qa/ (fixtures). This file defines WHAT to check and pass/fail thresholds; #19 owns where/how it executes (CI/VPS); #18 owns business-value judgment.",
+  "description": "Ticket #15 — machine-readable technical verification rules for a finished Newsfind run. Consumed by scripts/qa_check_run.sh (gate) and tests/qa/ (fixtures). This file defines WHAT to check and pass/fail thresholds; #19 owns where/how it executes (CI/VPS); #18 owns business-value judgment. Rules with severity 'warning' are reported but do not fail the gate.",
   "thresholds": {
     "min_sources": 5,
     "min_findings": 2,
-    "min_citations": 3
+    "min_citations": 3,
+    "min_whitelist_ratio": 0.15
   },
   "expected_terminal_state": "reported",
   "required_stages": ["plan", "deliver"],
@@ -122,6 +123,31 @@
       "severity": "error",
       "gating": true,
       "description": "events_full.ndjson contains a stage.finished event for stage 'deliver'."
+    },
+    {
+      "id": "stage_progression_source_discover",
+      "category": "invariant",
+      "severity": "warning",
+      "gating": false,
+      "description": "grounding.source_discover_ran is true — the pre-plan source grounding stage executed.",
+      "known_bad": "Deploy gap: agent image predates the grounding pipeline, so every topic searches unscoped."
+    },
+    {
+      "id": "source_targets_resolved",
+      "category": "grounding",
+      "severity": "warning",
+      "gating": false,
+      "description": "grounding.source_target_entities > 0 — the topic resolved to at least one whitelisted entity.",
+      "known_bad": "Zero targets: whitelist/playbooks missing from the image, or the topic never got translated to English."
+    },
+    {
+      "id": "whitelist_source_ratio",
+      "category": "grounding",
+      "severity": "warning",
+      "gating": false,
+      "threshold_key": "min_whitelist_ratio",
+      "description": "grounding.whitelist_source_ratio >= min_whitelist_ratio — whitelisted domains actually reached news.json. Warn-only: the threshold is a floor on grounding reaching the output, not a target, and a healthy report also cites wire services and specialist outlets that are not on the whitelist.",
+      "known_bad": "Grounding resolved targets but the agent ignored them; report reads like a generic web search."
     },
     {
       "id": "citation_integrity",

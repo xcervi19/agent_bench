@@ -52,6 +52,10 @@ def failed_ids(report: dict) -> set[str]:
     return set(report.get("failed_checks", []))
 
 
+def warning_ids(report: dict) -> set[str]:
+    return set(report.get("warnings", []))
+
+
 @pytest.fixture
 def good_run(tmp_path: Path) -> Path:
     """A fresh, writable copy of the healthy run fixture."""
@@ -108,6 +112,22 @@ def break_run(run_dir: Path, kind: str) -> None:
 
     elif kind == "empty_events":
         (agent / "events_full.ndjson").write_text("")
+
+    elif kind == "no_source_targets":
+        ev = _read_json(run_dir / "evaluation.json")
+        ev["grounding"]["source_target_entities"] = 0
+        _write_json(run_dir / "evaluation.json", ev)
+
+    elif kind == "unused_whitelist":
+        ev = _read_json(run_dir / "evaluation.json")
+        ev["grounding"]["whitelist_sources"] = 0
+        ev["grounding"]["whitelist_source_ratio"] = 0
+        _write_json(run_dir / "evaluation.json", ev)
+
+    elif kind == "missing_source_discover":
+        ev = _read_json(run_dir / "evaluation.json")
+        ev["grounding"]["source_discover_ran"] = False
+        _write_json(run_dir / "evaluation.json", ev)
 
     elif kind == "missing_deliver_stage":
         ev_file = agent / "events_full.ndjson"

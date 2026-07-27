@@ -39,6 +39,14 @@ Use these three commands for normal validation and pilot readiness:
 - `scripts/devops/ci_run_vps_e2e_ssh.sh` — SSH driver for VPS E2E
 - `scripts/devops/ci_fetch_test1_artifacts.sh` — pull `test1/latest` from VPS for CI upload
 
+### Owner-only (product owner / tech lead, destructive)
+
+Located in `scripts/owner/` — never called by CI, agents, or other scripts.
+
+- `scripts/owner/purge_test_topic_data.sh` — wipe topic test-run data (DB + `/state/news`)
+  on a VPS slot. Dry run by default; protects the RAG corpus and all account data.
+  See `scripts/owner/README.md`.
+
 ### Data / corpus processing
 
 - `scripts/data_processing/consolidate_corpus_l1.py`
@@ -64,3 +72,5 @@ Use legacy scripts only when you explicitly need old behavior.
 - If a script is part of daily validation, keep it in `scripts/` and document it in `testing/README.md`.
 - If it is one-off or transitional, put it in `scripts/legacy/` or document as specialized debug.
 - Do not add a second script for the same primary workflow (avoid duplicate E2E runners).
+- Destructive data operations belong in `scripts/owner/`, must default to a dry run, and must
+  assert that product know-how (RAG corpus, accounts) is untouched.

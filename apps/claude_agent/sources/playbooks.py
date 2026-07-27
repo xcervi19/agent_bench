@@ -5,7 +5,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .text import significant_tokens
+from .text import contains_folded, matched_tokens, significant_tokens
 from .whitelist import WhitelistEntry, entity_matches, index_by_domain
 
 MAX_TOPIC_PLAYBOOKS = 3
@@ -89,10 +89,10 @@ def find_playbooks(directory: Path, query: str) -> list[PlaybookHit]:
         text = path.read_text(encoding="utf-8")
         rows = parse_primary_official_sources(text, path.name)
         entity_row_match = any(
-            entity_matches(r.entity, q) or q.casefold() in r.domain for r in rows
+            entity_matches(r.entity, q) or contains_folded(r.domain, q) for r in rows
         )
         topic_hit = entity_matches(path.stem.replace("_", " "), q) or (
-            len(q) >= 3 and q.casefold() in text.casefold()
+            len(q) >= 3 and contains_folded(text, q)
         )
         if not (entity_row_match or topic_hit):
             continue
@@ -117,7 +117,7 @@ def _stem_relevance(hits: list[PlaybookHit], topic: str) -> dict[str, float]:
     frequency = Counter(t for toks in stem_tokens.values() for t in toks)
     topic_tokens = significant_tokens(topic)
     return {
-        name: sum(1 / frequency[t] for t in toks & topic_tokens)
+        name: sum(1 / frequency[t] for t in matched_tokens(toks, topic_tokens))
         for name, toks in stem_tokens.items()
     }
 
@@ -153,7 +153,7 @@ def selected_rows_for_query(hit: PlaybookHit, query: str) -> list[PlaybookSource
         return [
             r
             for r in hit.rows
-            if entity_matches(r.entity, query) or query.casefold() in r.domain
+            if entity_matches(r.entity, query) or contains_folded(r.domain, query)
         ]
     return list(hit.rows)
 

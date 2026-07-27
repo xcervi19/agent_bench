@@ -143,6 +143,26 @@ docker compose exec claude_agent bash -c \
 **Cause:** macOS ships BSD awk.
 **Fix:** Use `sed` instead: `sed -e 's/^data: //'`.
 
+### Problem 7 — report contains nothing from the whitelist
+**Symptom:** Every stage reports success, but the report is thin and cites no official domains.
+**Cause:** Source grounding (#29/#30/#36/#38) is best-effort by design — it degrades rather than fails, so a broken grounding stage looks exactly like a quiet news week. Three distinct faults produce this symptom.
+**Diagnosis:** Read the `grounding` block of a runner result (`testing/results/<env>/latest/evaluation.json`), or pull the stage events straight from the API:
+
+```bash
+# /events is an SSE stream; strip the `data: ` prefix like the runner does.
+curl -N -sS --max-time 10 "$API/v1/topics/$TOPIC_ID/events?from_seq=0" \
+  -H "X-API-Key: $CLAUDE_AGENT_API_KEY" \
+  | sed -n 's/^data: //p' \
+  | jq -c 'select(.event_type=="stage.finished") | .payload'
+```
+
+| Signal | Fault | Fix |
+|---|---|---|
+| No `source_discover` stage at all | Image predates #36 | Rebuild and redeploy |
+| `warning: "source grounding unavailable"` | `source_whitelist.json` / playbooks missing from the image | Check the `COPY` lines in `docker/Dockerfile.claude_agent` |
+| `degraded: true` on `topic_parse` with `CommandNotAllowedError` | `/newsfind-topic-parse` missing from `CLAUDE_AGENT_ALLOWED_COMMANDS` | See Problem 3; the boot log also warns `claude_agent.pipeline_commands_not_allowed` |
+| `entities: 0` but parse succeeded | Topic genuinely matches no whitelist entity | Expected; extend the whitelist (#29) or a playbook (#30) |
+
 ---
 
 ## Migrating to non-root user (one-time on each environment)

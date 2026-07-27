@@ -1,0 +1,40 @@
+# Owner-only scripts
+
+**Product owner / technical lead only.** These scripts are destructive and are not
+part of any developer, CI, or agent workflow. Do not call them from other scripts.
+
+## `purge_test_topic_data.sh`
+
+Wipes Newsfind topic test-run data from VPS slots after a testing campaign.
+The VPS-side half lives in `_purge_remote.sh`, which is copied to `/tmp` and executed
+per slot; do not invoke it directly.
+
+| | |
+|---|---|
+| **Deletes (DB)** | `topics`, `topic_events`, `topic_subscriptions`, `topic_refresh_deltas`, `topic_webhooks` |
+| **Deletes (disk)** | `<slot>/state*/news/*` — run artifacts (`parsed.json`, `report.md`, `delta.json`, streams) |
+| **Never touches** | `documents`, `events`, `signals` (RAG corpus + embeddings), `users`, `user_profiles`, `reports`, `alerts`, `agent_sessions`, `agent_events`, `alembic_version`, `local_knowledge_sources/`, `artifacts/`, S3/MinIO, `claude_home/` |
+
+```bash
+scripts/owner/purge_test_topic_data.sh --slot test1          # dry run (default)
+scripts/owner/purge_test_topic_data.sh --slot test1 --yes    # execute
+scripts/owner/purge_test_topic_data.sh --slot all --yes      # prod + test1 + test2
+```
+
+### Safety model
+
+1. **Dry run by default** — prints exactly what would be deleted; `--yes` is required to write.
+2. **Typed confirmation** — `--yes` prompts for the literal word `PURGE`.
+3. **In-flight guard** — aborts if any subscription has `refresh_locked = true`.
+4. **Table whitelist** — the SQL names the five topic tables explicitly; no `TRUNCATE CASCADE`, no wildcards.
+5. **Protected-count assertion** — row counts of all know-how tables are captured before and after; any drift exits non-zero.
+6. **Scoped disk delete** — only `<state dir>/news/*`, never the state dir itself or repo folders.
+
+### When to run
+
+Only when the environment held **test traffic only**. Never with customer data present.
+Stop monitoring first (`PATCH /monitor {"schedule_enabled": false}` and
+`DELETE /monitor`) so no refresh is running.
+
+Migrations are untouched — the schema stays at its current Alembic head, so topics
+can be created again immediately after a purge.

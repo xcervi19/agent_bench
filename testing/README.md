@@ -27,6 +27,15 @@ scripts/compare_evaluations.sh \
 
 **Results:** `testing/results/<env>/<timestamp>/` — `evaluation.json`, `qa_report.json`, `agent_log/`, `business_output/`, `runner.log`. Latest: `testing/results/<env>/latest/`.
 
+## UI smoke (#16)
+
+`testing/ui_smoke_16.md` — manual checklist for the web UI at `/app` on any slot:
+sign-in, topic list, NL create, live SSE activity, reconnect, plan gate,
+Proceed/Cancel, report + citations + sources, adaptive widgets, and monitoring
+with its delta timeline. Run it after deploying `claude_agent`, which now also
+ships the frontend bundle. It covers the same journey as `app_testing_scenario.md`
+without curl.
+
 ## Environments
 
 | Env | URL | Config |

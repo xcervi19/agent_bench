@@ -70,6 +70,30 @@ Every `/v1/topics/*` route resolves a caller and scopes data to it. Two paths:
 - Scheduled refreshes (#22) run server-side and stay attached to the topic owner,
   so a reconnecting user sees updates only for their own topics.
 
+### Web UI (#16)
+
+The SignalGather SPA is **baked into the `claude_agent` image** (`web` stage in
+`docker/Dockerfile.claude_agent`) and served by the same FastAPI app at **`/app`**.
+No extra container, port, Caddy vhost, or certificate — the existing
+`agent*.particletico.com` vhosts already proxy it.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `CLAUDE_AGENT_WEB_DIST` | `/app/web` (in image) | Built bundle to serve at `/app`. Empty disables the mount. |
+| `CLAUDE_AGENT_CORS_ORIGINS` | empty | Browser origins allowed to call the API. Only needed when the UI is served from a **different** origin (e.g. a dev machine's `http://localhost:5173`). Accepts a comma-separated list. |
+
+```bash
+# after deploying claude_agent
+curl -s -o /dev/null -w '%{http_code}\n' https://agent-test1.particletico.com/app   # 200
+```
+
+⚠️ **Product slots must set `CLAUDE_AGENT_ALLOW_SERVICE_KEY_BYPASS=false`.** With
+the harness default (`true`) and an empty `CLAUDE_AGENT_API_KEY`, an
+unauthenticated browser is treated as the service role and would see *every*
+topic in the slot. See “Topic API auth (#24)” above.
+
+Smoke checklist: `testing/ui_smoke_16.md`.
+
 ### Topic refresh scheduler (#22)
 
 The Newsfind auto-refresh scheduler runs **in-process inside `claude_agent`** (an

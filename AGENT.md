@@ -9,7 +9,8 @@ Legacy **Signal Gather** (CrewAI RSS/signals stack) lives on branch
 
 | App | Location | Purpose |
 |---|---|---|
-| `claude_agent` | `apps/claude_agent/` | Topic pipeline (`/newsfind-*`) — **product** |
+| `claude_agent` | `apps/claude_agent/` | Topic pipeline (`/newsfind-*`) — **product**; serves the UI at `/app` |
+| `signalgather_web` | `apps/signalgather_web/` | SignalGather web UI (#16) — React SPA over the topic API |
 | `rag_adhoc` | `apps/rag_adhoc/` | RAG semantic search; used during **plan** |
 
 Shared auth/DB: `libs/agentic_core/` (JWT for **#24**).
@@ -18,7 +19,7 @@ Shared auth/DB: `libs/agentic_core/` (JWT for **#24**).
 
 | Service | Local | VPS |
 |---|---|---|
-| `claude_agent` | 8002 | 8002 |
+| `claude_agent` (API + `/app` UI) | 8002 | 8002 |
 | `rag_adhoc` | 8001 | 8001 (internal) |
 | `postgres` | 5432 | — (tunnel to 5433) |
 
@@ -30,6 +31,7 @@ Claude slash commands workspace: `claude_agent_fe/` (mounted into `claude_agent`
 agent_bench/
 ├── apps/
 │   ├── claude_agent/           ← news research pipeline (Claude CLI)
+│   ├── signalgather_web/       ← web UI (React SPA), served at /app by claude_agent
 │   └── rag_adhoc/              ← RAG search API + corpus models
 ├── libs/
 │   ├── agentic_core/           ← auth, DB, health (slim)
@@ -64,8 +66,11 @@ docker compose up --build postgres rag_adhoc claude_agent
 # Run migrations
 docker compose run --rm --no-deps --entrypoint alembic rag_adhoc upgrade head
 
-# Rebuild + restart claude_agent only
+# Rebuild + restart claude_agent only (also rebuilds the bundled UI)
 docker compose build claude_agent && docker compose up -d claude_agent
+
+# Web UI dev server (proxies the API on :8002) → http://localhost:5173/app/
+cd apps/signalgather_web && npm install && npm run dev
 
 # Health checks
 curl -s http://localhost:8002/readyz
@@ -100,6 +105,7 @@ curl -N -X POST "$API/v1/agent/stream" \
 | Debug cheat sheet + war stories | `docs/ops/debugging.md` |
 | DB debug queries | `docs/ops/db_commands.md` |
 | Testing scenarios + eval harness | `testing/README.md` |
+| Web UI (stack, dev, deploy) | `apps/signalgather_web/README.md` |
 
 ---
 

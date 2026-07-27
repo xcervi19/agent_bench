@@ -113,7 +113,13 @@ Produce:
 * `summary_md` — ≤300 words executive abstract with citations.
 * `report_md` — section-structured markdown:
   * `## Snapshot` — 2–3 sentences with the headline takeaway. Cite.
-  * `## Evidence highlights` — 4–8 bullets, each citing 1–3 sources. Optionally `<NewsCard source-id="s01"/>` for the most important sources.
+  * `## Evidence highlights` — 4–8 bullets, each citing 1–3 sources. For the two or three most important sources, add a `news-card` widget (see `.claude/widgets.md`):
+
+    ````
+    ```markdown-ui-widget
+    {"type": "news-card", "sourceId": "s01"}
+    ```
+    ````
   * `## How news reshapes the working thesis` — at most one paragraph. Cite.
   * `## Risks & blind spots` — 2–4 bullets.
 * `key_findings` — 4–8 entries, each `{finding, confidence (high|medium|low), source_ids[]}`.
@@ -145,5 +151,5 @@ Echo `{"phase":"P5","status":"done"}`.
 
 * `news.json#sources` IDs are `s01`, `s02`, … No gaps.
 * Every factual claim in `report_md` / `summary_md` / `key_findings` is followed by inline citations referencing `news.json#sources[].id`.
-* Never fabricate sources. Never invent custom markdown components beyond `<NewsCard source-id="..."/>`.
+* Never fabricate sources. Presentation widgets are limited to the types listed in `.claude/widgets.md` — an invented `type` renders as "cannot display", so fall back to plain markdown instead.
 * The run is complete when `summary.json` exists on disk. Your final assistant message is ignored.

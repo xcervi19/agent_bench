@@ -11,7 +11,12 @@ from pathlib import Path
 
 from .conftest import GOOD_RUN, RULES, run_gate
 
-REQUIRED_THRESHOLDS = {"min_sources", "min_findings", "min_citations"}
+REQUIRED_THRESHOLDS = {
+    "min_sources",
+    "min_findings",
+    "min_citations",
+    "min_whitelist_ratio",
+}
 
 
 def test_rules_file_is_well_formed():
@@ -29,8 +34,16 @@ def test_rules_file_is_well_formed():
             "threshold",
             "lifecycle",
             "invariant",
+            "grounding",
         }
         assert rule["description"]
+
+
+def test_only_error_rules_gate():
+    """severity and gating must agree: a warning never fails the run."""
+    rules = json.loads(RULES.read_text())
+    for rule in rules["rules"]:
+        assert rule["gating"] is (rule["severity"] == "error"), rule["id"]
 
 
 def test_rules_and_gate_check_ids_match(tmp_path: Path):

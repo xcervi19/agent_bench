@@ -13,6 +13,8 @@
     "tool_calls": 18,
     "tool_errors": 0,
     "stages": [
+      {"stage": "topic_parse", "duration_ms": 4000, "cost_usd": 0.01},
+      {"stage": "source_discover", "duration_ms": 60, "cost_usd": null},
       {"stage": "plan", "duration_ms": 120000, "cost_usd": 0.21},
       {"stage": "deliver", "duration_ms": 240000, "cost_usd": 0.54}
     ],
@@ -35,6 +37,23 @@
     "report_lines": 48,
     "report_words": 620,
     "unique_citations": 5
+  },
+  "grounding": {
+    "topic_parse_ran": true,
+    "topic_parse_cached": false,
+    "topic_parse_degraded": false,
+    "topic_parse_degraded_reason": null,
+    "input_language": "en",
+    "canonical_topic_en": "Hormuz strait closure options to lower price",
+    "source_languages": ["en", "ar", "fa"],
+    "source_discover_ran": true,
+    "source_discover_warning": null,
+    "source_target_entities": 21,
+    "playbook_refs": ["strait_of_hormuz.md"],
+    "whitelist_sources": 1,
+    "whitelist_source_ratio": 0.16,
+    "whitelist_domains_hit": ["eia.gov"],
+    "other_domains": ["argusmedia.com", "bloomberg.com", "irna.ir", "platts.com", "reuters.com"]
   },
   "refresh": {
     "enabled": true,

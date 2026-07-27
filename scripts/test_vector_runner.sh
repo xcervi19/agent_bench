@@ -765,6 +765,52 @@ if [ "$STEP" = "collecting" ]; then
       | jq -sc '.[0] * .[1] * .[2]' 2>/dev/null || echo '{}')
   fi
 
+  # ── Grounding metrics (#29 whitelist, #30 playbooks, #36 discover, #38 parse)
+  # The pre-plan stages resolve official domains, but only news.json proves the
+  # agent actually searched them. Without this, a grounding regression looks
+  # exactly like a thin news week.
+  STAGE_METRICS=$(jq -rsc '
+    ([.[] | select(.event_type=="stage.finished" and .payload.stage=="topic_parse")] | last) as $tp
+    | ([.[] | select(.event_type=="stage.finished" and .payload.stage=="source_discover")] | last) as $sd
+    # No `//` on the boolean fields: jq treats `false` as empty, so
+    # `.degraded // null` would erase exactly the healthy case.
+    | {
+        topic_parse_ran: ($tp != null),
+        topic_parse_cached: $tp.payload.cached,
+        topic_parse_degraded: $tp.payload.degraded,
+        topic_parse_degraded_reason: $tp.payload.degraded_reason,
+        input_language: $tp.payload.input_language,
+        canonical_topic_en: $tp.payload.canonical_topic_en,
+        source_languages: ($tp.payload.source_languages // []),
+        source_discover_ran: ($sd != null),
+        source_discover_warning: $sd.payload.warning,
+        source_target_entities: ($sd.payload.entities // 0),
+        playbook_refs: ($sd.payload.playbook_refs // [])
+      }
+  ' "$EVENTS_FULL" 2>/dev/null || echo '{}')
+
+  RATIO_METRICS='{}'
+  WHITELIST_FILE="$REPO_ROOT/source_whitelist.json"
+  if [ -s "$BIZ_OUT/news.json" ] && [ -s "$WHITELIST_FILE" ]; then
+    RATIO_METRICS=$(jq -nc \
+      --slurpfile news "$BIZ_OUT/news.json" \
+      --slurpfile wl "$WHITELIST_FILE" '
+      def host: ascii_downcase | sub("^[a-z]+://";"") | split("/")[0] | split(":")[0]
+                | sub("^www\\.";"");
+      ($wl[0] | map(.domain | host)) as $known
+      | ($news[0].sources // [] | map(.url // "" | host) | map(select(. != ""))) as $hosts
+      | ($hosts | map(select(. as $h | $known | any(. == $h or ($h | endswith("." + .)))))) as $hit
+      | {
+          whitelist_sources: ($hit | length),
+          whitelist_source_ratio: (if ($hosts | length) == 0 then 0
+            else (($hit | length) / ($hosts | length) * 100 | floor / 100) end),
+          whitelist_domains_hit: ($hit | unique),
+          other_domains: (($hosts - $hit) | unique)
+        }' 2>/dev/null || echo '{}')
+  fi
+
+  GROUNDING_METRICS=$(echo "$STAGE_METRICS $RATIO_METRICS" | jq -sc '.[0] * .[1]' 2>/dev/null || echo '{}')
+
   # Extract refresh metrics
   REFRESH_METRICS='{"enabled":false}'
   if [ -s "$BIZ_OUT/refresh_deltas.json" ]; then
@@ -815,6 +861,7 @@ if [ "$STEP" = "collecting" ]; then
     --argjson events "$EVENTS_METRICS" \
     --argjson plan "$PLAN_METRICS" \
     --argjson deliver "$DELIVER_METRICS" \
+    --argjson grounding "$GROUNDING_METRICS" \
     --argjson refresh "$REFRESH_METRICS" \
     --argjson schedule "$SCHEDULE_METRICS" \
     '{
@@ -830,6 +877,7 @@ if [ "$STEP" = "collecting" ]; then
       events: $events,
       plan: $plan,
       deliver: $deliver,
+      grounding: $grounding,
       refresh: $refresh,
       schedule: $schedule
     }' > "$EVAL_FILE"
@@ -870,6 +918,7 @@ if [ -s "$EVAL_FILE" ]; then
     "  Sources:  \(.deliver.sources_total // "?") (\(.deliver.sources_unique_publishers // "?") publishers)",
     "  Findings: \(.deliver.key_findings_count // "?")  Thesis: \(.deliver.thesis_status // "?")",
     "  Report:   \(.deliver.report_lines // "?") lines, \(.deliver.report_words // "?") words, \(.deliver.unique_citations // "?") citations",
+    "  Grounding: \(.grounding.source_target_entities // "?") targets, \(.grounding.whitelist_sources // "?") whitelisted sources (\(((.grounding.whitelist_source_ratio // 0) * 100)|floor)%), lang=\(.grounding.input_language // "?")\(if .grounding.topic_parse_degraded then " [parse degraded]" else "" end)",
     "  Events:   \(.events.total_events // "?") total, \(.events.tool_calls // "?") tool calls, \(.events.tool_errors // "?") errors"
   ' "$EVAL_FILE" 2>/dev/null
 fi

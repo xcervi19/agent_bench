@@ -1,17 +1,21 @@
 {"seq":1,"event_type":"topic.created","payload":{"topic_id":"fixture-topic-0001"}}
-{"seq":2,"event_type":"stage.started","payload":{"stage":"plan"}}
-{"seq":3,"event_type":"tool_use","payload":{"tool":"rag_search","input_preview":"hormuz strait tanker"}}
-{"seq":4,"event_type":"tool_result","payload":{"tool":"rag_search","is_error":false}}
-{"seq":5,"event_type":"tool_use","payload":{"tool":"WebSearch","input_preview":"strait of hormuz closure"}}
-{"seq":6,"event_type":"tool_result","payload":{"tool":"WebSearch","is_error":false}}
-{"seq":7,"event_type":"intro.ready","payload":{"headline":"Hormuz closure scenarios and price relief options"}}
-{"seq":8,"event_type":"stage.finished","payload":{"stage":"plan","duration_ms":120000,"total_cost_usd":0.21}}
-{"seq":9,"event_type":"needs_input","payload":{"gate":"planned_awaiting_review"}}
-{"seq":10,"event_type":"stage.started","payload":{"stage":"deliver"}}
-{"seq":11,"event_type":"tool_use","payload":{"tool":"WebSearch","input_preview":"opec spare capacity"}}
-{"seq":12,"event_type":"tool_result","payload":{"tool":"WebSearch","is_error":false}}
-{"seq":13,"event_type":"tool_use","payload":{"tool":"WebFetch","input_preview":"https://example.com/opec"}}
-{"seq":14,"event_type":"tool_result","payload":{"tool":"WebFetch","is_error":false}}
-{"seq":15,"event_type":"report.ready","payload":{}}
-{"seq":16,"event_type":"stage.finished","payload":{"stage":"deliver","duration_ms":240000,"total_cost_usd":0.54}}
-{"seq":17,"event_type":"state.changed","payload":{"state":"reported"}}
+{"seq":2,"event_type":"stage.started","payload":{"stage":"topic_parse"}}
+{"seq":3,"event_type":"stage.finished","payload":{"stage":"topic_parse","cached":false,"degraded":false,"degraded_reason":null,"input_language":"en","canonical_topic_en":"Hormuz strait closure options to lower price","source_languages":["en","ar","fa"]}}
+{"seq":4,"event_type":"stage.started","payload":{"stage":"source_discover"}}
+{"seq":5,"event_type":"stage.finished","payload":{"stage":"source_discover","entities":21,"playbook_refs":["strait_of_hormuz.md"],"warning":null}}
+{"seq":6,"event_type":"stage.started","payload":{"stage":"plan"}}
+{"seq":7,"event_type":"tool_use","payload":{"tool":"rag_search","input_preview":"hormuz strait tanker"}}
+{"seq":8,"event_type":"tool_result","payload":{"tool":"rag_search","is_error":false}}
+{"seq":9,"event_type":"tool_use","payload":{"tool":"WebSearch","input_preview":"strait of hormuz closure"}}
+{"seq":10,"event_type":"tool_result","payload":{"tool":"WebSearch","is_error":false}}
+{"seq":11,"event_type":"intro.ready","payload":{"headline":"Hormuz closure scenarios and price relief options"}}
+{"seq":12,"event_type":"stage.finished","payload":{"stage":"plan","duration_ms":120000,"total_cost_usd":0.21}}
+{"seq":13,"event_type":"needs_input","payload":{"gate":"planned_awaiting_review"}}
+{"seq":14,"event_type":"stage.started","payload":{"stage":"deliver"}}
+{"seq":15,"event_type":"tool_use","payload":{"tool":"WebSearch","input_preview":"opec spare capacity"}}
+{"seq":16,"event_type":"tool_result","payload":{"tool":"WebSearch","is_error":false}}
+{"seq":17,"event_type":"tool_use","payload":{"tool":"WebFetch","input_preview":"https://example.com/opec"}}
+{"seq":18,"event_type":"tool_result","payload":{"tool":"WebFetch","is_error":false}}
+{"seq":19,"event_type":"report.ready","payload":{}}
+{"seq":20,"event_type":"stage.finished","payload":{"stage":"deliver","duration_ms":240000,"total_cost_usd":0.54}}
+{"seq":21,"event_type":"state.changed","payload":{"state":"reported"}}

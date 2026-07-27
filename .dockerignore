@@ -1,0 +1,25 @@
+# Keep host-only artifacts out of the build context. Notably the frontend's
+# node_modules/dist (#16): the image builds the SPA in its own stage, so a stale
+# host build must never be copied in by `COPY apps ./apps`.
+**/node_modules/
+apps/signalgather_web/dist/
+
+.git/
+.venv/
+**/__pycache__/
+**/*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+state/
+artifacts/
+runs/
+testing/results/
+corpus/L1_raw/
+corpus/L2_text/
+corpus/L2b_clean/
+oil_gas_knowledge/
+claude_home/
+.DS_Store

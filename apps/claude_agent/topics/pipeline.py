@@ -13,6 +13,14 @@ from ..runner import stream_claude
 from ..schemas import RunRequest
 from ..sources.discover import discover_sources_for_topic
 from .db import session_scope
+from .facets import (
+    FACETS_FILENAME,
+    discovery_query,
+    facets_cache_path,
+    fallback_facets,
+    load_cached_facets,
+    normalize_facets,
+)
 from .models import Topic, TopicEvent
 from .webhooks import deliver_event
 
@@ -22,6 +30,19 @@ STATE_DELIVERING = "delivering"
 STATE_REPORTED = "reported"
 STATE_FAILED = "failed"
 STATE_CANCELLED = "cancelled"
+
+TOPIC_PARSE_COMMAND = "/newsfind-topic-parse"
+PLAN_COMMAND = "/newsfind-plan"
+DELIVER_COMMAND = "/newsfind-deliver"
+
+PIPELINE_COMMANDS = (TOPIC_PARSE_COMMAND, PLAN_COMMAND, DELIVER_COMMAND)
+"""Slash commands the topic lifecycle drives.
+
+Deployments override `allowed_commands` in their own `.env`, so adding a leg to
+this module is not enough to make it run in production. `app.py` warns at
+startup when one of these is missing rather than letting the stage silently
+no-op, which is how #36 shipped a disabled grounding stage unnoticed.
+"""
 
 
 def topic_id_hash(topic: str) -> str:
@@ -58,17 +79,101 @@ async def set_state(topic_id: uuid.UUID, new_state: str, *, error: str | None = 
     await emit(topic_id, "state.changed", {"from": old, "to": new_state, "error": error})
 
 
-async def run_source_discover(topic_id: uuid.UUID, topic: str, out_dir: Path) -> None:
-    await emit(topic_id, "stage.started", {"stage": "source_discover"})
-    result = await asyncio.to_thread(discover_sources_for_topic, topic)
-    targets = result["source_targets"]
-    (out_dir / "source_targets.json").write_text(
-        json.dumps(targets, ensure_ascii=False, indent=2), encoding="utf-8"
+def _write_json(path: Path, data: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+async def _run_parse_leg(run_dir: Path, settings: ClaudeAgentSettings) -> None:
+    """Drive the topic_parse command, raising on anything short of success.
+
+    Deliberately quieter than `_run_slash`: this leg makes no tool calls worth
+    showing an operator, and it reports failure by raising so the caller can
+    degrade instead of moving the topic to `failed`.
+    """
+    req = RunRequest(
+        command=TOPIC_PARSE_COMMAND,
+        args=str(run_dir),
+        output_format="stream-json",
+        timeout_sec=settings.topic_parse_timeout_sec,
     )
+    success = False
+    async for line in stream_claude(req, settings):
+        event = _try_loads(line)
+        if not isinstance(event, dict):
+            continue
+        kind = event.get("type")
+        if kind == "result":
+            if event.get("subtype") != "success":
+                raise RuntimeError(f"result subtype={event.get('subtype')}")
+            success = True
+        elif kind == "error":
+            raise RuntimeError(str(event.get("error") or "stream error"))
+    if not success:
+        raise RuntimeError("agent produced no result event")
+
+
+async def run_topic_parse(
+    topic_id: uuid.UUID,
+    topic: str,
+    out_dir: Path,
+    settings: ClaudeAgentSettings,
+) -> dict[str, Any]:
+    """Restate the topic in English so lexical source discovery can key on it.
+
+    Never fails the topic. Grounding is an optimization over an agent that can
+    still search the open web, so every failure mode here degrades to the
+    untranslated topic and lets the run continue.
+    """
+    await emit(topic_id, "stage.started", {"stage": "topic_parse"})
+    cache = facets_cache_path(settings.state_dir, topic_id_hash(topic))
+    facets = load_cached_facets(cache, topic)
+    cached = facets is not None
+
+    if facets is None:
+        parse_dir = out_dir / "topic_parse"
+        _write_json(parse_dir / "input.json", {"topic": topic})
+        try:
+            await _run_parse_leg(parse_dir, settings)
+            raw = json.loads((parse_dir / FACETS_FILENAME).read_text(encoding="utf-8"))
+            facets = normalize_facets(raw, topic)
+        except Exception as exc:  # noqa: BLE001 - degrade on anything, incl. a missing CLI
+            facets = fallback_facets(topic, reason=f"{type(exc).__name__}: {exc}")
+        else:
+            _write_json(cache, facets)
+
+    _write_json(out_dir / FACETS_FILENAME, facets)
+    await emit(topic_id, "stage.finished", {
+        "stage": "topic_parse",
+        "cached": cached,
+        "degraded": facets["degraded"],
+        "degraded_reason": facets["degraded_reason"],
+        "input_language": facets["input_language"],
+        "canonical_topic_en": facets["canonical_topic_en"],
+        "source_languages": facets["source_languages"],
+    })
+    return facets
+
+
+async def run_source_discover(topic_id: uuid.UUID, query: str, out_dir: Path) -> None:
+    await emit(topic_id, "stage.started", {"stage": "source_discover"})
+    warning: str | None = None
+    try:
+        result = await asyncio.to_thread(discover_sources_for_topic, query)
+    except OSError as exc:
+        # Whitelist or playbooks missing from the image is a packaging fault,
+        # not a reason to deny the operator a report: the plan agent can still
+        # search unscoped. #36 shipped exactly this bug and failed every topic.
+        warning = f"source grounding unavailable: {exc}"
+        result = {"source_targets": {"entities": []}, "playbook_refs": []}
+
+    targets = result["source_targets"]
+    _write_json(out_dir / "source_targets.json", targets)
     await emit(topic_id, "stage.finished", {
         "stage": "source_discover",
         "entities": len(targets["entities"]),
         "playbook_refs": result["playbook_refs"],
+        "warning": warning,
     })
 
 
@@ -77,9 +182,7 @@ async def run_plan(topic_id: uuid.UUID, topic: str, settings: ClaudeAgentSetting
     hash_ = topic_id_hash(topic)
     out_dir = run_dir(settings.state_dir, hash_, plan_run_id)
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "input.json").write_text(
-        json.dumps({"topic": topic, "run_id": plan_run_id}), encoding="utf-8"
-    )
+    _write_json(out_dir / "input.json", {"topic": topic, "run_id": plan_run_id})
 
     async with session_scope() as s:
         row = await s.get(Topic, topic_id)
@@ -87,15 +190,16 @@ async def run_plan(topic_id: uuid.UUID, topic: str, settings: ClaudeAgentSetting
         row.topic_id_hash = hash_
 
     await set_state(topic_id, STATE_PLANNING)
+    facets = await run_topic_parse(topic_id, topic, out_dir, settings)
     try:
-        await run_source_discover(topic_id, topic, out_dir)
-    except (OSError, ValueError) as exc:
+        await run_source_discover(topic_id, discovery_query(facets), out_dir)
+    except ValueError as exc:
         error = f"source_discover failed: {exc}"
         await emit(topic_id, "error", {"stage": "source_discover", "error": error})
         await set_state(topic_id, STATE_FAILED, error=error)
         return
 
-    summary = await _run_slash(topic_id, leg="plan", command="/newsfind-plan", args=str(out_dir), settings=settings)
+    summary = await _run_slash(topic_id, leg="plan", command=PLAN_COMMAND, args=str(out_dir), settings=settings)
     if summary is None:
         return
     await emit(topic_id, "intro.ready", summary)
@@ -128,7 +232,7 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
 
     await set_state(topic_id, STATE_DELIVERING)
     summary = await _run_slash(
-        topic_id, leg="deliver", command="/newsfind-deliver", args=str(out_dir), settings=settings
+        topic_id, leg="deliver", command=DELIVER_COMMAND, args=str(out_dir), settings=settings
     )
     if summary is None:
         return

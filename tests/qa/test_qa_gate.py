@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from .conftest import break_run, failed_ids, run_gate
+from .conftest import break_run, failed_ids, run_gate, warning_ids
 
 # kind -> the gating check id that must turn red for that regression.
 BAD_CASES = {
@@ -26,14 +26,37 @@ BAD_CASES = {
     "missing_deliver_stage": "stage_progression_deliver",
 }
 
+# kind -> the warn-severity check id that must turn red without failing the gate.
+# Grounding regressions degrade the report rather than invalidate it, so they
+# are reported and not gated (#38).
+WARN_CASES = {
+    "no_source_targets": "source_targets_resolved",
+    "unused_whitelist": "whitelist_source_ratio",
+    "missing_source_discover": "stage_progression_source_discover",
+}
+
 
 def test_good_run_passes(good_run: Path):
     report = run_gate(good_run)
     assert report["passed"] is True, report["failed_checks"]
     assert report["returncode"] == 0
     assert report["summary"]["checks_failed"] == 0
+    assert report["summary"]["checks_warned"] == 0, report["warnings"]
     # The gate must actually evaluate the full rule set, not a subset.
-    assert report["summary"]["checks_total"] == 16
+    assert report["summary"]["checks_total"] == 19
+
+
+@pytest.mark.parametrize("kind,expected_check", sorted(WARN_CASES.items()))
+def test_grounding_regression_warns_without_failing(
+    good_run: Path, kind: str, expected_check: str
+):
+    break_run(good_run, kind)
+    report = run_gate(good_run)
+    assert expected_check in warning_ids(report), (
+        f"{kind} expected warning '{expected_check}'; got {sorted(warning_ids(report))}"
+    )
+    assert report["passed"] is True, f"{kind} must not fail the gate: {report['failed_checks']}"
+    assert report["returncode"] == 0
 
 
 @pytest.mark.parametrize("kind,expected_check", sorted(BAD_CASES.items()))

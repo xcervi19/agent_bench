@@ -8,11 +8,14 @@ from __future__ import annotations
 import logging
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import structlog
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
-from .config import get_settings
+from .config import ClaudeAgentSettings, get_settings
 from .jobs import JobManager
 from .routes import router
 
@@ -42,6 +45,29 @@ def _configure_logging(level: str, app_env: str) -> None:
     )
 
 
+def _warn_on_disabled_pipeline_commands(settings: ClaudeAgentSettings) -> None:
+    """Surface an allowlist that silently disables part of the topic pipeline.
+
+    Deployments set `CLAUDE_AGENT_ALLOWED_COMMANDS` in their own `.env`, which
+    replaces the defaults in `config.py` wholesale. A leg added to the pipeline
+    but not to that list degrades quietly instead of erroring, so the only clue
+    is a report that looks thin. Say it once, loudly, at boot.
+    """
+    if not settings.allowed_commands:  # empty list means allow all
+        return
+    from .topics.pipeline import PIPELINE_COMMANDS
+    from .topics.refresh import REFRESH_COMMAND
+
+    required = (*PIPELINE_COMMANDS, REFRESH_COMMAND)
+    missing = [c for c in required if c not in settings.allowed_commands]
+    if missing:
+        structlog.get_logger("claude_agent").warning(
+            "claude_agent.pipeline_commands_not_allowed",
+            missing=missing,
+            hint="add them to CLAUDE_AGENT_ALLOWED_COMMANDS; those stages will degrade",
+        )
+
+
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     settings = get_settings()
@@ -52,6 +78,7 @@ async def _lifespan(app: FastAPI):
         claude_bin=settings.claude_bin,
         allowed_commands=settings.allowed_commands,
     )
+    _warn_on_disabled_pipeline_commands(settings)
 
     app.state.scheduler = None
     if settings.database_url and settings.scheduler_enabled:
@@ -66,6 +93,56 @@ async def _lifespan(app: FastAPI):
     finally:
         if app.state.scheduler is not None:
             await app.state.scheduler.stop()
+
+
+def _mount_cors(app: FastAPI, settings: ClaudeAgentSettings) -> None:
+    """Allow a separately-served UI origin (#16) — e.g. `vite dev` on :5173.
+
+    Credentials stay off: the SPA sends a Bearer token, not cookies, so a
+    wildcard origin remains legal here.
+    """
+    if not settings.cors_origins:
+        return
+    from fastapi.middleware.cors import CORSMiddleware
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["Content-Type"],
+    )
+
+
+def _mount_web(app: FastAPI, settings: ClaudeAgentSettings) -> None:
+    """Serve the built SPA at /app so the UI shares the API origin (no CORS).
+
+    Unknown /app/* paths fall back to index.html — client-side routes like
+    /app/topics/<uuid> must survive a hard reload.
+    """
+    if not settings.web_dist:
+        return
+    dist = Path(settings.web_dist)
+    index = dist / "index.html"
+    if not index.is_file():
+        structlog.get_logger("claude_agent").warning(
+            "claude_agent.web_dist_missing", web_dist=str(dist)
+        )
+        return
+
+    if (dist / "assets").is_dir():
+        app.mount("/app/assets", StaticFiles(directory=str(dist / "assets")), name="web-assets")
+
+    @app.get("/app", include_in_schema=False)
+    @app.get("/app/{path:path}", include_in_schema=False)
+    async def spa(path: str = "") -> FileResponse:
+        candidate = (dist / path).resolve()
+        if path and dist.resolve() in candidate.parents and candidate.is_file():
+            return FileResponse(str(candidate))
+        return FileResponse(str(index), media_type="text/html; charset=utf-8")
+
+    structlog.get_logger("claude_agent").info("claude_agent.web_mounted", web_dist=str(dist))
 
 
 def build_app() -> FastAPI:
@@ -95,6 +172,8 @@ def build_app() -> FastAPI:
             return {"status": "degraded", "reason": "claude binary not available"}
         return {"status": "ready", "claude_version": ver}
 
+    _mount_cors(app, settings)
+
     app.include_router(router)
     if settings.database_url:
         from .auth import bootstrap_auth_env
@@ -108,6 +187,8 @@ def build_app() -> FastAPI:
         for auth_router in build_auth_routers():
             app.include_router(auth_router)
         app.include_router(topics_router)
+
+    _mount_web(app, settings)
     return app
 
 

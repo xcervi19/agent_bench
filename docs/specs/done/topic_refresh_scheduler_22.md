@@ -104,7 +104,7 @@ Test cases:
 
 - `docs/specs/done/pilot_ops_v1_17.md` — external cron was interim model; superseded for product by this ticket
 - `docs/specs/active/signalgather_frontend_v1_16.md` — 16c monitor + deltas UX
-- `docs/specs/active/topic_user_ownership_24.md` — per-user topic access; collected data scoped to owner
+- `docs/specs/done/topic_user_ownership_24.md` — per-user topic access; collected data scoped to owner
 - `docs/specs/active/continuous_monitoring_evaluation_20.md` — realistic cadence for longitudinal capture
 - `apps/claude_agent/topics/refresh.py`, `apps/claude_agent/topics/models.py`
 - `testing/app_testing_scenario.md` §7 (monitor + refresh)

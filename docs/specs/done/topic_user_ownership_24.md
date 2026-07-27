@@ -1,6 +1,6 @@
 # Topic user ownership — #24
 
-**Status:** planned  
+**Status:** done (verified on `test1`, 2026-07-26)  
 **Depends on:** #17 (topic API + `GET /v1/topics` shipped), #13 (multi-env HTTPS)  
 **Blocks:** #16 (frontend topic list + per-user workspace), #22 (scheduler UX: user sees only their monitored topics)  
 **Feeds:** #16 (JWT login + scoped APIs)  
@@ -18,17 +18,22 @@ This ticket adds the **backend ownership model and access control**. It does **n
 
 *"When a user is authenticated, do they see only their own topics and collected monitoring data — and can no other user read or mutate them?"*
 
-## Current state (gap)
+**Answer:** Yes on `test1` after migration `0006_topic_owner` (cross-user isolation verified on all topic routes + SSE).
 
-| Area | Today | Needed |
-|---|---|---|
-| Auth on `/v1/topics/*` | Optional shared `X-API-Key` | JWT bearer per user (reuse `agentic_core` / fastapi-users) |
-| `topics` table | No owner column | `owner_user_id` (FK → `users.id`); optional `tenant_id` for isolation |
-| `POST /v1/topics` | Anonymous to service key | Bind `owner_user_id` from authenticated user |
-| `GET /v1/topics` | Returns all topics | Filter by current user |
-| `GET/PATCH/monitor/refresh/deltas/events/artifacts` | Any topic UUID if key matches | 404 unless topic belongs to current user |
-| Auth routes on `claude_agent` | Not mounted | Mount login/register/users from `libs/agentic_core/api/auth_routes.py` (or documented shared gateway) |
-| Eval harness / CI | Uses service key | Keep working via explicit **service-key bypass** or test-user JWT (document both) |
+## Shipped
+
+| Area | Delivered |
+|---|---|
+| Schema | Migration `0006_topic_owner`: `topics.owner_user_id` (nullable FK → `users.id`), index `(owner_user_id, updated_at DESC)` |
+| Auth | `apps/claude_agent/auth.py` — `Principal` (JWT user or service key); auth routes mounted when DB enabled |
+| Enforcement | `_owned()` on all 22 `/v1/topics/*` routes; list filtered by owner; 404 on cross-user access |
+| Harness | `CLAUDE_AGENT_ALLOW_SERVICE_KEY_BYPASS` (default `true`); documented in `docs/ops/vps.md`, `testing/app_testing_scenario.md` |
+| Tests | `tests/topics/test_ownership.py` (12 tests) |
+| Deploy | `test1` at commit `d8d0900`; prod pending separate deploy |
+
+**Deferred (explicit out of scope):** `topics.tenant_id` column; Postgres RLS; CORS for frontend origin (#16 deploy).
+
+**Backfill policy:** `owner_user_id` nullable — pre-migration and service-key topics stay NULL (service role only).
 
 Existing user model: `libs/agentic_core/api/user_model.py` — `User` with `id`, `email`, `tenant_id` (JWT via fastapi-users).
 
@@ -102,31 +107,30 @@ Expose enough for the UI without duplicating business logic:
 - **Row-level security (RLS)** on `topics` in Postgres — optional follow-up; app-layer checks are sufficient for V1
 - **Migrating `signal_gather` user profiles** to Newsfind topics — separate product integration
 
-## Open questions
+## Open questions (resolved at ship)
 
-- Service key: **superuser bypass** vs **deprecated** once JWT is live on prod?
-- Single shared `tenant_id` for all pilot users vs real multi-tenant from day one?
-- Should `GET /v1/topics` support pagination cursor vs current offset (keep as-is unless #16 needs more)?
-- Backfill strategy for topics created before migration on test1/prod?
+- Service key: **superuser bypass** kept via `CLAUDE_AGENT_ALLOW_SERVICE_KEY_BYPASS` (default on for harness).
+- `tenant_id` on topics: **not added** — YAGNI for V1.
+- Backfill: **nullable `owner_user_id`** — legacy rows service-owned.
 
 ## Acceptance criteria
 
-- [ ] Migration adds `owner_user_id` (+ `tenant_id` if chosen) to `topics` with index.
-- [ ] `POST /v1/topics` persists owner from JWT; unauthenticated requests rejected (401) in product mode.
-- [ ] `GET /v1/topics` returns only the authenticated user's topics.
-- [ ] All topic-scoped routes return 404 for another user's `topic_id`.
-- [ ] SSE `/events` enforces ownership on connect.
-- [ ] Auth routes (login/register) available on `claude_agent` when DB enabled.
-- [ ] Harness/CI path documented and working (JWT test user **or** documented service-key bypass).
-- [ ] Tests cover cross-user isolation (at least: list filter, get 404, create binds owner).
-- [ ] Ops doc updated: product uses JWT; harness uses documented bypass or test user.
+- [x] Migration adds `owner_user_id` (+ `tenant_id` if chosen) to `topics` with index.
+- [x] `POST /v1/topics` persists owner from JWT; unauthenticated requests rejected (401) in product mode.
+- [x] `GET /v1/topics` returns only the authenticated user's topics.
+- [x] All topic-scoped routes return 404 for another user's `topic_id`.
+- [x] SSE `/events` enforces ownership on connect.
+- [x] Auth routes (login/register) available on `claude_agent` when DB enabled.
+- [x] Harness/CI path documented and working (JWT test user **or** documented service-key bypass).
+- [x] Tests cover cross-user isolation (at least: list filter, get 404, create binds owner).
+- [x] Ops doc updated: product uses JWT; harness uses documented bypass or test user.
 
 ## Related
 
-- `apps/claude_agent/topics/models.py`, `apps/claude_agent/topics/routes.py`
+- `apps/claude_agent/auth.py`, `apps/claude_agent/topics/models.py`, `apps/claude_agent/topics/routes.py`
 - `libs/agentic_core/api/auth.py`, `auth_routes.py`, `user_model.py`
-- `database/migrations/versions/0003_newsfind_topics.py` — baseline topics schema
+- `database/migrations/versions/0006_topic_owner.py`
 - `docs/specs/done/pilot_ops_v1_17.md` — `GET /v1/topics` (#17)
-- `docs/specs/active/signalgather_frontend_v1_16.md` — blocked on this ticket for real user sessions
-- `docs/specs/active/topic_refresh_scheduler_22.md` — background collection; data must be user-scoped
+- `docs/specs/active/signalgather_frontend_v1_16.md` — consumes JWT + scoped APIs
+- `docs/specs/active/topic_refresh_scheduler_22.md` — background collection; data user-scoped via owner
 - `testing/app_testing_scenario.md`, `scripts/test_vector_runner.sh`

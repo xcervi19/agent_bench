@@ -1,9 +1,11 @@
 """Settings for the claude_agent service. All env vars are prefixed CLAUDE_AGENT_."""
 
+import json
 from functools import lru_cache
+from typing import Annotated
 
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class ClaudeAgentSettings(BaseSettings):
@@ -54,6 +56,7 @@ class ClaudeAgentSettings(BaseSettings):
             "/rag-search",
             "/rag-query-builder",
             "/newsfind-queries",
+            "/newsfind-topic-parse",
             "/newsfind-plan",
             "/newsfind-deliver",
             "/newsfind-refresh",
@@ -77,6 +80,27 @@ class ClaudeAgentSettings(BaseSettings):
             "with access to every topic (ops smoke, eval harness). When api_key is "
             "empty this leaves the topic API open, as it was before ownership. Set "
             "false in product mode so only a user JWT is accepted."
+        ),
+    )
+
+    # Frontend (#16). The SPA in apps/signalgather_web talks to this service.
+    # NoDecode: keep pydantic-settings from JSON-decoding the env value so the
+    # validator below can accept a plain comma-separated string.
+    cors_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=list,
+        description=(
+            "Origins allowed to call the API from a browser (comma-separated in "
+            "env, e.g. 'http://localhost:5173'). Needed only when the UI is served "
+            "from a different origin; the bundled /app mount is same-origin. "
+            "'*' allows any origin — never use it in product mode."
+        ),
+    )
+    web_dist: str = Field(
+        default="",
+        description=(
+            "Path to the built SignalGather SPA (apps/signalgather_web/dist). When "
+            "set and present, it is served at /app with history fallback so the UI "
+            "shares the API origin (no CORS). Empty disables the mount."
         ),
     )
 
@@ -113,6 +137,17 @@ class ClaudeAgentSettings(BaseSettings):
         description=(
             "Bump this whenever the agent runtime/env changes in a way that "
             "should invalidate cached newsfind-queries runs."
+        ),
+    )
+
+    topic_parse_timeout_sec: int = Field(
+        default=120,
+        ge=10,
+        description=(
+            "Budget for the topic_parse leg (#38), which restates the topic in "
+            "English for source discovery. It does no research, so a run that "
+            "reaches this bound is stuck; the pipeline degrades to the "
+            "untranslated topic rather than waiting out max_timeout_sec."
         ),
     )
 
@@ -153,6 +188,21 @@ class ClaudeAgentSettings(BaseSettings):
         ge=1,
         description="Upper bound accepted for schedule_interval_hours (default 7d).",
     )
+
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, value: object) -> object:
+        """Accept `a,b` from env as well as a JSON list, so ops can write a plain
+        comma-separated string in .env like every other origin allowlist."""
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return []
+            if stripped.startswith("["):
+                return json.loads(stripped)
+            return [part.strip() for part in stripped.split(",") if part.strip()]
+        return value
 
 
 @lru_cache

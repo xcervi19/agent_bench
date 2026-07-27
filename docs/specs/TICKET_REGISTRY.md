@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#37` (assign to the next new ticket; then bump this line)
+**Next available number:** `#39` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -21,25 +21,27 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 
 || # | File | Status | Blocks / unblocks |
 ||---|------|--------|---------------------|
-|| 16 | `docs/specs/active/signalgather_frontend_v1_16.md` | planned | User-facing V1 UI; needs #17 done |
 || 18 | `docs/specs/active/business_output_evaluation_18.md` | planned | Needs #15 PASS; pairs with #20, #21 |
 || 20 | `docs/specs/active/continuous_monitoring_evaluation_20.md` | planned | Needs #18, #21, **#22** |
 || 21 | `docs/specs/active/timeliness_channel_metrics_21.md` | planned | Feeds #15, #18, #20 |
+|| 16 | `docs/specs/active/signalgather_frontend_v1_16.md` | implemented, awaiting test1 smoke | **16a–d built** (`apps/signalgather_web/`, served at `/app`): plan gate, report + citations, sources, monitoring + deltas, adaptive widget registry |
 || 22 | `docs/specs/active/topic_refresh_scheduler_22.md` | planned | Blocks #16 (16c), #20 |
 || 23 | `docs/specs/active/trading_intelligence_evaluation_23.md` | in progress | Lane A framework; generalizes #18; needs #15 PASS |
-|| 24 | `docs/specs/active/topic_user_ownership_24.md` | planned | Blocks #16 (user sessions); pairs with #22 |
 || 29 | `docs/specs/active/source_whitelist_seed_29.md` | mostly done | Whitelist shipped (`source_whitelist.json` 610 entries); commit + top-20 sign-off remaining |
 || 31 | `docs/specs/active/scraping_infrastructure_31.md` | planned | Nastavit `twscrape` a `Pyrogram` pro Twitter/Telegram |
 || 33 | `docs/specs/active/plan_source_integration_33.md` | superseded | **Superseded by #36** — agent-inline source-discover in plan replaced by Python pre-stage |
 || 34 | `docs/specs/active/topic_ops_table_frontend_34.md` | planned | **frontend** — topic ops table (user + admin); needs #16, #24, #22 |
 || 35 | `docs/specs/active/graph_retrieval_layer_35.md` | planned | Grafová orchestrační vrstva retrievalu (v2); nadstavba nad #29/#30, po změření kvality |
 || 36 | `docs/specs/active/hybrid_pipeline_orchestration_36.md` | planned | Python-orchestrated pipeline (source_discover pre-stage, thin plan agent); needs #29+#30; supersedes #33 |
+|| 37 | `docs/specs/active/pilot_first_use_experience_37.md` | planned | First-use and return-use UX after #16a–b; blocks broad pilot acquisition |
+|| 38 | `docs/specs/active/multilingual_topic_grounding_38.md` | implemented, awaiting deploy | Diacritics/inflection matching + `topic_parse` leg so non-English topics ground against the whitelist; extends #29/#30/#36 |
 
 ---
 ## Done (shipped)
 
 | # | File | Shipped |
 |---|------|---------|
+| 24 | `docs/specs/done/topic_user_ownership_24.md` | 2026-07-26 |
 | 32 | `docs/specs/done/source_discover_skill_32.md` | 2026-07-23 |
 | 30 | `docs/specs/done/coverage_playbooks_seed_30.md` | 2026-07-23 |
 | 25 | `docs/specs/done/slim_main_archive_25.md` | 2026-06-16 |

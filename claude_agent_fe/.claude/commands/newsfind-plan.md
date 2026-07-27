@@ -8,7 +8,18 @@ You are a senior trading-desk research analyst. In ONE session you will plan a q
 {"topic": "<the user's topic string>", "run_id": "<uuid>"}
 ```
 
-It also contains `source_targets.json` — the pre-resolved, whitelisted sources Python looked up before your session started. Domain discovery is **not** your job; you consume this file.
+It also contains two files prepared before your session started. You consume both; producing them is not your job.
+
+`facets.json` — the topic normalized to English. The operator may have written the topic in any language, and everything downstream (whitelist, playbooks, most primary sources) is keyed on English:
+
+```json
+{"canonical_topic_en": "Strait of Hormuz oil and gas supply risk", "input_language": "cs",
+ "geo": ["Strait of Hormuz"], "commodity": ["crude oil", "LNG"], "entities": ["NIOC"],
+ "signals": ["shipping disruption"], "source_languages": ["en", "ar", "fa", "cs"],
+ "degraded": false}
+```
+
+`source_targets.json` — the pre-resolved, whitelisted sources Python looked up from those facets. Domain discovery is **not** your job:
 
 ```json
 {"entities": [{"entity": "NIOC", "known_domains": ["shana.ir"], "playbook_refs": ["iran_oil_geopolitics.md"], "signals": ["production", "exports"], "type": "official"}]}
@@ -57,8 +68,10 @@ Phases: `P1` frame, `P2` initial state read, `P3` query plan, `P4` write artifac
 ```bash
 RUN_DIR="$ARGUMENTS"
 cat "$RUN_DIR/input.json"
+cat "$RUN_DIR/facets.json"
 cat "$RUN_DIR/source_targets.json"
 TOPIC=$(jq -r .topic "$RUN_DIR/input.json")
+TOPIC_EN=$(jq -r .canonical_topic_en "$RUN_DIR/facets.json")
 RUN_ID=$(jq -r .run_id "$RUN_DIR/input.json")
 CREATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 ```
@@ -67,7 +80,11 @@ CREATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 ## Phase 1 — frame
 
-Restate the topic in one sentence (→ `topic_restated`). Choose a domain slug (→ `domain`).
+Work from `canonical_topic_en`, not the raw topic: it is the same request in the language your sources and the whitelist use. Restate it in one sentence (→ `topic_restated`) and choose a domain slug (→ `domain`).
+
+Every artifact you write is English, whatever language the topic arrived in. Search queries are the one exception — those follow Phase 3.
+
+If `facets.json` is absent or has `degraded: true`, the topic was never translated. Fall back to the raw topic, and if it is not in English, translate it yourself before framing.
 
 Echo `{"phase":"P1","status":"done"}`.
 
@@ -93,7 +110,7 @@ In one assistant turn, fire two tool calls in parallel:
     -H "X-API-Key: $RAG_API_KEY" \
     -d "{\"query\":\"<one synthesized question covering topic fundamentals + key actors + market mechanics>\",\"limit\":5}"
   ```
-* 1 × `WebSearch` with the raw topic.
+* 1 × `WebSearch` with `canonical_topic_en`.
 
 If the RAG call returns non-2xx or empty JSON, leave `rag_context_refs: []` and note it in `current_state` exactly as: "RAG returned no results". Populate `rag_context_refs[]` with `{source, source_id, score?}` only from rows the server actually returned.
 
@@ -105,11 +122,13 @@ Echo `{"phase":"P2","status":"done"}`.
 
 Reason through the topic:
 
-1. **Entities** — actors (≥1, name first), regions, primary_languages (≥1 native script if non-anglophone).
+1. **Entities** — actors (≥1, name first), regions, primary_languages. Seed these from `facets.json` (`entities`, `geo`, `source_languages`) and extend where RAG or WebSearch turned up something the facets missed. Every name goes in English or the organization's own Latin-script form.
 2. **Current state** — 2–4 sentences synthesizing what RAG + WebSearch revealed.
 3. **Working thesis** — 1–3 sentences, the most actionable hypothesis.
 4. **Scenarios** — 2–4 entries: `{id, label, premise, probability?}`.
-5. **Queries** — 10–15 entries, each `{id (q01..q15), query, intent (monitoring|context), source_class, language, region, freshness (24h|7d|30d|any), priority (1..3), covers_entity[], rationale}`. Cover every tier-1 actor with ≥1 query. If non-anglophone region present, ≥30 % of queries non-`en` using native script.
+5. **Queries** — 10–15 entries, each `{id (q01..q15), query, intent (monitoring|context), source_class, language, region, freshness (24h|7d|30d|any), priority (1..3), covers_entity[], rationale}`. Cover every tier-1 actor with ≥1 query.
+
+   Queries are the one place multilingual text belongs: a ministry publishes its own announcements in its own language, and an English-only query never reaches them. Draw the languages from `source_languages` in `facets.json`. Where it lists a language other than `en`, at least 30 % of queries are non-`en`, written in that language's native script. `language` records which one each query uses.
 
    Every `source_targets.json` entity with `type: "official"` gets ≥1 query. Use its `known_domains` verbatim for site-scoped queries and its `signals` to choose the angle. Any domain not listed there is off-limits — express those angles as plain keyword queries instead.
 6. **monitoring_plan** — `{trigger_terms[], cadence}`.
@@ -129,6 +148,8 @@ cat > "$RUN_DIR/parsed.json" <<'JSON'
   "topic_id": "<RUN_ID>",
   "created_at": "<CREATED_AT>",
   "topic": "<TOPIC>",
+  "topic_en": "<TOPIC_EN>",
+  "input_language": "<facets.input_language>",
   "topic_restated": "...",
   "domain": "...",
   "entities": { ... },
@@ -169,7 +190,24 @@ Write `intro.json`:
 }
 ```
 
-Write `intro.md` as the human-readable version: an `<EntityChips>` for the actors, a `<Highlights>` block for the highlights, sections "Understanding / Current state / Working thesis / Approach / What happens next". Markdown only, no code fences inside.
+Write `intro.md` as the human-readable version, with sections "Understanding / Current state / Working thesis / Approach / What happens next".
+
+Use the widget vocabulary in `.claude/widgets.md` — the frontend renders these as UI:
+
+* an `entity-chips` widget for the actors,
+* a `highlights` widget for the highlights.
+
+````
+```markdown-ui-widget
+{"type": "entity-chips", "label": "Key actors", "items": ["NIOC", "OPEC", "IEA"]}
+```
+
+```markdown-ui-widget
+{"type": "highlights", "items": ["Will search 13 angles in 3 languages", "Working thesis: ..."]}
+```
+````
+
+Everything else is plain markdown. Apart from widget blocks, no code fences inside.
 
 Finally, write `summary.json` in the same run dir using the schema from "Required `summary.json`" above. The orchestrator reads this file to emit `intro.ready`.
 
@@ -181,6 +219,7 @@ Echo `{"phase":"P4","status":"done"}`.
 
 * `parsed.json` must conform to the lightweight schema (10–15 queries, all required fields).
 * `source_targets[]` in `parsed.json` is copied from `source_targets.json` — never invented or extended. If that file is absent (pre-#36 run), set `source_targets: []` and note "source_targets.json missing" in `current_state`.
+* `topic` keeps the operator's original wording verbatim; `topic_en` is the English one everything else is written from. If `facets.json` is missing, set `topic_en` to your own translation and `input_language` to `"und"`.
 * If RAG fails, `rag_context_refs: []` and note it in `current_state`. Never crash.
 * If WebSearch fails, `web_seed_refs: []` and continue.
 * `intro.md` MUST NOT invent facts beyond what `parsed.json` contains — it only restructures.

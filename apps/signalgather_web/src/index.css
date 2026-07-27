@@ -1,0 +1,158 @@
+@import 'tailwindcss';
+
+/*
+ * Trader-desk palette: dark by default (the product is read on dark terminals),
+ * with a light scheme honoured for tablet/daylight use. Everything is expressed
+ * as semantic tokens so components never hard-code a scheme.
+ */
+@theme {
+  --color-surface: oklch(0.19 0.015 260);
+  --color-surface-raised: oklch(0.235 0.017 260);
+  --color-surface-sunken: oklch(0.155 0.014 260);
+  --color-line: oklch(0.33 0.02 260);
+  --color-ink: oklch(0.95 0.005 260);
+  --color-ink-muted: oklch(0.72 0.015 260);
+  --color-ink-faint: oklch(0.58 0.015 260);
+  --color-accent: oklch(0.72 0.14 230);
+  --color-accent-ink: oklch(0.16 0.02 260);
+  --color-positive: oklch(0.74 0.15 155);
+  --color-warning: oklch(0.8 0.14 85);
+  --color-danger: oklch(0.68 0.18 25);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+}
+
+/*
+ * Light scheme. This must be a plain `:root` rule, NOT a second `@theme` block:
+ * Tailwind hoists every `@theme` into `@layer theme` and drops the surrounding
+ * media query, so a nested one would silently overwrite the dark defaults for
+ * everyone. Unlayered rules outrank layered ones, so these win when they apply.
+ */
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-surface: oklch(0.985 0.003 260);
+    --color-surface-raised: oklch(1 0 0);
+    --color-surface-sunken: oklch(0.955 0.005 260);
+    --color-line: oklch(0.88 0.01 260);
+    --color-ink: oklch(0.24 0.02 260);
+    --color-ink-muted: oklch(0.45 0.02 260);
+    --color-ink-faint: oklch(0.58 0.015 260);
+    --color-accent: oklch(0.52 0.15 245);
+    --color-accent-ink: oklch(1 0 0);
+    --color-positive: oklch(0.52 0.14 155);
+    --color-warning: oklch(0.6 0.14 70);
+    --color-danger: oklch(0.55 0.19 25);
+  }
+}
+
+html,
+body {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Rendered artifact markdown (intro.md). Scoped so it cannot leak into chrome. */
+.prose-artifact {
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.prose-artifact > * + * {
+  margin-top: 0.85rem;
+}
+.prose-artifact h1,
+.prose-artifact h2,
+.prose-artifact h3 {
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 1.6rem;
+}
+.prose-artifact h1 {
+  font-size: 1.35rem;
+}
+.prose-artifact h2 {
+  font-size: 1.1rem;
+}
+.prose-artifact h3 {
+  font-size: 1rem;
+  color: var(--color-ink-muted);
+}
+.prose-artifact ul,
+.prose-artifact ol {
+  padding-left: 1.25rem;
+  list-style: revert;
+}
+.prose-artifact li + li {
+  margin-top: 0.3rem;
+}
+.prose-artifact a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-artifact code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-line);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.3rem;
+}
+.prose-artifact pre {
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-line);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+.prose-artifact pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.prose-artifact blockquote {
+  border-left: 3px solid var(--color-line);
+  padding-left: 0.85rem;
+  color: var(--color-ink-muted);
+}
+.prose-artifact table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.prose-artifact th,
+.prose-artifact td {
+  border: 1px solid var(--color-line);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+
+/* Source citations resolved from `[s01]` markers (see lib/citations.ts). */
+.citation {
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px dotted currentColor;
+  cursor: pointer;
+}
+.citation:hover {
+  border-bottom-style: solid;
+}
+/* Cited but absent from news.json — visibly unresolved, not silently styled. */
+.citation-missing {
+  color: var(--color-ink-faint);
+  border-bottom-style: dashed;
+  cursor: help;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

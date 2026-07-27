@@ -5,7 +5,14 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from .text import significant_tokens, tokens
+from .text import (
+    contains_folded,
+    covers,
+    explained_by,
+    fold,
+    significant_tokens,
+    tokens,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,15 +64,14 @@ def entity_matches(entity: str, query: str) -> bool:
     if not q:
         return False
     e = entity.strip()
-    if e.casefold() == q.casefold():
+    if fold(e) == fold(q):
         return True
     q_tokens = tokens(q)
     if not q_tokens:
         return False
-    e_tokens = tokens(e)
-    if q_tokens <= e_tokens:
+    if explained_by(q_tokens, tokens(e)):
         return True
-    return len(q) >= 3 and q.casefold() in e.casefold()
+    return len(q) >= 3 and contains_folded(e, q)
 
 
 def _name_variants(entity: str) -> list[str]:
@@ -81,7 +87,7 @@ def entities_named_in(entries: list[WhitelistEntry], topic: str) -> list[Whiteli
         entry
         for entry in entries
         if any(
-            (name_tokens := significant_tokens(variant)) and name_tokens <= topic_tokens
+            covers(significant_tokens(variant), topic_tokens)
             for variant in _name_variants(entry.entity)
         )
     ]
@@ -90,7 +96,7 @@ def entities_named_in(entries: list[WhitelistEntry], topic: str) -> list[Whiteli
 
 
 def match_entries(entries: list[WhitelistEntry], query: str) -> list[WhitelistEntry]:
-    q = query.strip().casefold()
+    q = fold(query.strip())
     if not q:
         return []
     hits = [e for e in entries if entity_matches(e.entity, query) or e.domain == q]

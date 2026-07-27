@@ -35,23 +35,23 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 | Order | Ticket | Why now | Unblocks |
 |------|--------|---------|----------|
-| 1 | **#22** Topic refresh scheduler *(in progress — code done, VPS verify pending)* | Automatic monitoring cadence — product expectation for pilot | #16 (16c), #20 |
-| 2 | **#24** Topic user ownership | Bind topics to authenticated users before multi-user UI | #16 (real login + scoped topic list) |
-| 3 | **#16** SignalGather frontend V1 | User-facing surface on shipped API (#17, #24) | Pilot demos without curl |
-| 4 | **#21** Timeliness & channel metrics | Measurable inputs for eval lanes | #18, #20 (richer verdicts) |
-| 5 | **#23** Trading Intelligence Evaluation Framework | Lane A — runnable framework (generalizes #18); offline + LLM judge | Pilot go/no-go narrative; version-vs-version verdicts |
-| 6 | **#18** Business output evaluation | Lane A rubric/playbook narrative — folded into #23 framework | Pilot go/no-go narrative |
-| 7 | **#20** Continuous monitoring evaluation | Lane A over time — needs scheduler + rubric | Longitudinal product proof |
+| 1 | **#22** Topic refresh scheduler *(in progress — code done, VPS verify pending)* | Automatic monitoring cadence — product expectation for pilot; #16's monitoring UI is its first user-facing surface | #16 monitoring, #20 |
+| 2 | **#16** SignalGather frontend V1 *(16a–d built — **test1 smoke pending**)* | User-facing setup, approval, report, and monitoring journey on shipped API (#17, #24 done) | Pilot flow without curl; #37 |
+| 3 | **#37** Pilot first-use experience | Make the completed topic journey self-explanatory and trustworthy before broad pilot acquisition | Self-serve pilot onboarding |
+| 5 | **#21** Timeliness & channel metrics | Measurable inputs for eval lanes | #18, #20 (richer verdicts) |
+| 6 | **#23** Trading Intelligence Evaluation Framework | Lane A — runnable framework (generalizes #18); offline + LLM judge | Pilot go/no-go narrative; version-vs-version verdicts |
+| 7 | **#18** Business output evaluation | Lane A rubric/playbook narrative — folded into #23 framework | Pilot go/no-go narrative |
+| 8 | **#20** Continuous monitoring evaluation | Lane A over time — needs scheduler + rubric | Longitudinal product proof |
 
-**Suggested next pick:** **#22** — topic refresh scheduler (product cadence). **CI:** add GitHub secrets (`.github/README.md`) then run workflow “VPS E2E test1” for a live green artifact.
+**Suggested next pick:** **run `testing/ui_smoke_16.md` on test1** — #16 is code-complete (16a–d) but has never been exercised against a real agent. Then **#37** (first-use, loading/error/recovery, return-use clarity, and a new-account pilot smoke) before broad pilot acquisition. #16's monitoring section (16c) also gives #22 its first user-facing surface, so verify both in the same pass. **#24** is shipped on test1. **CI:** add GitHub secrets (`.github/README.md`) then run workflow “VPS E2E test1” for a live green artifact.
 
-**Parallel (when deps met):** #21 after harness artifacts (#11); #24 can start after #17 (no #22 dependency); #16 phase **16a** after **#24**; #18 can start rubric using `testing/results/test1/latest` (Lane B PASS); do not start #20 until **#22** + **#18** rubric exist.
+**Parallel (when deps met):** #21 after harness artifacts (#11); #18 can start rubric using `testing/results/test1/latest` (Lane B PASS); do not start #20 until **#22** + **#18** rubric exist.
 
 **Dependency sketch:**
 
 ```
-#11,#13,#15,#17,#19 (done) ──► #22 ──► #16 (16c)
-                       ├──► #24 ──► #16 (16a–b: user-scoped UI)
+#11,#13,#15,#17,#19,#24 (done) ──► #16 (16a–d built) ──► #37 (pilot first-use) ──► pilot acquisition
+                       └──► #22 ──► #16 monitoring verified on test1
                        └──► #21 ──┐
 #15 PASS (test1/latest) ───────► #18 ──► #20
 #22 + #18 + #21 ───────────────────────────► #20
@@ -60,6 +60,22 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 ---
 
 ## In Progress
+
+### SignalGather frontend V1 (#16) — 16a–d built, unverified on a live agent
+- **Spec:** `docs/specs/active/signalgather_frontend_v1_16.md` · **App:** `apps/signalgather_web/README.md`
+- **Lane:** Product / frontend — *the user-facing topic journey on the shipped API*
+- **What's done (code):** React 19 + TS + Vite + Tailwind SPA at `apps/signalgather_web/`, served by `claude_agent` at **`/app`** (same origin → no CORS in the deployed path).
+  - **16a** JWT sign-in + self-register (#24), env picker, owner-scoped topic list, NL create, workspace status bar, live activity feed, plan review + Proceed/Cancel. Fetch-based SSE reader (`EventSource` can't send `Authorization`) with `from_seq` resume, backoff, `: done` = clean close.
+  - **16b** Report reader (summary, thesis badge, body, thesis update, open questions, next queries), sources panel with relevance/class/sort/filter, `[s01]` citations resolved to links, and the **adaptive widget registry** — the agent declares presentation, the frontend needs no change per output type.
+  - **16c** Monitoring panel (subscription vs schedule kept separate, freshness window, interval, pause/resume, manual refresh) and delta timeline with per-cycle detail loaded on open.
+  - **16d** New-since-last-visit badge, per-group skeletons, retryable errors, responsive pass.
+  - Artifacts are grouped (plan/report/monitor/deltas) with per-group event invalidation; nothing polls. Prose sanitized with DOMPurify.
+  - Backend: `_mount_cors` / `_mount_web` + `CLAUDE_AGENT_CORS_ORIGINS` / `CLAUDE_AGENT_WEB_DIST`; `web` build stage in `docker/Dockerfile.claude_agent`; repo-root `.dockerignore`.
+  - Agent contract: `claude_agent_fe/.claude/widgets.md`; plan/deliver/refresh prompts now emit fenced `markdown-ui-widget` blocks. Legacy `<EntityChips>`/`<Highlights>`/`<NewsCard/>` in artifacts already on disk still render.
+  - Tests: 178 frontend (vitest) + 12 backend (`tests/topics/test_web_hosting.py`); typecheck, lint, build green.
+- **What's missing — the whole live verification.** No part of 16b/16c has ever run against a real report or a real refresh cycle: Docker was unavailable in the build environment, so only the static `/app` mount was smoke-tested locally. The highest-risk unknowns are (a) whether the agent actually emits well-formed widgets after the prompt change, (b) whether `[s01]` citations match `news.json` ids in practice, and (c) monitoring, which also depends on #22 being live.
+- **Also:** set `CLAUDE_AGENT_ALLOW_SERVICE_KEY_BYPASS=false` on any slot used as a real product surface — with the harness default an unauthenticated browser is the service role and sees every topic.
+- **Next step:** Deploy `claude_agent` to test1 (the image now builds the UI), then work `testing/ui_smoke_16.md` end to end — §7b (widgets), §7d (monitoring/deltas), §5 (reconnect) and §11 (responsive) are what unit tests cannot close.
 
 ### Topic refresh scheduler (#22)
 - **Spec:** `docs/specs/active/topic_refresh_scheduler_22.md`
@@ -105,12 +121,6 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 **Execution rule:** Agents execute only `docs/specs/active/*_<n>.md` tickets. Move completed tickets to `docs/specs/done/`.
 
-### SignalGather frontend V1 — topic intelligence UI (#16)
-- **Spec:** `docs/specs/active/signalgather_frontend_v1_16.md`
-- **What's done:** Task spec from business requirements + event-driven UX principles
-- **What's missing:** App scaffold, topic list/workspace, SSE client, artifact views, monitor/delta UI, deploy to test1
-- **Next step:** `GET /v1/topics` now shipped (#17 done); resolve open decisions (repo path, hosting URL, auth) and implement phase 16a
-
 ---
 
 ## Known Bugs
@@ -138,6 +148,7 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 | What | Date | Spec |
 |---|---|---|
+| **#24 Topic user ownership** — `owner_user_id` + migration `0006`; JWT auth on all topic routes; service-key bypass for harness; verified on test1 | Jul 26, 2026 | `docs/specs/done/topic_user_ownership_24.md` |
 | **#36 Hybrid pipeline orchestration** — Python `source_discover` pre-plan stage writes `source_targets.json`; deterministic topic→entity resolution (no LLM); plan agent consumes pre-resolved domains; `execute_search` contract documented only | Jul 24, 2026 | `docs/specs/active/hybrid_pipeline_orchestration_36.md` |
 | **#32 `/source-discover`** — Python `apps/claude_agent/sources` (whitelist + local playbooks) + Cursor skill; CLI `python -m apps.claude_agent.sources`; pipeline wire-up = #36 | Jul 23, 2026 | `docs/specs/done/source_discover_skill_32.md` |
 | **#30 Coverage playbooks seed** — 55 playbooks in `local_knowledge_sources/playbooks/`; ingest `document_type=playbook`; Meta-RAG ready (pipeline wiring = #36) | Jul 23, 2026 | `docs/specs/done/coverage_playbooks_seed_30.md` |

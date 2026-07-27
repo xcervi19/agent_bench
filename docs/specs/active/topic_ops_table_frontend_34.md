@@ -209,7 +209,7 @@ Recommended order: **34a after #24**; **34c** can follow 34a if backend admin li
 ## Related
 
 - `docs/specs/done/signalgather_frontend_v1_16.md` — shell, workspace, auth (#16)
-- `docs/specs/active/topic_user_ownership_24.md` — JWT scoping + admin bypass (#24)
+- `docs/specs/done/topic_user_ownership_24.md` — JWT scoping + admin bypass (#24)
 - `docs/specs/done/topic_refresh_scheduler_22.md` — scheduler fields (#22)
 - `testing/app_testing_scenario.md` §7.2a — PATCH/DELETE monitor curl reference
 - Ops manual check pattern: prod topic `2d09f18a-7512-4a56-87d2-1b8302bd127d` (Chinese Demand & Stimulus) — reference row for QA
