@@ -45,6 +45,10 @@ RUN pip install --upgrade pip && pip install -e .
 COPY source_whitelist.json ./
 COPY local_knowledge_sources/playbooks ./local_knowledge_sources/playbooks
 
+# Operator tooling run with `docker compose exec` — account creation and topic
+# ownership transfer, which are the only way in once public registration is off.
+COPY scripts/owner ./scripts/owner
+
 # Built SPA. CLAUDE_AGENT_WEB_DIST can be overridden (or set empty) to disable.
 COPY --from=web /web/dist /app/web
 ENV CLAUDE_AGENT_WEB_DIST=/app/web
