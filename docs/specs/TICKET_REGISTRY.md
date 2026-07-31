@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#39` (assign to the next new ticket; then bump this line)
+**Next available number:** `#40` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -34,6 +34,7 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 || 35 | `docs/specs/active/graph_retrieval_layer_35.md` | planned | Grafová orchestrační vrstva retrievalu (v2); nadstavba nad #29/#30, po změření kvality |
 || 36 | `docs/specs/active/hybrid_pipeline_orchestration_36.md` | planned | Python-orchestrated pipeline (source_discover pre-stage, thin plan agent); needs #29+#30; supersedes #33 |
 || 37 | `docs/specs/active/pilot_first_use_experience_37.md` | planned | First-use and return-use UX after #16a–b; blocks broad pilot acquisition |
+|| 39 | `docs/specs/active/source_authority_enforcement_39.md` | implemented, awaiting comparison refresh | Reports were 100% secondary sources on refresh; two-tier freshness + source-mix measurement. Extends #29/#30/#36, surfaces in #16b |
 || 38 | `docs/specs/active/multilingual_topic_grounding_38.md` | implemented, awaiting deploy | Diacritics/inflection matching + `topic_parse` leg so non-English topics ground against the whitelist; extends #29/#30/#36 |
 
 ---

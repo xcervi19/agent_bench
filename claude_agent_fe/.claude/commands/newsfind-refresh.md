@@ -90,7 +90,11 @@ For each candidate hit:
 
 1. Compute `url_hash = sha1(url)[0:16]`.
 2. **Drop if `url_hash ∈ input.seen_url_hashes`** (already seen in prior runs).
-3. **Drop if `published_at` is older than `max_age_hours` from `today_iso`**, when `published_at` is available. If `published_at` is missing, keep the hit but record `freshness: "unknown"`.
+3. Apply freshness **by source tier**, not uniformly:
+   * `primary_official` and `data_feed` — **exempt from `max_age_hours`.** These publish on an event cadence, not a news cadence: an advisory or a throughput release that has not changed is the *current standing state*, not stale news. Keep it and set `standing: true`. Applying a news-speed window here silently deletes exactly the sources that carry the most weight.
+   * everything else — **drop if `published_at` is older than `max_age_hours` from `today_iso`**.
+
+   If `published_at` is missing, keep the hit and record `freshness: "unknown"`.
 4. Drop intra-batch duplicates by `url_hash`.
 5. Score `relevance_score ∈ [0,1]` against `parsed.working_thesis + parsed.entities`. Drop anything `<0.40` (bump `drops.low_relevance`).
 6. Score `source_class` ∈ `primary_official|specialist_outlet|aggregator|data_feed|blog_or_newsletter|social|unknown`.
@@ -113,12 +117,13 @@ Write `news.json`:
   "sources": [
     {
       "id":"s01","url":"...","url_hash":"...","title":"...","publisher":"...",
-      "published_at":"<iso|null>","freshness":"fresh|unknown","language":"en",
+      "published_at":"<iso|null>","freshness":"fresh|unknown|standing","language":"en",
       "snippet":"...","query_ids":["st01"],"source_class":"primary_official",
       "relevance_score":0.83
     }
   ],
-  "drops": {"already_seen": 0, "too_old": 0, "low_relevance": 0, "intra_batch_dup": 0}
+  "drops": {"already_seen": 0, "too_old": 0, "low_relevance": 0, "intra_batch_dup": 0},
+  "source_mix": {"primary_official": 0, "secondary": 0}
 }
 ```
 
@@ -130,7 +135,11 @@ Read the `news.json` you just wrote. For the survivors:
 
 * `summary_md` — ≤200 words. What is genuinely new? Cite `[s01]`. Note any `monitoring_plan.trigger_terms` that were hit.
 * `report.md` — single section `## Refresh delta (<today_iso>)` with 2–6 bullets, each citing 1–2 sources. End with one-line "Trigger terms hit: …" or "No trigger terms hit." If one source clearly drives the cycle, add a `news-card` widget for it (see `.claude/widgets.md`); otherwise plain markdown.
-* `thesis_status` — `unchanged` is fine if nothing material moved. Use `supported|weakened|invalidated` only if the new sources directly speak to the working thesis.
+* `thesis_status` — `unchanged` is fine if nothing material moved. Use `supported|weakened|invalidated` only if the new sources directly speak to the working thesis. This is a verdict on **this cycle's evidence**, not a re-verdict on the full report; say so when the two diverge.
+
+**Confidence is capped by sourcing.** A `key_changes` entry supported only by `aggregator`, `blog_or_newsletter`, `social` or a single `specialist_outlet` is **`medium` at most**. `high` requires either a `primary_official`/`data_feed` source, or two independent `specialist_outlet` sources that are not republishing the same wire copy. State-affiliated outlets never count toward independence on a story about their own state.
+
+**Source mix must be stated, never implied.** Open `summary_md` with one line: `Sources: N new (P primary/official, S secondary).` If `P = 0`, the first bullet of `report.md` must say so plainly — that every finding this cycle rests on secondary reporting, and which primary sources were queried and returned nothing. A cycle that is entirely secondary is a usable result; a cycle that hides it is not.
 
 Write `delta.json`:
 

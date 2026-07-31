@@ -4,6 +4,7 @@ import { absoluteTime, formatDuration, formatUsd, relativeTime } from '../../lib
 import type { DeltaArtifact, DeltaSummary, NewsArtifact } from '../../lib/types'
 import { ArtifactMarkdown } from '../ArtifactMarkdown'
 import { SourceCard } from '../widgets/SourceCard'
+import { SourceMixNote } from '../report/SourceMixNote'
 import { ThesisBadge } from '../report/ThesisBadge'
 import { Card, EmptyState, ErrorNote, SectionHeading, Skeleton, cx } from '../primitives'
 
@@ -210,6 +211,8 @@ function DeltaDetail({ topicId, seq }: { topicId: string; seq: number }) {
           ))}
         </div>
       )}
+
+      <SourceMixNote sources={news?.sources} />
 
       {(delta?.summary_md || markdown) && (
         <ArtifactMarkdown source={markdown ?? delta?.summary_md ?? ''} sources={news?.sources} />

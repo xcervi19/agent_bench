@@ -22,6 +22,7 @@ from .facets import (
     normalize_facets,
 )
 from .models import Topic, TopicEvent
+from .source_quality import load_whitelisted_domains, summarize_run
 from .webhooks import deliver_event
 
 STATE_PLANNING = "planning"
@@ -236,7 +237,8 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
     )
     if summary is None:
         return
-    await emit(topic_id, "report.ready", summary)
+    source_mix = summarize_run(out_dir, load_whitelisted_domains())
+    await emit(topic_id, "report.ready", {**summary, "source_mix": source_mix.as_payload()})
     await set_state(topic_id, STATE_REPORTED)
 
 

@@ -3,6 +3,7 @@ import { ArtifactMarkdown } from '../ArtifactMarkdown'
 import { WidgetRenderer } from '../widgets/registry'
 import { WidgetContext } from '../widgets/WidgetContext'
 import { indexSources } from '../../lib/citations'
+import { SourceMixNote } from './SourceMixNote'
 import { ThesisBadge } from './ThesisBadge'
 import { Card, SectionHeading, Skeleton } from '../primitives'
 import { useMemo } from 'react'
@@ -60,14 +61,17 @@ export function ReportView({
           Report
         </SectionHeading>
 
-        {report?.summary_md && (
-          <div className="border-b border-line bg-surface-sunken px-4 py-4">
-            <p className="mb-2 text-xs font-medium tracking-wide text-ink-faint uppercase">
-              Executive summary
-            </p>
-            <ArtifactMarkdown source={report.summary_md} sources={news?.sources} />
-          </div>
-        )}
+        <div className="border-b border-line bg-surface-sunken px-4 py-4">
+          <SourceMixNote sources={news?.sources} className="mb-3" />
+          {report?.summary_md && (
+            <>
+              <p className="mb-2 text-xs font-medium tracking-wide text-ink-faint uppercase">
+                Executive summary
+              </p>
+              <ArtifactMarkdown source={report.summary_md} sources={news?.sources} />
+            </>
+          )}
+        </div>
 
         <div className="px-4 py-4">
           {reportMarkdown ? (

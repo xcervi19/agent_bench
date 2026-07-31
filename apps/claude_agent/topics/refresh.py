@@ -27,11 +27,12 @@ from typing import Any
 from sqlalchemy import desc, select, update
 
 from ..config import ClaudeAgentSettings
-from ..schemas import RunRequest
 from ..runner import CommandNotAllowedError, stream_claude
+from ..schemas import RunRequest
 from .db import session_scope
 from .models import Topic, TopicRefreshDelta, TopicSubscription
 from .pipeline import emit, run_dir
+from .source_quality import SourceMix, load_whitelisted_domains, summarize_run
 
 logger = logging.getLogger(__name__)
 
@@ -245,10 +246,12 @@ async def run_refresh(
         new_count = 0
         queries_executed = 0
         summary_md: str | None = None
+        source_mix = SourceMix(total=0, authoritative=0, whitelisted=0)
         if error is None and summary is not None:
             new_count = int(summary.get("new_sources_count") or 0)
             queries_executed = int(summary.get("queries_executed") or 0)
             summary_md = summary.get("summary_md")
+            source_mix = summarize_run(refresh_dir, load_whitelisted_domains())
 
         async with session_scope() as s:
             await s.execute(
@@ -293,6 +296,7 @@ async def run_refresh(
                 "duration_ms": duration_ms,
                 "total_cost_usd": cost,
                 "trigger": trigger,
+                "source_mix": source_mix.as_payload(),
             })
     finally:
         await _release_lock(subscription_id)

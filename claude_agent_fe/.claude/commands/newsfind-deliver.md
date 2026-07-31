@@ -76,7 +76,8 @@ Echo `{"phase":"P2","status":"done"}`.
   * `relevance_score ∈ [0,1]` — does it address the entities + working thesis? Drop anything `<0.35` (bump `drops.low_relevance`).
   * `novelty_score ∈ [0,1]` — penalize repeat-publisher coverage of the same fact within 24h.
   * `source_class` ∈ `primary_official|specialist_outlet|aggregator|data_feed|blog_or_newsletter|social|unknown`.
-* Number survivors `s01`, `s02`, … in descending `relevance_score`.
+* Number survivors `s01`, `s02`, … in descending `relevance_score`, except that a `primary_official` or `data_feed` source outranks a secondary source of equal relevance. Authority is not a tiebreaker applied at the end; it is part of the ordering.
+* **Never drop a `primary_official` or `data_feed` hit for age.** These publish on an event cadence — an unchanged advisory or a quarterly release is the current standing state. Keep it and set `freshness: "standing"`.
 
 Echo `{"phase":"P3","status":"done"}`.
 
@@ -130,6 +131,10 @@ Produce:
 * `next_queries` — 3–6 entries `{q, intent, rationale}` the operator should run next cycle.
 
 **No fabrication.** If a fact has no citation in `news.json`, don't include it. If `sources` is empty/thin, set `thesis_status: "inconclusive"` and say so in `thesis_update_md`.
+
+**Confidence is capped by sourcing.** A `key_findings` entry supported only by `aggregator`, `blog_or_newsletter`, `social` or a single `specialist_outlet` is **`medium` at most**. `high` requires a `primary_official`/`data_feed` source, or two independent `specialist_outlet` sources that are not republishing the same wire copy. State-affiliated outlets never count toward independence on a story about their own state.
+
+**Source mix must be stated, never implied.** Open `summary_md` with one line: `Sources: N (P primary/official, S secondary).` If `P = 0`, `## Snapshot` must open by saying every finding rests on secondary reporting, and name which primary sources were queried and returned nothing.
 
 Echo `{"phase":"P4","status":"done"}`.
 
