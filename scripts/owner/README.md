@@ -3,6 +3,46 @@
 **Product owner / technical lead only.** These scripts are destructive and are not
 part of any developer, CI, or agent workflow. Do not call them from other scripts.
 
+## `create_user.py` — issue an invitation-only account
+
+Public registration is off by default
+(`CLAUDE_AGENT_ALLOW_PUBLIC_REGISTRATION=false`), so `POST /auth/register` does
+not exist on a product deployment. This is how an operator issues an account.
+
+```bash
+# on the VPS, inside the running container
+docker compose exec claude_agent \
+  python3 scripts/owner/create_user.py you@example.com
+
+# non-interactive
+docker compose exec -e SIGNALGATHER_PASSWORD='...' claude_agent \
+  python3 scripts/owner/create_user.py you@example.com
+```
+
+The password comes from a hidden prompt or `SIGNALGATHER_PASSWORD` — never from
+argv, so it stays out of shell history and `ps`. Hashing goes through
+fastapi-users' own `UserManager`; nothing here hand-rolls crypto.
+
+Each account gets a fresh tenant unless `--tenant-id` names an existing one.
+`--superuser` is available but nothing in the product reads it yet.
+
+## `assign_topics.py` — hand topics to an account
+
+Topics created before #24, or by the service key, have `owner_user_id = NULL`.
+Every topic route filters by owner, so those are invisible in the UI. This
+reassigns them.
+
+```bash
+docker compose exec claude_agent \
+  python3 scripts/owner/assign_topics.py you@example.com --unowned          # dry run
+docker compose exec claude_agent \
+  python3 scripts/owner/assign_topics.py you@example.com --unowned --apply
+```
+
+Scopes are mutually exclusive: `--unowned`, `--all`, or `--from-email X`.
+Dry run by default. Child rows (events, subscriptions, deltas, webhooks) resolve
+access through `topic_id`, so only `topics` is touched.
+
 ## `purge_test_topic_data.sh`
 
 Wipes Newsfind topic test-run data from VPS slots after a testing campaign.

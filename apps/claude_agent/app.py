@@ -209,7 +209,9 @@ def build_app() -> FastAPI:
 
         from .topics.routes import router as topics_router
 
-        for auth_router in build_auth_routers():
+        for auth_router in build_auth_routers(
+            public_registration=settings.allow_public_registration
+        ):
             app.include_router(auth_router)
         app.include_router(topics_router)
 

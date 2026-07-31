@@ -83,6 +83,16 @@ class ClaudeAgentSettings(BaseSettings):
         ),
     )
 
+    allow_public_registration: bool = Field(
+        default=False,
+        description=(
+            "Mount POST /auth/register. False (default) makes the deployment "
+            "invitation-only: accounts are created with scripts/owner/create_user.py "
+            "and no stranger can self-register. Enable it on test slots and for the "
+            "eval harness, which register throwaway users."
+        ),
+    )
+
     # Frontend (#16). The SPA in apps/signalgather_web talks to this service.
     # NoDecode: keep pydantic-settings from JSON-decoding the env value so the
     # validator below can accept a plain comma-separated string.

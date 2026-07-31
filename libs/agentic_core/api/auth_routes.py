@@ -21,16 +21,16 @@ class UserUpdate(schemas.BaseUserUpdate):
     tenant_id: uuid.UUID | None = None
 
 
-def build_auth_routers() -> list[APIRouter]:
+def build_auth_routers(*, public_registration: bool = True) -> list[APIRouter]:
     login = fastapi_users.get_auth_router(auth_backend)
-    register = fastapi_users.get_register_router(UserRead, UserCreate)
     users = fastapi_users.get_users_router(UserRead, UserUpdate)
 
-    return [
-        _prefix(login, "/auth/jwt", ["auth"]),
-        _prefix(register, "/auth", ["auth"]),
-        _prefix(users, "/users", ["users"]),
-    ]
+    routers = [_prefix(login, "/auth/jwt", ["auth"])]
+    if public_registration:
+        register = fastapi_users.get_register_router(UserRead, UserCreate)
+        routers.append(_prefix(register, "/auth", ["auth"]))
+    routers.append(_prefix(users, "/users", ["users"]))
+    return routers
 
 
 def _prefix(router: APIRouter, prefix: str, tags: list[Any]) -> APIRouter:

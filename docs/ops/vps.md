@@ -70,6 +70,33 @@ Every `/v1/topics/*` route resolves a caller and scopes data to it. Two paths:
 - Scheduled refreshes (#22) run server-side and stay attached to the topic owner,
   so a reconnecting user sees updates only for their own topics.
 
+### Accounts — invitation only
+
+`CLAUDE_AGENT_ALLOW_PUBLIC_REGISTRATION` defaults to **false**, so `POST
+/auth/register` is not mounted on a product deployment and no stranger can
+self-register on a public hostname. Test slots set it to `true`
+(`infra/docker-compose.test{1,2}.yml`) because throwaway users are how they are
+exercised.
+
+Issue an account:
+
+```bash
+cd ~/agent_bench
+docker compose exec claude_agent python3 scripts/owner/create_user.py you@example.com
+```
+
+Hand it the legacy topics (those created by the service key have
+`owner_user_id = NULL` and are invisible in the UI):
+
+```bash
+docker compose exec claude_agent \
+  python3 scripts/owner/assign_topics.py you@example.com --unowned            # dry run
+docker compose exec claude_agent \
+  python3 scripts/owner/assign_topics.py you@example.com --unowned --apply
+```
+
+Details and safety model: `scripts/owner/README.md`.
+
 ### Web UI (#16)
 
 The SignalGather SPA is **baked into the `claude_agent` image** (`web` stage in
