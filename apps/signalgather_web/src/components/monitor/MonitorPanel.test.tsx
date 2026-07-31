@@ -112,6 +112,24 @@ describe('MonitorPanel', () => {
     expect(stopMonitor).not.toHaveBeenCalled()
   })
 
+  it('shows a freshness window set outside the presets', () => {
+    renderPanel({ monitor: monitor({ max_age_hours: 120 }) })
+    const button = screen.getByRole('button', { name: '120h' })
+    expect(button.getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('keeps preset windows in ascending order when injecting the current value', () => {
+    renderPanel({ monitor: monitor({ max_age_hours: 120 }) })
+    const labels = ['24h', '48h', '72h', '120h', '168h']
+    const rendered = labels.map((l) => screen.getByRole('button', { name: l }).textContent)
+    expect(rendered).toEqual(labels)
+  })
+
+  it('does not duplicate a window already in the presets', () => {
+    renderPanel({ monitor: monitor({ max_age_hours: 48 }) })
+    expect(screen.getAllByRole('button', { name: '48h' })).toHaveLength(1)
+  })
+
   it('marks the active schedule interval', () => {
     renderPanel({ monitor: monitor({ schedule_enabled: true, schedule_interval_hours: 24 }) })
     expect(screen.getByRole('button', { name: 'Daily' }).getAttribute('aria-pressed')).toBe('true')

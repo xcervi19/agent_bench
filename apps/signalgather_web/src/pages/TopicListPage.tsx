@@ -96,7 +96,9 @@ function TopicRow({ topic }: { topic: TopicListItem }) {
       className="block rounded-xl border border-line bg-surface-raised px-4 py-3.5 transition-colors hover:border-ink-faint focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <p className="min-w-0 flex-1 text-sm font-medium text-ink">{topic.topic}</p>
+        <p className="line-clamp-2 min-w-0 flex-1 text-sm font-medium text-ink" title={topic.topic}>
+          {topic.topic}
+        </p>
         <StateBadge state={topic.state} />
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-faint">

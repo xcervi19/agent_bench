@@ -21,6 +21,10 @@ const INTERVALS = [
 
 const AGE_WINDOWS = [24, 48, 72, 168]
 
+function windowsIncluding(current: number): number[] {
+  return AGE_WINDOWS.includes(current) ? AGE_WINDOWS : [...AGE_WINDOWS, current].sort((a, b) => a - b)
+}
+
 /**
  * Monitoring controls (16c).
  *
@@ -123,7 +127,7 @@ export function MonitorPanel({
             hint="How old a source may be and still count as new."
           >
             <div className="flex flex-wrap gap-1">
-              {AGE_WINDOWS.map((hours) => (
+              {windowsIncluding(monitor.max_age_hours).map((hours) => (
                 <Choice
                   key={hours}
                   active={monitor.max_age_hours === hours}

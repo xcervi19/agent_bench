@@ -216,9 +216,7 @@ function StatusBar({ topic }: { topic: TopicDetail }) {
         ← All topics
       </Link>
       <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-        <h1 className="min-w-0 flex-1 text-lg font-semibold tracking-tight text-ink">
-          {topic.topic}
-        </h1>
+        <TopicHeading topic={topic.topic} />
         <StateBadge state={topic.state} />
       </div>
       <dl className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-faint">
@@ -227,13 +225,47 @@ function StatusBar({ topic }: { topic: TopicDetail }) {
           value={relativeTime(topic.created_at)}
           title={absoluteTime(topic.created_at)}
         />
-        <Meta
-          label={running ? 'Running for' : 'Total time'}
-          value={elapsed(topic.created_at, running ? undefined : topic.updated_at)}
-        />
+        {running ? (
+          <Meta label="Running for" value={elapsed(topic.created_at)} />
+        ) : (
+          <Meta
+            label="Last activity"
+            value={relativeTime(topic.updated_at)}
+            title={absoluteTime(topic.updated_at)}
+          />
+        )}
         <Meta label="Events" value={String(topic.last_event_seq)} />
       </dl>
     </header>
+  )
+}
+
+const COLLAPSED_TOPIC_CHARS = 180
+
+function TopicHeading({ topic }: { topic: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = topic.length > COLLAPSED_TOPIC_CHARS
+
+  return (
+    <div className="min-w-0 flex-1">
+      <h1
+        className={cx(
+          'text-lg font-semibold tracking-tight text-ink',
+          isLong && !expanded && 'line-clamp-2',
+        )}
+      >
+        {topic}
+      </h1>
+      {isLong && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          aria-expanded={expanded}
+          className="mt-1 text-xs text-accent hover:underline"
+        >
+          {expanded ? 'Show less' : 'Show full brief'}
+        </button>
+      )}
+    </div>
   )
 }
 
