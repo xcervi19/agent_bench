@@ -125,6 +125,20 @@ def _r(x: float) -> float:
     return round(x, 3)
 
 
+def _scenario_probability(scenario: dict) -> object:
+    """A scenario carries a probability under whichever key produced it.
+
+    The plan writes ``probability``; ``newsfind-deliver`` writes ``p_before`` /
+    ``p_after`` for the same idea. Reading only the first scored every delivered
+    scenario as having no probability at all.
+    """
+    for key in ("probability", "p_after", "p_before"):
+        value = scenario.get(key)
+        if value not in (None, ""):
+            return value
+    return None
+
+
 class HeuristicEvaluator(Evaluator):
     name = "heuristic"
 
@@ -371,7 +385,7 @@ class HeuristicEvaluator(Evaluator):
         scenarios = a.scenarios
         findings = a.key_findings
         scen_prob = (
-            sum(bool(s.get("probability")) for s in scenarios) / len(scenarios)
+            sum(bool(_scenario_probability(s)) for s in scenarios) / len(scenarios)
             if scenarios
             else 0.0
         )

@@ -86,7 +86,18 @@ class RunArtifacts(BaseModel):
 
     @property
     def scenarios(self) -> list[dict[str, Any]]:
-        return list(self.report.get("scenarios", []) or [])
+        """Forward scenarios from the report.
+
+        ``newsfind-deliver`` writes them as ``scenario_updates``; only the
+        rubric doc ever called the key ``scenarios``. Reading just the latter
+        scored every real run as having none, which understated causal
+        reasoning, research depth and actionability at once. Accept both.
+        """
+        for key in ("scenario_updates", "scenarios"):
+            rows = self.report.get(key)
+            if rows:
+                return list(rows)
+        return []
 
     @property
     def rag_refs(self) -> list[dict[str, Any]]:
@@ -125,7 +136,13 @@ class RunArtifacts(BaseModel):
 
     @property
     def run_dt(self) -> datetime | None:
-        return parse_dt(self.run_timestamp)
+        """When the run happened, for source-age scoring.
+
+        ``evaluation.json`` only exists for harness runs. Falling back to the
+        plan's ``created_at`` lets a run pulled straight off the API be scored
+        for latency instead of silently taking the neutral 2.5.
+        """
+        return parse_dt(self.run_timestamp) or parse_dt(self.parsed.get("created_at"))
 
 
 def _resolve_business_dir(run_dir: Path) -> Path:
