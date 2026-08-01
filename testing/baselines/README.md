@@ -46,6 +46,15 @@ needs `OPENAI_API_KEY`.
 
 ### `hormuz_90d_2026-08-01`
 
+> **Reference sample, not yet a usable baseline — see #41.** This is one run of
+> one topic. The pipeline searches the live web, so the run-to-run spread has
+> never been measured and no threshold exists for when a delta counts as an
+> improvement. Four of the five categories carrying 40 % of the weight move with
+> the news cycle rather than with the code, and `information_latency` is scored
+> against run time, so a later run is penalised for being later. Treat the
+> structural categories (entities, scenarios, findings, citation structure) as
+> comparable and the discovery categories as indicative only.
+
 First prod run scored end to end after #38, #39 and #16b were all live.
 
 | | |

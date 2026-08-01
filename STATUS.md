@@ -142,6 +142,14 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **What's missing:** `timeliness`/`channels` blocks in `evaluation.json`, field docs, verification on a real run
 - **Next step:** Implement metric calculators in `scripts/test_vector_runner.sh` and document fields in `testing/README.md`
 
+### Multi-run evaluation baseline (#41)
+- **Spec:** `docs/specs/active/multi_run_evaluation_baseline_41.md`
+- **Lane:** A — *methodology for #23*
+- **Why:** `testing/baselines/hormuz_90d_2026-08-01` is one run of one topic against a pipeline that searches the live web. The variance was never measured, so a future ±0.3 delta cannot be attributed to the code rather than the news cycle. Worse, four of the five categories carrying 40 % of the rubric weight are web-dependent, and `information_latency` is scored against run time so every later run is penalised for existing later.
+- **What's needed:** noise floor from N≥3 repeat runs; baseline as M topics × N runs seeded from `testing/vectors.json`; verdict by `aggregate` win rate rather than single delta; a decision on the time-coupled latency category; structural vs discovery quality reported separately; prod runs written to `testing/results/prod/<timestamp>/` without hand-assembly.
+- **Cost:** ~14 min and ~$3.40-equivalent per run; a 3×3 set is ~9 runs, ~2 h.
+- **Next step:** Not started by request — build the testing later.
+
 **Execution rule:** Agents execute only `docs/specs/active/*_<n>.md` tickets. Move completed tickets to `docs/specs/done/`.
 
 ---
