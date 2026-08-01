@@ -1,6 +1,6 @@
 # Public topic sharing — #40
 
-**Status:** implemented 2026-08-01, awaiting migration + deploy
+**Status:** verified on test1 2026-08-01 (`fda0876`) — prod deploy pending
 **Lane:** Product / frontend + API — *letting a finished topic leave the account that made it*
 **Depends on:** #24 (topic ownership), #16 (SignalGather UI), #22 (refresh scheduler)
 
@@ -131,8 +131,34 @@ Human link: `https://agent.particletico.com/app/shared/<topic-id>`.
 - [x] Unpublish restores control and kills the link
 - [x] `/app/shared/*` renders with no session; no action control anywhere on it
 - [x] `pytest tests/topics` (113) and `vitest` (211) green; tsc + eslint clean
-- [ ] Migration `0007_topic_public` applied on test1/prod
+- [x] Migration `0007_topic_public` applied on **test1** (`0006_topic_owner` → `0007_topic_public (head)`)
+- [ ] Migration applied on **prod**
 - [ ] Verified in a browser: publish → open the link in a logged-out window → unpublish → link 404s
+
+## Verified on test1 — 2026-08-01
+
+Slot `agent-test1.particletico.com`, branch `feat/public-topic-sharing-40`
+(`fda0876`), images rebuilt, migration applied, containers healthy, no errors in
+the boot log. Live results against topic `9f2607da`:
+
+| Check | Result |
+|---|---|
+| Anonymous `GET /v1/topics` | **401** — owner API still closed |
+| Anonymous `GET /v1/public/topics` | **200**, lists only the published topic |
+| Anonymous `POST/PUT/PATCH/DELETE /v1/public/topics` | **405** on all four |
+| Anonymous `GET .../{detail,report,report.md,news,parsed,intro.md,deltas}` | **200** — report body readable with no credentials |
+| Public payload | no `owner_user_id`, no run ids, no `error` |
+| `POST /refresh`, `/proceed`, `/cancel`, `/monitor` **with a valid service key** | **409** `topic is published and read-only` |
+| `available_actions` while published | `[]` |
+| After `DELETE /publish` | detail + artifacts **404**, listing empty, owner regains control |
+| `/app`, `/app/shared`, `/app/shared/<id>` | **200** |
+
+Left published on test1 for the browser pass:
+`https://agent-test1.particletico.com/app/shared/9f2607da-4a94-494d-83bc-2af3ad9a8842`
+
+**Unrelated pre-existing issue seen at boot:** test1's
+`CLAUDE_AGENT_ALLOWED_COMMANDS` still lacks `/newsfind-topic-parse`, so #38's
+grounding leg degrades on that slot (prod got it in `1672fe9`). Not touched here.
 
 ## Known gaps
 
