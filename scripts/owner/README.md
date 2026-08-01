@@ -26,6 +26,31 @@ fastapi-users' own `UserManager`; nothing here hand-rolls crypto.
 Each account gets a fresh tenant unless `--tenant-id` names an existing one.
 `--superuser` is available but nothing in the product reads it yet.
 
+## `reset_password.py` — a user forgot their password
+
+There is no self-service reset. No email transport is configured, so
+`/auth/forgot-password` is deliberately not mounted rather than minting reset
+tokens nobody ever receives. On an invitation-only deployment the operator
+resets it.
+
+```bash
+docker compose exec claude_agent \
+  python3 scripts/owner/reset_password.py them@example.com
+```
+
+Same password handling as `create_user.py`: hidden prompt or
+`SIGNALGATHER_PASSWORD`, never argv. Hand the new password over a channel you
+trust and have them change it once they are in.
+
+**Existing sessions survive.** The JWT is stateless, so a token issued before the
+reset keeps working until it expires. If you are resetting because an account is
+compromised, rotate `JWT_SECRET` as well — that invalidates every token for every
+user, so expect to sign everyone back in.
+
+Changing a password you still know is a different thing and needs no operator:
+`PATCH /users/me` with `{"password": "..."}` works today for a signed-in user,
+though the UI does not expose it yet.
+
 ## `assign_topics.py` — hand topics to an account
 
 Topics created before #24, or by the service key, have `owner_user_id = NULL`.

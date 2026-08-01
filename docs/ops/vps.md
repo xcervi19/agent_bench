@@ -95,6 +95,19 @@ docker compose exec claude_agent \
   python3 scripts/owner/assign_topics.py you@example.com --unowned --apply
 ```
 
+Reset a forgotten password (there is no self-service reset — see below):
+
+```bash
+docker compose exec claude_agent \
+  python3 scripts/owner/reset_password.py them@example.com
+```
+
+**No email-based password reset exists.** `/auth/forgot-password` is not mounted,
+because `on_after_forgot_password` has no transport behind it and would mint
+tokens nobody receives. A user who forgets their password needs an operator until
+that ships. JWTs are stateless, so a reset does not end existing sessions; rotate
+`JWT_SECRET` if you need that, accepting it signs everyone out.
+
 Details and safety model: `scripts/owner/README.md`.
 
 ### Web UI (#16)
