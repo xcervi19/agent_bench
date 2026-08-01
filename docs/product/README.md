@@ -10,12 +10,19 @@
 3. User **approves** the plan.
 4. System **delivers** — web search, sources, strategic `report.md`.
 5. User **monitors** — periodic refresh for new news only (deltas, deduped).
+6. User **shares** (#40, optional) — publishing a finished topic makes it
+   world-readable at `/app/shared/<id>` and freezes it: no account is needed to
+   read it, and no caller (owner included) can run anything on it until it is
+   unpublished. Nothing anonymous can spend money.
 
-**API:** `POST /v1/topics`, SSE `/events`, `/proceed`, `/monitor`, `/refresh`, artifact routes.  
+**API:** `POST /v1/topics`, SSE `/events`, `/proceed`, `/monitor`, `/refresh`, artifact routes,
+`POST|DELETE /publish`, plus the unauthenticated read-only `GET /v1/public/topics/*`.  
 **Public URL (prod):** `https://agent.particletico.com`  
 **Web UI (#16a):** `/app` on the same host — sign-in, topic list, NL topic
 creation, live activity, plan review + Proceed/Cancel. Report reading (16b) and
-monitoring controls (16c) are still API-only.
+monitoring controls (16c) are still API-only.  
+**Shared topics (#40):** `/app/shared` (browse) and `/app/shared/<topic-id>` — the
+only routes that render without an account.
 
 ## Shipped stack (main)
 

@@ -31,6 +31,9 @@ function item(state: TopicState, topic = 'Hormuz closure'): TopicListItem {
     last_event_seq: 3,
     created_at: '2026-07-26T10:00:00+00:00',
     updated_at: '2026-07-26T10:04:00+00:00',
+    is_public: false,
+    published_at: null,
+    public_path: null,
   }
 }
 

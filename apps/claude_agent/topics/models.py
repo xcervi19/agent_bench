@@ -24,6 +24,12 @@ class Topic(TopicsBase):
     deliver_run_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     last_event_seq: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
+    # Sharing (#40). is_public is the only thing the anonymous read API consults:
+    # true means "this snapshot is world-readable and frozen", false means the
+    # row does not exist as far as /v1/public/* is concerned. Default false so a
+    # topic is private unless its owner says otherwise.
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()

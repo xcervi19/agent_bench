@@ -143,6 +143,13 @@ async def _try_acquire_lock(subscription_id: int) -> bool:
         return result.scalar_one_or_none() is not None
 
 
+async def _is_published(topic_id: uuid.UUID) -> bool:
+    """True when the topic has been shared publicly (#40) and is therefore frozen."""
+    async with session_scope() as s:
+        topic = await s.get(Topic, topic_id)
+        return topic is not None and bool(topic.is_public)
+
+
 async def _release_lock(subscription_id: int) -> None:
     async with session_scope() as s:
         await s.execute(
@@ -164,6 +171,13 @@ async def run_refresh(
     *,
     trigger: str = "manual",
 ) -> None:
+    # A published topic is a frozen snapshot (#40): refusing here means no code
+    # path — manual, scheduled, or a task queued before the topic was shared —
+    # can run a search against it and bill us for a topic nobody can act on.
+    if await _is_published(topic_id):
+        await emit(topic_id, "refresh.skipped", {"reason": "topic_published", "trigger": trigger})
+        return
+
     if not await _try_acquire_lock(subscription_id):
         await emit(topic_id, "refresh.skipped", {"reason": "already_running_or_paused", "trigger": trigger})
         return

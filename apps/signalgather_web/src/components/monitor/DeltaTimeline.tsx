@@ -9,6 +9,19 @@ import { ThesisBadge } from '../report/ThesisBadge'
 import { Card, EmptyState, ErrorNote, SectionHeading, Skeleton, cx } from '../primitives'
 
 /**
+ * How one cycle's artifacts are fetched. The owner's workspace uses the
+ * authenticated routes; a shared topic (#40) uses the public ones, which return
+ * the same documents to a reader with no account.
+ */
+export interface DeltaLoaders {
+  getDelta: (topicId: string, seq: number) => Promise<DeltaArtifact | null>
+  getDeltaNews: (topicId: string, seq: number) => Promise<NewsArtifact | null>
+  getDeltaReportMarkdown: (topicId: string, seq: number) => Promise<string | null>
+}
+
+const OWNER_LOADERS: DeltaLoaders = { getDelta, getDeltaNews, getDeltaReportMarkdown }
+
+/**
  * "What's new since I last looked" (16c).
  *
  * Each refresh cycle is a row; opening one lazily loads its artifacts. Cycles
@@ -20,10 +33,14 @@ export function DeltaTimeline({
   topicId,
   deltas,
   loading,
+  loaders = OWNER_LOADERS,
+  title = 'Refresh history',
 }: {
   topicId: string
   deltas: DeltaSummary[]
   loading: boolean
+  loaders?: DeltaLoaders
+  title?: string
 }) {
   const [openSeq, setOpenSeq] = useState<number | null>(null)
 
@@ -44,7 +61,7 @@ export function DeltaTimeline({
           ) : undefined
         }
       >
-        Refresh history
+        {title}
       </SectionHeading>
 
       {deltas.length === 0 ? (
@@ -61,6 +78,7 @@ export function DeltaTimeline({
               key={delta.seq}
               topicId={topicId}
               delta={delta}
+              loaders={loaders}
               open={openSeq === delta.seq}
               onToggle={() => setOpenSeq(openSeq === delta.seq ? null : delta.seq)}
             />
@@ -74,11 +92,13 @@ export function DeltaTimeline({
 function DeltaRow({
   topicId,
   delta,
+  loaders,
   open,
   onToggle,
 }: {
   topicId: string
   delta: DeltaSummary
+  loaders: DeltaLoaders
   open: boolean
   onToggle: () => void
 }) {
@@ -133,13 +153,21 @@ function DeltaRow({
         </span>
       </button>
 
-      {open && <DeltaDetail topicId={topicId} seq={delta.seq} />}
+      {open && <DeltaDetail topicId={topicId} seq={delta.seq} loaders={loaders} />}
     </li>
   )
 }
 
 /** Artifacts load only when a cycle is opened — never for the whole list. */
-function DeltaDetail({ topicId, seq }: { topicId: string; seq: number }) {
+function DeltaDetail({
+  topicId,
+  seq,
+  loaders,
+}: {
+  topicId: string
+  seq: number
+  loaders: DeltaLoaders
+}) {
   const [delta, setDelta] = useState<DeltaArtifact | null>(null)
   const [news, setNews] = useState<NewsArtifact | null>(null)
   const [markdown, setMarkdown] = useState<string | null>(null)
@@ -152,9 +180,9 @@ function DeltaDetail({ topicId, seq }: { topicId: string; seq: number }) {
   useEffect(() => {
     let cancelled = false
     Promise.all([
-      getDelta(topicId, seq),
-      getDeltaNews(topicId, seq),
-      getDeltaReportMarkdown(topicId, seq),
+      loaders.getDelta(topicId, seq),
+      loaders.getDeltaNews(topicId, seq),
+      loaders.getDeltaReportMarkdown(topicId, seq),
     ])
       .then(([d, n, md]) => {
         if (cancelled) return
@@ -172,7 +200,7 @@ function DeltaDetail({ topicId, seq }: { topicId: string; seq: number }) {
     return () => {
       cancelled = true
     }
-  }, [topicId, seq, attempt])
+  }, [topicId, seq, attempt, loaders])
 
   if (loading) {
     return (

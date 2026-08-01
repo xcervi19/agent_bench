@@ -81,6 +81,14 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **Still not exercised:** no topic has been run end to end on the new build. `CLAUDE_AGENT_SCHEDULER_ENABLED=false` on prod, so 16c's *scheduled* refresh path cannot be tested there until that is flipped (no subscription currently has `schedule_enabled`, so flipping it is safe); manual refresh works.
 - **Next step:** work `testing/ui_smoke_16.md` end to end against `https://agent.particletico.com/app` — §7b (widgets), §7d (monitoring/deltas), §5 (reconnect) and §11 (responsive) are what unit tests cannot close.
 
+### Public topic sharing (#40) — code complete, migration + browser check pending
+- **Spec:** `docs/specs/active/public_topic_sharing_40.md`
+- **Lane:** Product / API + frontend — *a finished topic leaving the account that made it*
+- **Why:** a report is worth something to more people than its owner, but everything under `/v1/topics/*` is owner-scoped (#24) and no UI route renders without a session. The two constraints that shaped the design: anonymous read must be **per-row opt-in**, not a config flag (the 2026-07-27 incident, `1672fe9`, was exactly the loose version), and no anonymous request may cause a Claude run — we do not check permissions before spending, there is simply no route that spends.
+- **Shipped (code):** migration `0007_topic_public` (`is_public` NOT NULL default false, `published_at`, partial index); `POST|DELETE /v1/topics/{id}/publish`; `_mutable()` → 409 on proceed/cancel/subscribe/monitor/refresh while published, `available_actions` empty; publishing pauses monitoring + clears its schedule, and is itself refused while a cycle is in flight; scheduler due-query and `run_refresh` both skip published topics; new **GET-only, auth-free** router `/v1/public/topics/*` (list + detail + plan/report/news artifacts + deltas, no SSE, no owner/run-id leakage); `serving.py` shared by both routers. Frontend: `/app/shared` + `/app/shared/<id>` render with no session via a token-free client (`lib/publicApi.ts`), Share tab + published banner, monitoring/plan panels explain the freeze. 24 backend + 17 frontend tests (`tests/topics/test_public_sharing.py`, `publicApi.test.ts`, `SharePanel.test.tsx`, `PublicTopicPage.test.tsx`).
+- **What's missing:** migration `0007` applied on test1/prod; browser check of publish → open the link logged out → unpublish → link 404s.
+- **Next step:** deploy to test1, run `alembic upgrade head`, publish V001 and open `/app/shared/<id>` in a logged-out window.
+
 ### Source authority enforcement (#39)
 - **Spec:** `docs/specs/active/source_authority_enforcement_39.md`
 - **Lane:** Product / quality — *what a report is allowed to stand on*

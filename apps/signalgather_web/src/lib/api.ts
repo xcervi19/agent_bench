@@ -15,6 +15,7 @@ import type {
   MonitorState,
   NewsArtifact,
   ParsedArtifact,
+  PublishResponse,
   ReportArtifact,
   TopicDetail,
   TopicListResponse,
@@ -49,7 +50,8 @@ export function authHeaders(extra?: HeadersInit): Headers {
   return headers
 }
 
-async function errorFrom(res: Response): Promise<ApiError> {
+/** Shared with the public client (`publicApi.ts`) so errors read the same there. */
+export async function errorFrom(res: Response): Promise<ApiError> {
   let detail = res.statusText
   try {
     const body = await res.json()
@@ -177,6 +179,23 @@ export async function proceedTopic(topicId: string): Promise<void> {
 
 export async function cancelTopic(topicId: string): Promise<void> {
   await request(`/v1/topics/${topicId}/cancel`, { method: 'POST' })
+}
+
+// ---- sharing (#40) ---------------------------------------------------------
+
+/**
+ * Publish the topic: anyone can read it, nobody — including the owner — can
+ * change it until it is unpublished. 409 while the topic is not `reported`.
+ */
+export async function publishTopic(topicId: string): Promise<PublishResponse> {
+  const res = await request(`/v1/topics/${topicId}/publish`, { method: 'POST' })
+  return (await res.json()) as PublishResponse
+}
+
+/** Take it back. Shared links stop resolving as soon as this returns. */
+export async function unpublishTopic(topicId: string): Promise<PublishResponse> {
+  const res = await request(`/v1/topics/${topicId}/publish`, { method: 'DELETE' })
+  return (await res.json()) as PublishResponse
 }
 
 // ---- plan artifacts (16a) --------------------------------------------------

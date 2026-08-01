@@ -58,6 +58,9 @@ function topic(overrides: Partial<TopicDetail> = {}): TopicDetail {
     updated_at: '2026-07-26T10:00:00+00:00',
     plan_run_id: null,
     deliver_run_id: null,
+    is_public: false,
+    published_at: null,
+    public_path: null,
     error: null,
     ...overrides,
   }

@@ -39,6 +39,11 @@ export interface TopicListItem {
   last_event_seq: number
   created_at: string
   updated_at: string
+  /** Sharing (#40). Published topics are world-readable and frozen. */
+  is_public: boolean
+  published_at: string | null
+  /** API path anyone can read while published; null when private. */
+  public_path: string | null
 }
 
 export interface TopicListResponse {
@@ -61,6 +66,45 @@ export interface CreateTopicResponse {
   events_url: string
 }
 
+// ---- sharing (#40) ---------------------------------------------------------
+
+export interface ShareState {
+  is_public: boolean
+  published_at: string | null
+  public_path: string | null
+}
+
+export interface PublishResponse extends ShareState {
+  already_published?: boolean
+  already_private?: boolean
+  /** Publishing pauses monitoring — the UI says so rather than letting it surprise. */
+  monitoring_paused?: boolean
+}
+
+/**
+ * A published topic as an anonymous reader sees it: no owner, no run ids, no
+ * `available_actions` — there are none. `GET /v1/public/topics[/{id}]`.
+ */
+export interface PublicTopic {
+  id: string
+  topic: string
+  state: TopicState
+  published_at: string | null
+  created_at: string
+  updated_at: string
+  read_only: true
+  has_plan: boolean
+  has_report: boolean
+}
+
+export interface PublicTopicListResponse {
+  items: PublicTopic[]
+  count: number
+  limit: number
+  offset: number
+  q: string | null
+}
+
 // ---- events ---------------------------------------------------------------
 
 export type TopicEventType =
@@ -81,6 +125,8 @@ export type TopicEventType =
   | 'refresh.completed'
   | 'refresh.failed'
   | 'refresh.skipped'
+  | 'topic.published'
+  | 'topic.unpublished'
 
 export interface TopicEvent {
   seq: number

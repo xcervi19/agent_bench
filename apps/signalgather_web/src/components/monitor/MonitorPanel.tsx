@@ -74,6 +74,21 @@ export function MonitorPanel({
     )
   }
 
+  // A published topic is frozen (#40) and the API refuses every control below,
+  // so show why instead of a panel full of buttons that answer 409.
+  if (topic.is_public) {
+    return (
+      <Card>
+        <SectionHeading>Monitoring</SectionHeading>
+        <p className="px-4 py-6 text-sm text-ink-muted">
+          Monitoring is paused while this topic is shared publicly, so what readers see stays
+          the snapshot you published — and a shared topic never spends on its own. Stop sharing
+          on the <span className="text-ink">Share</span> tab to control it again.
+        </p>
+      </Card>
+    )
+  }
+
   if (!canMonitor) {
     return (
       <Card>

@@ -29,7 +29,7 @@ from sqlalchemy import select
 
 from ..config import ClaudeAgentSettings
 from .db import session_scope
-from .models import TopicSubscription
+from .models import Topic, TopicSubscription
 from .refresh import run_refresh
 
 logger = logging.getLogger(__name__)
@@ -76,6 +76,12 @@ async def claim_due_subscriptions(
     is still in flight. ``run_refresh`` separately holds the per-topic lock, so
     overlap is impossible even if a run outlasts its interval.
 
+    Published topics (#40) are excluded. Publishing already pauses the
+    subscription and clears its schedule, so this filter should never be the
+    thing that stops a run — but it is the difference between "we turned it off
+    when you shared it" and "a frozen, world-readable topic can never quietly
+    spend money", and only the second one is a guarantee.
+
     Returns a list of (topic_id, subscription_id).
     """
     if limit <= 0:
@@ -91,6 +97,9 @@ async def claim_due_subscriptions(
                     TopicSubscription.refresh_locked.is_(False),
                     TopicSubscription.next_refresh_at.is_not(None),
                     TopicSubscription.next_refresh_at <= now,
+                    TopicSubscription.topic_id.notin_(
+                        select(Topic.id).where(Topic.is_public.is_(True))
+                    ),
                 )
                 .order_by(TopicSubscription.next_refresh_at.asc())
                 .limit(limit)

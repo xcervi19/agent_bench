@@ -79,7 +79,13 @@ const EVENT_GROUPS: Record<string, ArtifactGroup[]> = {
 }
 
 /** Events that mean the topic row itself moved. */
-const TOPIC_EVENTS = new Set(['state.changed', 'error'])
+const TOPIC_EVENTS = new Set([
+  'state.changed',
+  'error',
+  // Sharing (#40) changes `is_public`, and with it every action the UI offers.
+  'topic.published',
+  'topic.unpublished',
+])
 
 export interface TopicStreamState extends Artifacts {
   topic: TopicDetail | null

@@ -30,6 +30,9 @@ function topicIn(state: TopicState): TopicDetail {
     plan_run_id: 'run-1',
     deliver_run_id: null,
     error: null,
+    is_public: false,
+    published_at: null,
+    public_path: null,
   }
 }
 

@@ -207,6 +207,7 @@ def build_app() -> FastAPI:
 
         from agentic_core.api import build_auth_routers
 
+        from .topics.public_routes import router as public_topics_router
         from .topics.routes import router as topics_router
 
         for auth_router in build_auth_routers(
@@ -214,6 +215,9 @@ def build_app() -> FastAPI:
         ):
             app.include_router(auth_router)
         app.include_router(topics_router)
+        # Shared topics (#40): unauthenticated, GET-only, published rows only.
+        # See topics/public_routes.py for why that is safe to mount here.
+        app.include_router(public_topics_router)
 
     _mount_web(app, settings)
     return app

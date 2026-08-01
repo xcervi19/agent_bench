@@ -109,6 +109,14 @@ function TopicRow({ topic }: { topic: TopicListItem }) {
         <span title={absoluteTime(topic.created_at)}>
           Created {relativeTime(topic.created_at)}
         </span>
+        {topic.is_public && (
+          <span
+            className="rounded-full bg-positive/15 px-2 py-0.5 font-medium text-positive"
+            title="Published — anyone with the link can read it, and it is frozen until you stop sharing"
+          >
+            Shared
+          </span>
+        )}
         {needsYou && (
           <span className="rounded-full bg-warning/15 px-2 py-0.5 font-medium text-warning">
             Needs your review

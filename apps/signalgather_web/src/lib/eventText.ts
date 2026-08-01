@@ -117,6 +117,15 @@ export function describeEvent(event: TopicEvent): EventLine {
     case 'refresh.skipped':
       return { tone: 'neutral', title: 'Refresh skipped', detail: str(p, 'reason') }
 
+    case 'topic.published':
+      return {
+        tone: 'good',
+        title: 'Shared publicly',
+        detail: p.monitoring_paused ? 'Monitoring paused; the topic is now read-only.' : undefined,
+      }
+    case 'topic.unpublished':
+      return { tone: 'neutral', title: 'Sharing stopped' }
+
     default:
       return { tone: 'neutral', title: event.event_type }
   }

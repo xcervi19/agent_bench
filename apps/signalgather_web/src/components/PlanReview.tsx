@@ -96,7 +96,9 @@ export function PlanReview({
         <p className="text-xs text-ink-muted">
           {atGate
             ? intro?.next_step ?? 'Proceed starts web search and source collection.'
-            : 'Review is closed for this topic — its state has moved on.'}
+            : topic.is_public
+              ? 'This topic is shared publicly and read-only. Stop sharing to act on it.'
+              : 'Review is closed for this topic — its state has moved on.'}
         </p>
         <div className="flex gap-2">
           <Button

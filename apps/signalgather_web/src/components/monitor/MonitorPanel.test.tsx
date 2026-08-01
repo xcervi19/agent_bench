@@ -24,7 +24,7 @@ vi.mock('../../lib/api', () => ({
   triggerRefresh: (...a: unknown[]) => triggerRefresh(...(a as [])),
 }))
 
-function topic(state: TopicState = 'reported'): TopicDetail {
+function topic(state: TopicState = 'reported', over: Partial<TopicDetail> = {}): TopicDetail {
   return {
     id: 't1',
     topic: 'Hormuz',
@@ -36,6 +36,10 @@ function topic(state: TopicState = 'reported'): TopicDetail {
     plan_run_id: 'p1',
     deliver_run_id: 'd1',
     error: null,
+    is_public: false,
+    published_at: null,
+    public_path: null,
+    ...over,
   }
 }
 

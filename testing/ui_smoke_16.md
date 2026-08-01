@@ -147,6 +147,30 @@ This is the point of the widget registry — check it actually fired.
 - [ ] Delta detail shows new sources, key changes, and trigger terms hit
 - [ ] DevTools → Network: delta artifacts are fetched **only** when a row is opened
 
+## 7e. Sharing (#40)
+
+The one section to run in **two windows**: signed in, and a private/incognito
+window with no account at all.
+
+- [ ] **Share** tab appears once the topic is `reported`
+- [ ] Before publishing it names the trade-off: monitoring pauses, actions stop
+- [ ] **Share publicly** → badge flips to Shared, a banner appears on every tab
+- [ ] **Copy link** yields `…/app/shared/<topic-id>`
+- [ ] Monitoring tab now explains the freeze instead of showing controls
+- [ ] Plan tab's Proceed/Cancel stay disabled and say why
+- [ ] `curl -X POST .../v1/topics/<id>/refresh` with the owner's JWT → **409**
+- [ ] Topic list shows a **Shared** badge on the row
+- [ ] **Incognito:** open the copied link → report, sources, plan and updates all
+      render; the page says Read-only
+- [ ] **Incognito:** DevTools → Network shows only `GET /v1/public/topics/*`, no
+      `Authorization` header, and no request to `/v1/topics/*`
+- [ ] **Incognito:** nothing on the page runs anything — no Proceed, Cancel,
+      Refresh, monitoring or Share control anywhere
+- [ ] **Incognito:** `/app/shared` lists the topic and its search finds it
+- [ ] **Stop sharing** → incognito reload shows "not shared", `/app/shared` no
+      longer lists it, owner actions work again, monitoring stays paused
+- [ ] Publishing a topic that is not `reported` is refused (button disabled)
+
 ## 8. Cancel (second topic)
 
 - [ ] Create another topic, hit **Cancel topic** while it is planning

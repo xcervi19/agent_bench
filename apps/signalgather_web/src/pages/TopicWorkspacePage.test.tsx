@@ -46,6 +46,9 @@ function topic(state: TopicState, over: Partial<TopicDetail> = {}): TopicDetail 
     plan_run_id: 'p1',
     deliver_run_id: 'd1',
     error: null,
+    is_public: false,
+    published_at: null,
+    public_path: null,
     ...over,
   }
 }

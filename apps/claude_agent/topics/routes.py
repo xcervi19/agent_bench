@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,6 +29,7 @@ from .pipeline import (
 )
 from .refresh import build_short_term_queries, list_deltas, run_refresh
 from .scheduler import compute_next_refresh_at, normalize_interval
+from .serving import artifact_response
 
 
 class CreateTopicBody(BaseModel):
@@ -71,6 +72,23 @@ async def _owned(s: AsyncSession, topic_id: uuid.UUID, principal: Principal) -> 
     row = await s.get(Topic, topic_id)
     if row is None or not (principal.is_service or row.owner_user_id == principal.user_id):
         raise HTTPException(status_code=404, detail="topic not found")
+    return row
+
+
+async def _mutable(s: AsyncSession, topic_id: uuid.UUID, principal: Principal) -> Topic:
+    """Load a topic the principal may *change*.
+
+    Publishing (#40) freezes a topic: what was shared is the state at that
+    moment, so every route that could move it — or spend money on it — refuses
+    while `is_public` is set. The owner unpublishes to get control back; that is
+    the one write a published topic accepts.
+    """
+    row = await _owned(s, topic_id, principal)
+    if row.is_public:
+        raise HTTPException(
+            status_code=409,
+            detail="topic is published and read-only; unpublish it first",
+        )
     return row
 
 
@@ -122,15 +140,7 @@ async def list_topics(
             stmt.order_by(Topic.updated_at.desc(), Topic.created_at.desc()).offset(offset).limit(limit)
         )).scalars().all()
 
-    items = [{
-        "id": str(row.id),
-        "topic": row.topic,
-        "state": row.state,
-        "available_actions": _actions(row.state),
-        "last_event_seq": row.last_event_seq,
-        "created_at": row.created_at.astimezone(timezone.utc).isoformat(),
-        "updated_at": row.updated_at.astimezone(timezone.utc).isoformat(),
-    } for row in rows]
+    items = [_summary(row) for row in rows]
 
     return {"items": items, "count": len(items), "limit": limit, "offset": offset, "state": state}
 
@@ -140,25 +150,128 @@ async def get_topic(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[st
     async with session_scope() as s:
         row = await _owned(s, topic_id, principal)
         return {
-            "id": str(row.id),
-            "topic": row.topic,
-            "state": row.state,
+            **_summary(row),
             "plan_run_id": row.plan_run_id,
             "deliver_run_id": row.deliver_run_id,
             "error": row.error,
-            "available_actions": _actions(row.state),
-            "last_event_seq": row.last_event_seq,
-            "created_at": row.created_at.astimezone(timezone.utc).isoformat(),
-            "updated_at": row.updated_at.astimezone(timezone.utc).isoformat(),
         }
 
 
-def _actions(state: str) -> list[str]:
+def _summary(row: Topic) -> dict[str, Any]:
+    return {
+        "id": str(row.id),
+        "topic": row.topic,
+        "state": row.state,
+        "available_actions": _actions(row.state, row.is_public),
+        "last_event_seq": row.last_event_seq,
+        "created_at": row.created_at.astimezone(timezone.utc).isoformat(),
+        "updated_at": row.updated_at.astimezone(timezone.utc).isoformat(),
+        **_share_payload(row),
+    }
+
+
+def _share_payload(row: Topic) -> dict[str, Any]:
+    return {
+        "is_public": bool(row.is_public),
+        "published_at": (
+            row.published_at.astimezone(timezone.utc).isoformat()
+            if row.published_at is not None
+            else None
+        ),
+        # Where anyone — signed in or not — can read this snapshot. Null while
+        # private so a client cannot advertise a link that would 404.
+        "public_path": f"/v1/public/topics/{row.id}" if row.is_public else None,
+    }
+
+
+def _actions(state: str, is_public: bool = False) -> list[str]:
+    # A published topic is frozen (#40); offering an action the API will refuse
+    # would only invite a click.
+    if is_public:
+        return []
     if state == STATE_PLANNED:
         return ["proceed", "cancel"]
     if state in (STATE_REPORTED, STATE_FAILED, STATE_CANCELLED):
         return []
     return ["cancel"]
+
+
+# ---- sharing (#40) ---------------------------------------------------------
+
+
+@router.post("/{topic_id}/publish", status_code=status.HTTP_200_OK)
+async def publish_topic(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
+    """Share a finished topic: anyone may read it, nobody may change it.
+
+    Only a `reported` topic can be published — publishing means "here is the
+    finished picture", and a topic still moving through the pipeline has no
+    finished picture to hand over. Freezing is enforced in `_mutable`; here we
+    also *stop* the two things that would keep spending money on a topic nobody
+    can steer any more: the monitoring subscription and its refresh schedule.
+
+    Idempotent: publishing an already-published topic keeps the original
+    `published_at`, so the snapshot's date does not drift on a double click.
+    """
+    async with session_scope() as s:
+        row = await _owned(s, topic_id, principal)
+        if row.is_public:
+            return {**_share_payload(row), "already_published": True}
+        if row.state != STATE_REPORTED:
+            raise HTTPException(
+                status_code=409,
+                detail=f"cannot publish from state={row.state}; topic must be 'reported'",
+            )
+        sub = (await s.execute(
+            select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
+        )).scalar_one_or_none()
+        # A cycle already running would write new artifacts *after* the share —
+        # `run_refresh` only checks `is_public` on the way in. Rather than
+        # publishing a snapshot that is about to change underneath its readers,
+        # say wait.
+        if sub is not None and sub.refresh_locked:
+            raise HTTPException(
+                status_code=409,
+                detail="a refresh is running; publish once it finishes so the shared state is final",
+            )
+
+        row.is_public = True
+        row.published_at = datetime.now(timezone.utc)
+
+        monitoring_paused = False
+        if sub is not None and (sub.status == "active" or sub.schedule_enabled):
+            sub.status = "paused"
+            sub.schedule_enabled = False
+            sub.next_refresh_at = None
+            monitoring_paused = True
+        payload = _share_payload(row)
+
+    await emit(topic_id, "topic.published", {
+        "published_at": payload["published_at"],
+        "monitoring_paused": monitoring_paused,
+    })
+    return {**payload, "already_published": False, "monitoring_paused": monitoring_paused}
+
+
+@router.delete("/{topic_id}/publish", status_code=status.HTTP_200_OK)
+async def unpublish_topic(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
+    """Take a shared topic back. Existing links stop resolving immediately.
+
+    Monitoring stays paused — publishing turned it off deliberately, and turning
+    it back on is a spending decision the owner should make explicitly.
+    """
+    async with session_scope() as s:
+        row = await _owned(s, topic_id, principal)
+        if not row.is_public:
+            return {**_share_payload(row), "already_private": True}
+        row.is_public = False
+        row.published_at = None
+        payload = _share_payload(row)
+
+    await emit(topic_id, "topic.unpublished", {})
+    return {**payload, "already_private": False}
+
+
+# ---- pipeline actions ------------------------------------------------------
 
 
 @router.post("/{topic_id}/proceed", status_code=status.HTTP_202_ACCEPTED)
@@ -169,7 +282,7 @@ async def proceed(
     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
 ) -> dict[str, Any]:
     async with session_scope() as s:
-        row = await _owned(s, topic_id, principal)
+        row = await _mutable(s, topic_id, principal)
         if row.state != STATE_PLANNED:
             raise HTTPException(status_code=409, detail=f"cannot proceed from state={row.state}")
     background.add_task(run_deliver, topic_id, settings)
@@ -179,7 +292,7 @@ async def proceed(
 @router.post("/{topic_id}/cancel", status_code=status.HTTP_202_ACCEPTED)
 async def cancel(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
     async with session_scope() as s:
-        row = await _owned(s, topic_id, principal)
+        row = await _mutable(s, topic_id, principal)
         if row.state in (STATE_REPORTED, STATE_FAILED, STATE_CANCELLED):
             return {"accepted": True, "state": row.state}
     await set_state(topic_id, STATE_CANCELLED)
@@ -191,7 +304,7 @@ async def subscribe(
     topic_id: uuid.UUID, body: WebhookBody, principal: CurrentPrincipal
 ) -> dict[str, Any]:
     async with session_scope() as s:
-        await _owned(s, topic_id, principal)
+        await _mutable(s, topic_id, principal)
         sub = TopicWebhook(topic_id=topic_id, url=str(body.url), secret=body.secret)
         s.add(sub)
         await s.flush()
@@ -272,7 +385,7 @@ async def start_monitoring(
     refreshes the query plan but does not duplicate subscriptions.
     """
     async with session_scope() as s:
-        row = await _owned(s, topic_id, principal)
+        row = await _mutable(s, topic_id, principal)
         if row.state != STATE_REPORTED:
             raise HTTPException(
                 status_code=409,
@@ -358,7 +471,7 @@ async def update_monitoring(
     (either supplied here or already stored).
     """
     async with session_scope() as s:
-        await _owned(s, topic_id, principal)
+        await _mutable(s, topic_id, principal)
         sub = (await s.execute(
             select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
         )).scalar_one_or_none()
@@ -403,7 +516,7 @@ async def update_monitoring(
 @router.delete("/{topic_id}/monitor", status_code=status.HTTP_200_OK)
 async def stop_monitoring(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
     async with session_scope() as s:
-        await _owned(s, topic_id, principal)
+        await _mutable(s, topic_id, principal)
         sub = (await s.execute(
             select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
         )).scalar_one_or_none()
@@ -427,7 +540,7 @@ async def trigger_refresh(
     SSE for `refresh.started` / `refresh.completed` events.
     """
     async with session_scope() as s:
-        await _owned(s, topic_id, principal)
+        await _mutable(s, topic_id, principal)
         sub = (await s.execute(
             select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
         )).scalar_one_or_none()
@@ -469,12 +582,7 @@ async def get_delta(
         )).scalar_one_or_none()
         if row is None:
             raise HTTPException(status_code=404, detail="delta not found")
-    delta_path = (
-        Path(settings.state_dir) / "news" / topic_row.topic_id_hash / "runs" / row.run_id / "delta.json"
-    )
-    if not delta_path.exists():
-        raise HTTPException(status_code=404, detail="delta artifact not on disk")
-    return FileResponse(str(delta_path), media_type="application/json")
+    return artifact_response(settings, topic_row.topic_id_hash, row.run_id, "delta.json")
 
 
 def _build_queries_from_disk(
@@ -559,61 +667,46 @@ def _sse(seq: int, event_type: str, payload: dict[str, Any]) -> str:
 # ---- artifact serving ------------------------------------------------------
 
 
-def _artifact(settings: ClaudeAgentSettings, hash_: str, run_id: str | None, filename: str) -> Path:
-    if not run_id:
-        raise HTTPException(status_code=404, detail=f"{filename} not produced yet")
-    path = Path(settings.state_dir) / "news" / hash_ / "runs" / run_id / filename
-    if not path.exists():
-        raise HTTPException(status_code=404, detail=f"{filename} not produced yet")
-    return path
-
-
 @router.get("/{topic_id}/parsed")
 async def get_parsed(topic_id: uuid.UUID, principal: CurrentPrincipal,
                      settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
     row = await _load_topic(topic_id, principal)
-    return FileResponse(str(_artifact(settings, row.topic_id_hash, row.plan_run_id, "parsed.json")),
-                        media_type="application/json")
+    return artifact_response(settings, row.topic_id_hash, row.plan_run_id, "parsed.json")
 
 
 @router.get("/{topic_id}/intro")
 async def get_intro(topic_id: uuid.UUID, principal: CurrentPrincipal,
                     settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
     row = await _load_topic(topic_id, principal)
-    return FileResponse(str(_artifact(settings, row.topic_id_hash, row.plan_run_id, "intro.json")),
-                        media_type="application/json")
+    return artifact_response(settings, row.topic_id_hash, row.plan_run_id, "intro.json")
 
 
 @router.get("/{topic_id}/intro.md")
 async def get_intro_md(topic_id: uuid.UUID, principal: CurrentPrincipal,
                        settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
     row = await _load_topic(topic_id, principal)
-    return FileResponse(str(_artifact(settings, row.topic_id_hash, row.plan_run_id, "intro.md")),
-                        media_type="text/markdown; charset=utf-8")
+    return artifact_response(settings, row.topic_id_hash, row.plan_run_id, "intro.md")
 
 
 @router.get("/{topic_id}/news")
 async def get_news(topic_id: uuid.UUID, principal: CurrentPrincipal,
                    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
     row = await _load_topic(topic_id, principal)
-    return FileResponse(str(_artifact(settings, row.topic_id_hash, row.deliver_run_id, "news.json")),
-                        media_type="application/json")
+    return artifact_response(settings, row.topic_id_hash, row.deliver_run_id, "news.json")
 
 
 @router.get("/{topic_id}/report")
 async def get_report(topic_id: uuid.UUID, principal: CurrentPrincipal,
                      settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
     row = await _load_topic(topic_id, principal)
-    return FileResponse(str(_artifact(settings, row.topic_id_hash, row.deliver_run_id, "report.json")),
-                        media_type="application/json")
+    return artifact_response(settings, row.topic_id_hash, row.deliver_run_id, "report.json")
 
 
 @router.get("/{topic_id}/report.md")
 async def get_report_md(topic_id: uuid.UUID, principal: CurrentPrincipal,
                         settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
     row = await _load_topic(topic_id, principal)
-    return FileResponse(str(_artifact(settings, row.topic_id_hash, row.deliver_run_id, "report.md")),
-                        media_type="text/markdown; charset=utf-8")
+    return artifact_response(settings, row.topic_id_hash, row.deliver_run_id, "report.md")
 
 
 @router.get("/{topic_id}/deltas/{seq}/news")
@@ -634,13 +727,7 @@ async def get_delta_news(
         )).scalar_one_or_none()
         if delta is None:
             raise HTTPException(status_code=404, detail="delta not found")
-    news_path = (
-        Path(settings.state_dir) / "news" / topic_row.topic_id_hash
-        / "runs" / delta.run_id / "news.json"
-    )
-    if not news_path.exists():
-        raise HTTPException(status_code=404, detail="news.json not produced yet")
-    return FileResponse(str(news_path), media_type="application/json")
+    return artifact_response(settings, topic_row.topic_id_hash, delta.run_id, "news.json")
 
 
 @router.get("/{topic_id}/deltas/{seq}/report")
@@ -661,10 +748,4 @@ async def get_delta_report(
         )).scalar_one_or_none()
         if delta is None:
             raise HTTPException(status_code=404, detail="delta not found")
-    report_path = (
-        Path(settings.state_dir) / "news" / topic_row.topic_id_hash
-        / "runs" / delta.run_id / "report.md"
-    )
-    if not report_path.exists():
-        raise HTTPException(status_code=404, detail="report.md not produced yet")
-    return FileResponse(str(report_path), media_type="text/markdown; charset=utf-8")
+    return artifact_response(settings, topic_row.topic_id_hash, delta.run_id, "report.md")

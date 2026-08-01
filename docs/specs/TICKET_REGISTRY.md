@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#40` (assign to the next new ticket; then bump this line)
+**Next available number:** `#41` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -36,6 +36,7 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 || 37 | `docs/specs/active/pilot_first_use_experience_37.md` | planned | First-use and return-use UX after #16a–b; blocks broad pilot acquisition |
 || 39 | `docs/specs/active/source_authority_enforcement_39.md` | verified on prod; follow-ups open | Refresh was 0% primary sources -> 80% after two-tier freshness + source-mix measurement. Open: whitelist stance on state media, maritime/insurance coverage, nioc.ir returning 0 |
 || 38 | `docs/specs/active/multilingual_topic_grounding_38.md` | implemented, awaiting deploy | Diacritics/inflection matching + `topic_parse` leg so non-English topics ground against the whitelist; extends #29/#30/#36 |
+|| 40 | `docs/specs/active/public_topic_sharing_40.md` | implemented, awaiting migration + deploy | Publish a finished topic: anonymous GET-only router, frozen actions, no spend without an account; extends #24/#16 |
 
 ---
 ## Done (shipped)

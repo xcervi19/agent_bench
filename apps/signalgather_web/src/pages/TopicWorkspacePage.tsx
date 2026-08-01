@@ -11,9 +11,10 @@ import { ReportView } from '../components/report/ReportView'
 import { SourcesPanel } from '../components/report/SourcesPanel'
 import { MonitorPanel } from '../components/monitor/MonitorPanel'
 import { DeltaTimeline } from '../components/monitor/DeltaTimeline'
+import { PublishedBanner, SharePanel } from '../components/SharePanel'
 import { Card, ErrorNote, Skeleton, cx } from '../components/primitives'
 
-type Tab = 'plan' | 'report' | 'sources' | 'monitor'
+type Tab = 'plan' | 'report' | 'sources' | 'monitor' | 'share'
 
 /**
  * Single-topic command center: state, live activity, and one section per
@@ -75,6 +76,12 @@ export function TopicWorkspacePage() {
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
       <StatusBar topic={topic} />
 
+      {topic.is_public && (
+        <div className="mt-4">
+          <PublishedBanner topic={topic} />
+        </div>
+      )}
+
       {topic.error && (
         <div className="mt-4">
           <ErrorNote>{topic.error}</ErrorNote>
@@ -133,6 +140,10 @@ export function TopicWorkspacePage() {
               />
             </div>
           )}
+
+          {tab === 'share' && (
+            <SharePanel topic={topic} onChanged={() => void stream.refresh([])} />
+          )}
         </div>
 
         <div className="min-w-0">
@@ -148,6 +159,7 @@ const ALL_TABS: { id: Tab; label: string }[] = [
   { id: 'report', label: 'Report' },
   { id: 'sources', label: 'Sources' },
   { id: 'monitor', label: 'Monitoring' },
+  { id: 'share', label: 'Share' },
 ]
 
 /** Report/Sources/Monitoring only appear once the pipeline can back them. */
@@ -157,6 +169,9 @@ function visibleTabs(topic: TopicDetail | null): { id: Tab; label: string }[] {
   return ALL_TABS.filter((entry) => {
     if (entry.id === 'plan') return true
     if (entry.id === 'monitor') return topic.state === 'reported'
+    // Sharing is offered on a finished topic, and stays reachable while shared
+    // so the way to undo it is where the way to do it was.
+    if (entry.id === 'share') return topic.state === 'reported' || topic.is_public
     return hasReport
   })
 }
