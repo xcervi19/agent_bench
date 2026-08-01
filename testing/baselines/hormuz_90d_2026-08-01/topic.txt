@@ -1,0 +1,9 @@
+Strait of Hormuz transit risk and Middle East escalation — implications for crude, LNG and freight exposure over the next 90 days.
+
+I run a book that is long Brent, long regional refining margins, and short freight optionality. I need the current state of transit risk through Hormuz: actual tanker and LNG carrier transit counts versus the normal run-rate, war-risk insurance premiums and whether underwriters have withdrawn cover for Gulf calls, IRGC naval activity including any seizures, boardings or GPS jamming, and the posture of the US Fifth Fleet and allied escort arrangements.
+
+Then the substitution picture: real throughput and spare capacity on the bypass routes — Saudi Aramco's East-West pipeline to Yanbu and ADNOC's Habshan-Fujairah line — and how much of the roughly 20 mb/d of crude and products that normally transits could genuinely be rerouted, at what cost and over what timeframe. Same question for Qatari LNG, which has no bypass at all.
+
+Then the reaction function: OPEC+ spare capacity and whether Saudi and the UAE would actually deploy it, IEA and SPR release readiness, NIOC export behaviour and any change in sanctions enforcement on Iranian barrels into China.
+
+What I want out of this: the two or three scenarios that actually move price, with rough probabilities, the specific observable indicators that would tell me a scenario is developing before it is priced in, and the place where the consensus view is most likely wrong.

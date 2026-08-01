@@ -1,0 +1,27 @@
+{
+  "id": "hormuz_90d_2026-08-01",
+  "created": "2026-08-01",
+  "env": "prod",
+  "topic_id": "a83a1d57-3175-4018-9894-118274df3914",
+  "owner": "cervicekkarel@gmail.com",
+  "app_commit": "ab96982",
+  "evaluator": {
+    "name": "heuristic",
+    "framework_commit": "5380a96b1fff3c8c59009627a2971fbf899b6d11"
+  },
+  "scores": {
+    "overall": 3.8446,
+    "overall_100": 76.89,
+    "layers": {
+      "Information Discovery": 2.901,
+      "Research Quality": 4.589,
+      "Trading Intelligence": 4.359
+    }
+  },
+  "pipeline_config": {
+    "source_authority": "#39 two-tier freshness + source-mix, live",
+    "widgets": "#16b fenced markdown-ui-widget contract, live",
+    "grounding": "#38 multilingual topic_parse, live",
+    "rag_documents": 141
+  }
+}

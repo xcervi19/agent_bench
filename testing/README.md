@@ -36,6 +36,21 @@ with its delta timeline. Run it after deploying `claude_agent`, which now also
 ships the frontend bundle. It covers the same journey as `app_testing_scenario.md`
 without curl.
 
+## Evaluation baselines (Lane A)
+
+`testing/baselines/` holds frozen runs, committed, to compare future output
+against in relative mode:
+
+```bash
+scripts/evaluate_output.sh relative \
+  --baseline  testing/baselines/hormuz_90d_2026-08-01 \
+  --candidate testing/results/prod/latest
+```
+
+A comparison is only valid when the candidate ran the baseline's `topic.txt`
+verbatim and was scored by the same framework commit. See
+`testing/baselines/README.md`.
+
 ## Environments
 
 | Env | URL | Config |

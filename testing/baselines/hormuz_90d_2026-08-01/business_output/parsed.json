@@ -1,0 +1,150 @@
+{
+  "schema_version": "0.2.0",
+  "topic_id": "211b6b0f-cefc-4734-9cc8-357ce92bc9b2",
+  "created_at": "2026-08-01T15:16:42Z",
+  "topic": "Strait of Hormuz transit risk and Middle East escalation — implications for crude, LNG and freight exposure over the next 90 days.\n\nI run a book that is long Brent, long regional refining margins, and short freight optionality. I need the current state of transit risk through Hormuz: actual tanker and LNG carrier transit counts versus the normal run-rate, war-risk insurance premiums and whether underwriters have withdrawn cover for Gulf calls, IRGC naval activity including any seizures, boardings or GPS jamming, and the posture of the US Fifth Fleet and allied escort arrangements.\n\nThen the substitution picture: real throughput and spare capacity on the bypass routes — Saudi Aramco's East-West pipeline to Yanbu and ADNOC's Habshan-Fujairah line — and how much of the roughly 20 mb/d of crude and products that normally transits could genuinely be rerouted, at what cost and over what timeframe. Same question for Qatari LNG, which has no bypass at all.\n\nThen the reaction function: OPEC+ spare capacity and whether Saudi and the UAE would actually deploy it, IEA and SPR release readiness, NIOC export behaviour and any change in sanctions enforcement on Iranian barrels into China.\n\nWhat I want out of this: the two or three scenarios that actually move price, with rough probabilities, the specific observable indicators that would tell me a scenario is developing before it is priced in, and the place where the consensus view is most likely wrong.",
+  "topic_en": "Strait of Hormuz transit risk and Middle East escalation over the next 90 days, covering actual tanker and LNG carrier transit volumes versus normal run-rate, war-risk insurance and underwriter withdrawal from Gulf calls, IRGC naval activity including seizures, boardings and GPS jamming, US Fifth Fl",
+  "input_language": "en",
+  "topic_restated": "Assessment of Strait of Hormuz transit and Middle East escalation risk over the next 90 days, and its pricing implications for Brent crude, regional refining margins, Qatari LNG and freight, for a book that is long Brent, long regional refining margins, and short freight optionality.",
+  "domain": "hormuz_transit_risk",
+  "entities": {
+    "actors": [
+      "IRGC",
+      "US Fifth Fleet / CENTCOM",
+      "NIOC",
+      "Saudi Aramco",
+      "ADNOC",
+      "QatarEnergy",
+      "OPEC+",
+      "IEA",
+      "UKMTO"
+    ],
+    "regions": [
+      "Strait of Hormuz",
+      "Persian Gulf",
+      "Middle East",
+      "Iran",
+      "Saudi Arabia",
+      "United Arab Emirates",
+      "Qatar",
+      "Yanbu",
+      "Fujairah",
+      "China"
+    ],
+    "primary_languages": ["en", "ar", "fa", "zh"]
+  },
+  "current_state": "As of early August 2026, Hormuz transit risk has moved from latent to realized: IMO recorded eight vessels hit near Omani waters during July 13-20, war-risk hull premiums have surged from a roughly 0.25% pre-war baseline to about 3-10% of hull value (Marsh/Howden Re reporting), and US CENTCOM has struck IRGC coastal radar sites, anti-ship missile capabilities and more than 60 IRGC small boats in and near the strait, indicating direct US military engagement rather than a passive escort posture. IRGC is also reported to be running an extortion-linked mandatory 'insurance' scheme for vessels transiting the strait. RAG playbook context confirms the standing trader-relevant signal set (UKMTO incident notices, NIOC/PMO export and port data, Saudi/UAE loading continuity, Fujairah and Duqm as bypass staging) but predates this week's kinetic escalation and should be treated as structural background rather than current status. Note: source_targets.json for this run carries the full generic crude-oil/OPEC+ whitelist (44 official-type domains spanning multiple playbooks); only a subset is directly load-bearing for the Hormuz question, so secondary and tertiary producers/benchmarks are covered via bundled queries rather than dedicated ones.",
+  "working_thesis": "Given confirmed kinetic exchanges and underwriter withdrawal rather than mere threat rhetoric, price impact over the next 90 days is likely being driven more by freight and insurance cost inflation plus precautionary self-diversion than by an outright volume shock; the simple 'closed vs. normal' framing likely understates the realistic middle scenario of persistent elevated transit cost with throughput intact but materially more expensive, unless Iran escalates toward direct mining or blockade attempts.",
+  "scenarios": [
+    {
+      "id": "s1",
+      "label": "Managed escalation, no formal closure",
+      "premise": "Strikes, boardings and GPS jamming continue at current intensity; war-risk premiums stay elevated (3-10% of hull value); transit volumes dip modestly via self-diversion and slow steaming rather than a hard cutoff; bypass pipelines and OPEC+ spare capacity are not yet formally activated.",
+      "probability": 0.5
+    },
+    {
+      "id": "s2",
+      "label": "De-escalation / diplomatic off-ramp",
+      "premise": "Omani or other mediated diplomacy produces a ceasefire or stand-down; war-risk premiums retreat toward pre-war levels over weeks; transit counts normalize; Brent gives back the geopolitical risk premium.",
+      "probability": 0.2
+    },
+    {
+      "id": "s3",
+      "label": "Attempted blockade or major disruption event",
+      "premise": "Iran attempts mining, a major seizure wave, or a confirmed strike on Kharg/Ras Tanura-class infrastructure; tanker transits drop sharply; OPEC+ spare capacity and IEA/SPR coordinated releases are actually deployed; bypass pipelines run near nameplate capacity.",
+      "probability": 0.2
+    },
+    {
+      "id": "s4",
+      "label": "Broader regional war / spillover",
+      "premise": "Escalation draws in additional state actors beyond the current US-Iran exchange, materially raising tail risk to all Gulf loadings, not just Hormuz transit, with limited bypass capacity able to offset the loss.",
+      "probability": 0.1
+    }
+  ],
+  "rag_context_refs": [
+    {"source": "coverage_playbook: Strait of Hormuz", "source_id": "43c26ace-2873-456b-b8ca-04cdc38d7abc"},
+    {"source": "coverage_playbook: Strait of Hormuz", "source_id": "930e7eb2-ecb0-48ad-92c8-efc8e82baaed"},
+    {"source": "coverage_playbook: Strait of Hormuz", "source_id": "73a83e59-defe-4ac4-913e-8fc3ccf6c46e"},
+    {"source": "oies_oil_corpus", "source_id": "2ea10c05-7287-4e99-9edf-82b1dd596b13"},
+    {"source": "coverage_playbook: Iran oil geopolitics", "source_id": "26673cea-b749-4059-90a0-f0ac889222fa"}
+  ],
+  "web_seed_refs": [
+    {"title": "Middle East shipping insurance costs rise on Hormuz risks: Marsh | S&P Global", "url": "https://www.spglobal.com/energy/en/news-research/latest-news/shipping/072226-middle-east-shipping-insurance-costs-rise-on-hormuz-risks-marsh"},
+    {"title": "Iran Conflict and the Strait of Hormuz: Impacts on Oil, Gas, and Other Commodities | Congress.gov", "url": "https://www.congress.gov/crs-product/R45281"},
+    {"title": "What stopping war-risk insurance in the Strait of Hormuz tells us | World Economic Forum", "url": "https://www.weforum.org/stories/2026/04/how-middle-east-war-turning-governments-into-insurers-last-resort/"},
+    {"title": "Treasury Disrupts Iranian Regime's Strait of Hormuz Extortion Network | U.S. Department of the Treasury", "url": "https://home.treasury.gov/news/press-releases/sb0581"},
+    {"title": "Strait of Hormuz | International Crisis Group", "url": "https://www.crisisgroup.org/trigger-list/iran-usisrael-trigger-list/flashpoints/strait-hormuz"},
+    {"title": "Shipping insurance surges again as attacks intensify over Strait of Hormuz | The National", "url": "https://www.thenationalnews.com/business/2026/07/17/war-risk-shipping-premium-surges-again-as-tensions-escalate-at-strait-of-hormuz/"},
+    {"title": "Howden Re: Strait of Hormuz report, 27 March 2026", "url": "https://www.howdenre.com/sites/howdenre.howdenprod.com/files/2026-03/HowdenRe_Strait_of_Hormuz_report_March272026.pdf"},
+    {"title": "Shipping Costs Surge as Insurers Drop War Risk Protection in Gulf | Yahoo Finance", "url": "https://finance.yahoo.com/news/shipping-costs-surge-insurers-drop-143000136.html"}
+  ],
+  "source_targets": [
+    {"entity": "ADNOC", "known_domains": ["adnoc.ae"], "playbook_refs": ["opec_plus_policy.md", "strait_of_hormuz.md", "uae_oil_fujairah.md"]},
+    {"entity": "ASYAD Group", "known_domains": ["asyad.om"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "CME Group", "known_domains": ["cmegroup.com"], "playbook_refs": ["crude_oil_global.md"]},
+    {"entity": "EIA", "known_domains": ["eia.gov"], "playbook_refs": ["crude_oil_global.md"]},
+    {"entity": "ICE Endex (Amsterdam)", "known_domains": ["theice.com"], "playbook_refs": ["uae_oil_fujairah.md"]},
+    {"entity": "IEA", "known_domains": ["iea.org"], "playbook_refs": ["crude_oil_global.md", "opec_plus_policy.md"]},
+    {"entity": "IMO", "known_domains": ["imo.org"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "Kuwait Petroleum Corporation (KPC)", "known_domains": ["kpc.com.kw"], "playbook_refs": ["opec_plus_policy.md"]},
+    {"entity": "Ministry of Energy", "known_domains": ["minenergo.gov.ru"], "playbook_refs": ["opec_plus_policy.md"]},
+    {"entity": "Ministry of Energy and Infrastructure", "known_domains": ["moei.gov.ae"], "playbook_refs": ["strait_of_hormuz.md", "uae_oil_fujairah.md"]},
+    {"entity": "Ministry of Foreign Affairs", "known_domains": ["mofa.gov.sa"], "playbook_refs": ["saudi_arabia_oil.md", "strait_of_hormuz.md"]},
+    {"entity": "Ministry of Oil", "known_domains": ["moo.gov.kw"], "playbook_refs": ["opec_plus_policy.md"]},
+    {"entity": "Ministry of Petroleum", "known_domains": ["mop.ir"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "NIOC", "known_domains": ["nioc.ir"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "NNPC Limited", "known_domains": ["nnpcgroup.com"], "playbook_refs": ["opec_plus_policy.md"]},
+    {"entity": "OPEC", "known_domains": ["opec.org"], "playbook_refs": ["crude_oil_global.md", "opec_plus_policy.md", "saudi_arabia_oil.md", "uae_oil_fujairah.md"]},
+    {"entity": "PMO maritime traffic", "known_domains": ["pmo.ir"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "Port of Fujairah", "known_domains": ["fujairahport.ae"], "playbook_refs": ["strait_of_hormuz.md", "uae_oil_fujairah.md"]},
+    {"entity": "QatarEnergy", "known_domains": ["qatarenergy.qa"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "Saudi Aramco", "known_domains": ["aramco.com"], "playbook_refs": ["crude_oil_global.md", "opec_plus_policy.md", "saudi_arabia_oil.md"]},
+    {"entity": "Saudi Central Bank (SAMA)", "known_domains": ["sama.gov.sa"], "playbook_refs": ["saudi_arabia_oil.md"]},
+    {"entity": "Saudi Ports Authority (Mawani)", "known_domains": ["mawani.gov.sa"], "playbook_refs": ["saudi_arabia_oil.md", "strait_of_hormuz.md"]},
+    {"entity": "UKMTO (Maritime Trade Ops)", "known_domains": ["ukmto.org"], "playbook_refs": ["strait_of_hormuz.md", "uae_oil_fujairah.md"]},
+    {"entity": "US DOE", "known_domains": ["energy.gov"], "playbook_refs": ["crude_oil_global.md"]},
+    {"entity": "AD Ports Group", "known_domains": ["adports.ae"], "playbook_refs": ["strait_of_hormuz.md", "uae_oil_fujairah.md"]},
+    {"entity": "DME / Gulf Mercantile", "known_domains": ["dubaimerc.com"], "playbook_refs": ["uae_oil_fujairah.md"]},
+    {"entity": "EU Sanctions (Russian gas linkage)", "known_domains": ["ec.europa.eu"], "playbook_refs": ["crude_oil_global.md", "opec_plus_policy.md", "saudi_arabia_oil.md", "strait_of_hormuz.md", "uae_oil_fujairah.md"]},
+    {"entity": "IEF", "known_domains": ["ief.org"], "playbook_refs": ["crude_oil_global.md", "opec_plus_policy.md"]},
+    {"entity": "Indian Navy", "known_domains": ["indiannavy.nic.in"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "JODI", "known_domains": ["jodidata.org"], "playbook_refs": ["crude_oil_global.md", "opec_plus_policy.md"]},
+    {"entity": "Ministry of Foreign Affairs", "known_domains": ["mfa.gov.ir"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "NOC – National Oil Corporation", "known_domains": ["noc.ly"], "playbook_refs": ["opec_plus_policy.md"]},
+    {"entity": "Rosneft", "known_domains": ["rosneft.com"], "playbook_refs": ["opec_plus_policy.md"]},
+    {"entity": "Royal Navy", "known_domains": ["royalnavy.mod.uk"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "Saudi Exchange (Tadawul)", "known_domains": ["saudiexchange.sa"], "playbook_refs": ["saudi_arabia_oil.md"]},
+    {"entity": "Sonatrach", "known_domains": ["sonatrach.com"], "playbook_refs": ["opec_plus_policy.md"]},
+    {"entity": "ICE", "known_domains": ["ice.com"], "playbook_refs": ["crude_oil_global.md"]},
+    {"entity": "Ministry of Energy", "known_domains": ["energy.gov.sa"], "playbook_refs": ["opec_plus_policy.md", "saudi_arabia_oil.md"]},
+    {"entity": "Ministry of Energy", "known_domains": ["moenergy.gov.sa"], "playbook_refs": ["opec_plus_policy.md", "saudi_arabia_oil.md"]},
+    {"entity": "Ministry of Foreign Affairs", "known_domains": ["mofa.gov.ae"], "playbook_refs": ["strait_of_hormuz.md", "uae_oil_fujairah.md"]},
+    {"entity": "Ministry of Foreign Affairs", "known_domains": ["mofa.gov.om"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "Ministry of Foreign Affairs (MOFAIC)", "known_domains": ["mofaic.gov.ae"], "playbook_refs": ["uae_oil_fujairah.md"]},
+    {"entity": "NIOC (via SHANA)", "known_domains": ["shana.ir"], "playbook_refs": ["strait_of_hormuz.md"]},
+    {"entity": "Royal Saudi Navy", "known_domains": ["mod.gov.sa"], "playbook_refs": ["saudi_arabia_oil.md", "strait_of_hormuz.md"]},
+    {"entity": "Saudi National Center for Meteorology", "known_domains": ["ncm.gov.sa"], "playbook_refs": ["saudi_arabia_oil.md", "strait_of_hormuz.md"]},
+    {"entity": "UN COMTRADE", "known_domains": ["comtrade.un.org"], "playbook_refs": ["crude_oil_global.md"]}
+  ],
+  "queries": [
+    {"id": "q01", "query": "site:ukmto.org Strait of Hormuz Persian Gulf vessel incident advisory", "intent": "monitoring", "source_class": "official", "language": "en", "region": "Strait of Hormuz", "freshness": "24h", "priority": 1, "covers_entity": ["UKMTO (Maritime Trade Ops)"], "rationale": "UKMTO is the primary real-time incident/advisory hub for Gulf transits; fastest signal on new attacks, boardings or jamming."},
+    {"id": "q02", "query": "site:imo.org Strait of Hormuz maritime security guidance GPS interference", "intent": "monitoring", "source_class": "official", "language": "en", "region": "Strait of Hormuz", "freshness": "7d", "priority": 2, "covers_entity": ["IMO"], "rationale": "IMO issues formal maritime security guidance and aggregates incident counts (e.g. the 8-ship July 13-20 tally) referenced in current reporting."},
+    {"id": "q03", "query": "site:shana.ir صادرات نفت ایران خارک بندرعباس", "intent": "monitoring", "source_class": "official", "language": "fa", "region": "Iran", "freshness": "24h", "priority": 1, "covers_entity": ["NIOC (via SHANA)", "NIOC", "Ministry of Petroleum"], "rationale": "SHANA is the fastest official Iranian channel for NIOC export behaviour and Kharg loading status under sanctions/conflict stress."},
+    {"id": "q04", "query": "site:pmo.ir ترافیک دریایی بندرعباس خارک عسلویه", "intent": "monitoring", "source_class": "official", "language": "fa", "region": "Iran", "freshness": "24h", "priority": 2, "covers_entity": ["PMO maritime traffic"], "rationale": "Iranian Ports & Maritime Organization data on Bandar Abbas/Kharg/Assaluyeh traffic, a direct read on actual Iranian-side transit activity."},
+    {"id": "q05", "query": "site:mfa.gov.ir تنگه هرمز تهدید نظامی بیانیه", "intent": "monitoring", "source_class": "official", "language": "fa", "region": "Iran", "freshness": "24h", "priority": 1, "covers_entity": ["Ministry of Foreign Affairs"], "rationale": "Iranian MFA statements are a leading indicator of escalation vs. de-escalation intent on Hormuz threats."},
+    {"id": "q06", "query": "site:aramco.com East-West pipeline Yanbu spare capacity throughput", "intent": "context", "source_class": "official", "language": "en", "region": "Saudi Arabia", "freshness": "30d", "priority": 1, "covers_entity": ["Saudi Aramco", "Ministry of Energy"], "rationale": "Direct operator data on Petroline (East-West pipeline) capacity and utilisation, the key Saudi bypass route to Yanbu; Aramco commentary typically cites Saudi Ministry of Energy production policy."},
+    {"id": "q07", "query": "site:mofa.gov.sa بيان السعودية الأمن الإقليمي الخليج", "intent": "monitoring", "source_class": "official", "language": "ar", "region": "Saudi Arabia", "freshness": "7d", "priority": 2, "covers_entity": ["Ministry of Foreign Affairs", "Royal Saudi Navy", "Saudi National Center for Meteorology"], "rationale": "Saudi MOFA statements on regional security, published primarily in Arabic, are the fastest read on Saudi diplomatic posture toward the conflict."},
+    {"id": "q08", "query": "site:mawani.gov.sa Ras Tanura Jubail Yanbu port throughput", "intent": "context", "source_class": "official", "language": "en", "region": "Saudi Arabia", "freshness": "7d", "priority": 2, "covers_entity": ["Saudi Ports Authority (Mawani)"], "rationale": "Saudi ports authority data on loading continuity at Ras Tanura/Jubail/Yanbu, needed to confirm Saudi barrels are still moving normally outside the strait."},
+    {"id": "q09", "query": "site:adnoc.ae Habshan Fujairah pipeline capacity Murban exports", "intent": "context", "source_class": "official", "language": "en", "region": "United Arab Emirates", "freshness": "30d", "priority": 1, "covers_entity": ["ADNOC", "Ministry of Energy and Infrastructure"], "rationale": "ADNOC's own reporting on the Habshan-Fujairah line is the primary source for real UAE bypass throughput and spare capacity."},
+    {"id": "q10", "query": "site:fujairahport.ae storage bunker diversion hub capacity", "intent": "context", "source_class": "official", "language": "en", "region": "Fujairah", "freshness": "7d", "priority": 1, "covers_entity": ["Port of Fujairah", "AD Ports Group", "ASYAD Group", "Ministry of Foreign Affairs (MOFAIC)"], "rationale": "Fujairah (outside Hormuz) is the key staging/diversion hub; storage and throughput data here signals how much rerouting is actually happening, alongside UAE diplomatic channels covering the same port ecosystem."},
+    {"id": "q11", "query": "site:qatarenergy.qa Ras Laffan LNG shipping disruption", "intent": "monitoring", "source_class": "official", "language": "en", "region": "Qatar", "freshness": "7d", "priority": 1, "covers_entity": ["QatarEnergy"], "rationale": "Qatari LNG has no bypass route; QatarEnergy's own statements are the direct read on whether Ras Laffan cargo loadings/schedules are affected."},
+    {"id": "q12", "query": "site:opec.org OPEC+ spare capacity production decision Gulf security", "intent": "monitoring", "source_class": "official", "language": "en", "region": "Middle East", "freshness": "7d", "priority": 1, "covers_entity": ["OPEC", "IEF", "Kuwait Petroleum Corporation (KPC)", "Ministry of Oil", "NNPC Limited", "NOC – National Oil Corporation", "Sonatrach", "Rosneft", "Ministry of Energy", "CME Group", "ICE", "ICE Endex (Amsterdam)", "DME / Gulf Mercantile", "Saudi Exchange (Tadawul)", "Saudi Central Bank (SAMA)"], "rationale": "Whether Saudi/UAE actually deploy OPEC+ spare capacity is the key reaction-function question; OPEC/IEF communications and member statements also drive Brent/Murban/WTI benchmark and financial-market reaction covered by the bundled exchanges."},
+    {"id": "q13", "query": "site:iea.org SPR release readiness oil market report emergency stocks", "intent": "monitoring", "source_class": "official", "language": "en", "region": "Middle East", "freshness": "7d", "priority": 1, "covers_entity": ["IEA", "EIA", "US DOE"], "rationale": "IEA/EIA/DOE readiness signals on coordinated SPR releases are the consumer-side reaction function counterpart to OPEC+ spare capacity."},
+    {"id": "q14", "query": "伊朗 石油 出口 中国 制裁 执行 独立炼厂", "intent": "context", "source_class": "keyword", "language": "zh", "region": "China", "freshness": "30d", "priority": 2, "covers_entity": ["NIOC", "EU Sanctions (Russian gas linkage)"], "rationale": "Chinese-language coverage of independent ('teapot') refinery buying and customs handling of Iranian barrels is the most direct signal of any change in sanctions enforcement, per the topic's explicit ask."},
+    {"id": "q15", "query": "هجوم ناقلات مضيق هرمز الحرس الثوري مرافقة بحرية", "intent": "monitoring", "source_class": "keyword", "language": "ar", "region": "Persian Gulf", "freshness": "24h", "priority": 1, "covers_entity": ["Indian Navy", "Royal Navy", "Ministry of Foreign Affairs"], "rationale": "Arabic-language Gulf press on tanker attacks, IRGC naval activity and allied naval escort convoys, including Omani mediation channel coverage (mofa.gov.om) not reliably covered by English-language sources."}
+  ],
+  "monitoring_plan": {
+    "trigger_terms": ["tanker attack", "IRGC seizure", "war risk premium", "underwriter withdrawal", "CENTCOM strike", "SPR release", "OPEC+ emergency meeting", "Hormuz closure", "GPS jamming", "Kharg outage"],
+    "cadence": "6-hourly while kinetic escalation is active (current state); step down to daily if a confirmed ceasefire or diplomatic stand-down is reported"
+  }
+}
