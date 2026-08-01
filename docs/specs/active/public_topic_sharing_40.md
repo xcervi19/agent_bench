@@ -1,6 +1,6 @@
 # Public topic sharing — #40
 
-**Status:** verified on test1 2026-08-01 (`fda0876`) — prod deploy pending
+**Status:** deployed to test1 + **prod** 2026-08-01 (`bb924d7`) — browser pass outstanding
 **Lane:** Product / frontend + API — *letting a finished topic leave the account that made it*
 **Depends on:** #24 (topic ownership), #16 (SignalGather UI), #22 (refresh scheduler)
 
@@ -131,8 +131,7 @@ Human link: `https://agent.particletico.com/app/shared/<topic-id>`.
 - [x] Unpublish restores control and kills the link
 - [x] `/app/shared/*` renders with no session; no action control anywhere on it
 - [x] `pytest tests/topics` (113) and `vitest` (211) green; tsc + eslint clean
-- [x] Migration `0007_topic_public` applied on **test1** (`0006_topic_owner` → `0007_topic_public (head)`)
-- [ ] Migration applied on **prod**
+- [x] Migration `0007_topic_public` applied on **test1** and **prod** (`0006_topic_owner` → `0007_topic_public`)
 - [ ] Verified in a browser: publish → open the link in a logged-out window → unpublish → link 404s
 
 ## Verified on test1 — 2026-08-01
@@ -155,6 +154,26 @@ the boot log. Live results against topic `9f2607da`:
 
 Left published on test1 for the browser pass:
 `https://agent-test1.particletico.com/app/shared/9f2607da-4a94-494d-83bc-2af3ad9a8842`
+
+## Deployed to prod — 2026-08-01 (`bb924d7`)
+
+Migration applied **before** the restart, so the old code never saw the new
+column and the new code never saw a missing one. Boot clean: no
+`topic_api_unauthenticated`, no `pipeline_commands_not_allowed`.
+
+| Check on `agent.particletico.com` | Result |
+|---|---|
+| All 8 existing topics after migration | `is_public = f` — the deploy published nothing |
+| Anonymous `GET /v1/topics`, `/v1/topics/{id}` | **401** |
+| Anonymous `GET /v1/public/topics` | **200**, `count: 0` — open but empty |
+| Anonymous `POST/PUT/PATCH/DELETE` on the public router | **405** |
+| A **real** unpublished prod topic via the public router (detail, report.md, news, deltas) | **404** on all four |
+| `/app`, `/app/shared` | **200** |
+| `/readyz` | `ready`, claude 2.1.197 |
+
+Nothing on prod is shared: publishing is a per-topic decision its owner has yet
+to make. The user-visible change is that the Share tab exists and `/app/shared`
+resolves.
 
 **Unrelated pre-existing issue seen at boot:** test1's
 `CLAUDE_AGENT_ALLOWED_COMMANDS` still lacks `/newsfind-topic-parse`, so #38's
