@@ -31,7 +31,9 @@ services:
       RAG_ADHOC_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-agentic}:${POSTGRES_PASSWORD:-agentic}@postgres:5432/${POSTGRES_DB:-agentic}
       RAG_ADHOC_OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       RAG_ADHOC_API_KEY: ${RAG_ADHOC_API_KEY:-}
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     ports:
       - "8001:8000"
     depends_on:
@@ -46,9 +48,15 @@ services:
       context: .
       dockerfile: docker/Dockerfile.claude_agent
     env_file:
-      - .env
-      - apps/claude_agent/.env
-      - /etc/claude-worker.env
+      # Host-specific files. `required: false` so a laptop without them still
+      # boots — /etc/claude-worker.env only exists on the VPS, and the root .env
+      # only where postgres credentials are overridden.
+      - path: .env
+        required: false
+      - path: apps/claude_agent/.env
+        required: false
+      - path: /etc/claude-worker.env
+        required: false
     environment:
       CLAUDE_AGENT_WORKSPACE_DIR: /workspace/claude_agent_fe
       CLAUDE_AGENT_LOG_LEVEL: ${CLAUDE_AGENT_LOG_LEVEL:-INFO}

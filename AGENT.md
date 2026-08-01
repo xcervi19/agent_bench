@@ -105,6 +105,7 @@ curl -N -X POST "$API/v1/agent/stream" \
 | Debug cheat sheet + war stories | `docs/ops/debugging.md` |
 | DB debug queries | `docs/ops/db_commands.md` |
 | Testing scenarios + eval harness | `testing/README.md` |
+| Running the stack locally | `docs/ops/local.md` |
 | Web UI (stack, dev, deploy) | `apps/signalgather_web/README.md` |
 
 ---
