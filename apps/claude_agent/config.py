@@ -196,9 +196,20 @@ class ClaudeAgentSettings(BaseSettings):
         description="Process-level switch for the background article fetcher loop.",
     )
     content_fetch_poll_interval_sec: int = Field(
-        default=300,
-        ge=10,
-        description="How often the fetcher scans for documents with no fetch outcome yet.",
+        default=30,
+        ge=1,
+        description=(
+            "How long to wait when the queue came up empty. Not a throttle: while "
+            "documents are pending the fetcher starts the next batch immediately."
+        ),
+    )
+    content_fetch_max_hosts_in_parallel: int = Field(
+        default=8,
+        ge=1,
+        description=(
+            "How many distinct hosts to read at once. Within a host requests stay "
+            "sequential and spaced, so raising this never hits one site harder."
+        ),
     )
     content_fetch_batch_size: int = Field(
         default=50,

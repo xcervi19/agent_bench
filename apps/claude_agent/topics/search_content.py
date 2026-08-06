@@ -349,34 +349,84 @@ class _HostPacer:
         self._last[host] = asyncio.get_running_loop().time()
 
 
-async def fetch_pending(limit: int, *, host_interval_sec: float = 2.0) -> int:
-    """Attempt every unfetched document, up to `limit`. Returns how many were attempted."""
+def group_by_host(documents: list[tuple[int, str]]) -> dict[str, list[tuple[int, str]]]:
+    """Partition a batch so each host gets exactly one worker.
+
+    The courtesy we owe a site is one request at a time to *that* site, not one
+    request at a time across the whole internet. Partitioning by host enforces the
+    former structurally: a host's documents are handled in sequence by a single
+    coroutine, while unrelated hosts proceed independently. It also keeps
+    `RobotsCache` safe without a lock, since only one coroutine ever touches a
+    given host's entry.
+    """
+    hosts: dict[str, list[tuple[int, str]]] = {}
+    for document in documents:
+        hosts.setdefault(urlsplit(document[1]).netloc, []).append(document)
+    return hosts
+
+
+async def _fetch_host(
+    client: httpx.AsyncClient,
+    robots: RobotsCache,
+    documents: list[tuple[int, str]],
+    *,
+    host_interval_sec: float,
+) -> None:
+    """Read one host's documents in sequence, spaced by `host_interval_sec`."""
+    for position, (document_id, url) in enumerate(documents):
+        if position:
+            # Between requests only — no reason to idle before the first one.
+            await asyncio.sleep(host_interval_sec)
+        # Timed from here, so the robots.txt lookup on a host's first document
+        # counts against this path — it is part of what our client costs.
+        started_at = datetime.now(UTC)
+        clock = time.monotonic()
+        outcome = await fetch_one(client, robots, url)
+        duration_ms = int((time.monotonic() - clock) * 1000)
+        await record_attempt(
+            document_id,
+            outcome,
+            method=METHOD_HTTP,
+            started_at=started_at,
+            duration_ms=duration_ms,
+        )
+        logger.info("content.fetch status=%s ms=%s url=%s", outcome.status, duration_ms, url)
+
+
+async def fetch_pending(
+    limit: int,
+    *,
+    host_interval_sec: float = 2.0,
+    max_hosts_in_parallel: int = 8,
+) -> int:
+    """Attempt every unfetched document, up to `limit`. Returns how many were attempted.
+
+    Hosts run concurrently, each host sequentially. A batch of 50 URLs spread over
+    30 domains no longer costs the sum of all of them.
+    """
     documents = await _pending(limit)
     if not documents:
         return 0
     robots = RobotsCache()
-    pacer = _HostPacer(host_interval_sec)
+    slots = asyncio.Semaphore(max_hosts_in_parallel)
+
     async with httpx.AsyncClient(
         headers=HEADERS, follow_redirects=True, timeout=httpx.Timeout(30.0)
     ) as client:
-        for document_id, url in documents:
-            await pacer.wait(url)
-            # Timed from here, so the robots.txt lookup on a host's first document
-            # counts against this path — it is part of what our client costs.
-            started_at = datetime.now(UTC)
-            clock = time.monotonic()
-            outcome = await fetch_one(client, robots, url)
-            duration_ms = int((time.monotonic() - clock) * 1000)
-            await record_attempt(
-                document_id,
-                outcome,
-                method=METHOD_HTTP,
-                started_at=started_at,
-                duration_ms=duration_ms,
-            )
-            logger.info(
-                "content.fetch status=%s ms=%s url=%s", outcome.status, duration_ms, url
-            )
+
+        async def run_host(host_documents: list[tuple[int, str]]) -> None:
+            async with slots:
+                await _fetch_host(
+                    client, robots, host_documents, host_interval_sec=host_interval_sec
+                )
+
+        results = await asyncio.gather(
+            *(run_host(group) for group in group_by_host(documents).values()),
+            return_exceptions=True,
+        )
+    for failure in [r for r in results if isinstance(r, Exception)]:
+        # One host blowing up must not lose the batch; the rest already recorded.
+        logger.exception("content.host_failed", exc_info=failure)
     return len(documents)
 
 
@@ -407,14 +457,29 @@ class ContentFetcher:
         logger.info("content_fetcher.stopped")
 
     async def tick(self) -> int:
-        return await fetch_pending(self.settings.content_fetch_batch_size)
+        return await fetch_pending(
+            self.settings.content_fetch_batch_size,
+            max_hosts_in_parallel=self.settings.content_fetch_max_hosts_in_parallel,
+        )
 
     async def _loop(self) -> None:
+        """Drain the queue as fast as the per-host pacing allows.
+
+        The poll interval is how long to wait when there is *nothing to do*, not a
+        throttle. A full batch means the queue still has work, so the next one
+        starts immediately — otherwise a backlog of hundreds would be metered out
+        at one batch per interval for no reason. An exception backs off instead,
+        so a persistent failure cannot become a hot loop.
+        """
         while not self._stop.is_set():
             try:
-                await self.tick()
+                attempted = await self.tick()
+                queue_had_more = attempted >= self.settings.content_fetch_batch_size
             except Exception:  # pragma: no cover - a bad batch must not kill the loop
                 logger.exception("content_fetcher.tick failed")
+                queue_had_more = False
+            if queue_had_more:
+                continue
             with contextlib.suppress(TimeoutError):
                 await asyncio.wait_for(
                     self._stop.wait(), timeout=self.settings.content_fetch_poll_interval_sec

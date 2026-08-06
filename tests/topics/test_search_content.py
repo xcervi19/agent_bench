@@ -4,6 +4,7 @@ import httpx
 import pytest
 
 from apps.claude_agent.topics.search_content import (
+    METHOD_HTTP,
     RETRY_DEFAULT_SEC,
     STATUS_BLOCKED,
     STATUS_DISALLOWED,
@@ -16,6 +17,7 @@ from apps.claude_agent.topics.search_content import (
     classify,
     domain_coverage_stmt,
     fetch_one,
+    group_by_host,
     method_timing_stmt,
     origin,
     rank_of,
@@ -347,3 +349,93 @@ def test_timing_query_compiles_for_postgres():
     assert "percentile_cont" in sql
     assert "WITHIN GROUP" in sql
     assert "GROUP BY" in sql
+
+
+# --- Host partitioning -------------------------------------------------------
+# Hosts run concurrently, each host sequentially. The courtesy owed a site is one
+# request at a time to *that* site — not one request at a time across the world.
+
+
+def test_group_by_host_keeps_each_hosts_documents_together_and_in_order():
+    documents = [
+        (1, "https://a.example/one"),
+        (2, "https://b.example/one"),
+        (3, "https://a.example/two"),
+        (4, "https://a.example/three"),
+    ]
+    groups = group_by_host(documents)
+
+    assert set(groups) == {"a.example", "b.example"}
+    assert groups["a.example"] == [
+        (1, "https://a.example/one"),
+        (3, "https://a.example/two"),
+        (4, "https://a.example/three"),
+    ]
+    assert sum(len(v) for v in groups.values()) == len(documents)
+
+
+def test_group_by_host_separates_ports_and_subdomains():
+    groups = group_by_host(
+        [
+            (1, "https://example.com/a"),
+            (2, "https://news.example.com/a"),
+            (3, "https://example.com:8443/a"),
+        ]
+    )
+    assert len(groups) == 3
+
+
+@pytest.mark.asyncio
+async def test_one_host_is_never_hit_concurrently():
+    """The politeness guarantee: partitioning must serialise a host structurally."""
+    concurrent = {"now": 0, "peak": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/robots.txt":
+            return httpx.Response(200, text="User-agent: *\nAllow: /")
+        concurrent["now"] += 1
+        concurrent["peak"] = max(concurrent["peak"], concurrent["now"])
+        concurrent["now"] -= 1
+        return httpx.Response(200, text=ARTICLE, headers={"content-type": "text/html"})
+
+    documents = [(i, f"https://one.example/{i}") for i in range(5)]
+    async with _client(handler) as client:
+        await _fetch_host_for_test(client, documents)
+
+    assert concurrent["peak"] == 1
+
+
+async def _fetch_host_for_test(client, documents):
+    from apps.claude_agent.topics.search_content import _fetch_host
+
+    recorded = []
+
+    async def fake_record(document_id, outcome, **kw):
+        recorded.append((document_id, outcome.status, kw["method"], kw["duration_ms"]))
+
+    import apps.claude_agent.topics.search_content as mod
+
+    original = mod.record_attempt
+    mod.record_attempt = fake_record
+    try:
+        await _fetch_host(client, RobotsCache(), documents, host_interval_sec=0)
+    finally:
+        mod.record_attempt = original
+    return recorded
+
+
+@pytest.mark.asyncio
+async def test_every_document_of_a_host_is_recorded_with_its_timing():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/robots.txt":
+            return httpx.Response(200, text="User-agent: *\nAllow: /")
+        return httpx.Response(200, text=ARTICLE, headers={"content-type": "text/html"})
+
+    documents = [(i, f"https://one.example/{i}") for i in range(4)]
+    async with _client(handler) as client:
+        recorded = await _fetch_host_for_test(client, documents)
+
+    assert [r[0] for r in recorded] == [0, 1, 2, 3], "order within a host must hold"
+    assert {r[1] for r in recorded} == {STATUS_FETCHED}
+    assert {r[2] for r in recorded} == {METHOD_HTTP}
+    assert all(isinstance(r[3], int) for r in recorded), "duration must be recorded"
