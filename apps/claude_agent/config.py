@@ -203,6 +203,23 @@ class ClaudeAgentSettings(BaseSettings):
             "documents are pending the fetcher starts the next batch immediately."
         ),
     )
+    # Corpus breadth (#43). The number of queries — not fetch success — is what
+    # bounds how much a run collects: search returns ~9 links per query, and we
+    # read ~89% of them. Doubling the queries roughly doubles the corpus.
+    refresh_max_queries: int = Field(
+        default=40,
+        ge=1,
+        le=200,
+        description="Upper bound on the persistent short-term query plan per refresh.",
+    )
+    refresh_evidence_max_documents: int = Field(
+        default=200,
+        ge=0,
+        description=(
+            "How many readable documents to export into the run directory for the "
+            "analyst to read. 0 disables the export."
+        ),
+    )
     content_fetch_max_hosts_in_parallel: int = Field(
         default=8,
         ge=1,

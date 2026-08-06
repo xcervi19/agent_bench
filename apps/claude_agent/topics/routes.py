@@ -622,7 +622,7 @@ def _build_queries_from_disk(
                 report = json.loads(report_path.read_text(encoding="utf-8"))
             except (json.JSONDecodeError, OSError):
                 report = None
-    return build_short_term_queries(parsed, report)
+    return build_short_term_queries(parsed, report, max_queries=settings.refresh_max_queries)
 
 
 @router.get("/{topic_id}/events")

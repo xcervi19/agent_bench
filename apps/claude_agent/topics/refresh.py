@@ -30,6 +30,7 @@ from ..config import ClaudeAgentSettings
 from ..runner import CommandNotAllowedError, stream_claude
 from ..schemas import RunRequest
 from .db import session_scope
+from .evidence_export import export_evidence
 from .models import Topic, TopicRefreshDelta, TopicSubscription
 from .pipeline import emit, run_dir
 from .search_evidence import SearchEvidenceRecorder
@@ -55,6 +56,7 @@ def build_short_term_queries(
     report: dict[str, Any] | None,
     *,
     today_iso: str | None = None,
+    max_queries: int = 12,
 ) -> list[dict[str, Any]]:
     """Synthesize the persistent monitoring query plan from plan + report state.
 
@@ -64,14 +66,17 @@ def build_short_term_queries(
       - tier-1 actors × `parsed.monitoring_plan.trigger_terms` as fallback
 
     Each entry: {id, query, language, priority, source}. IDs are `st01`, `st02`, …
-    Capped at 12 queries to keep refresh cost bounded.
+
+    `max_queries` bounds the plan. It is the main lever on corpus size: search
+    returns roughly nine links per query, so the cap — not fetch success — is what
+    decides how much a refresh collects.
     """
     today_iso = today_iso or datetime.now(timezone.utc).strftime("%Y-%m-%d")
     hint = _recency_hint(today_iso)
     out: list[dict[str, Any]] = []
 
     if isinstance(report, dict):
-        for nq in (report.get("next_queries") or [])[:8]:
+        for nq in (report.get("next_queries") or [])[: max(1, (max_queries * 2) // 3)]:
             q = (nq.get("q") or nq.get("query") or "").strip()
             if not q:
                 continue
@@ -86,7 +91,7 @@ def build_short_term_queries(
 
     seen = {e["query"].lower() for e in out}
     for q in sorted(parsed.get("queries") or [], key=lambda x: x.get("priority", 3)):
-        if len(out) >= 12:
+        if len(out) >= max_queries:
             break
         text = f"{q.get('query','').strip()} {hint}".strip()
         if not text or text.lower() in seen:
@@ -105,7 +110,7 @@ def build_short_term_queries(
         triggers = (parsed.get("monitoring_plan") or {}).get("trigger_terms") or []
         for a in actors[:3]:
             for t in triggers[:3]:
-                if len(out) >= 12:
+                if len(out) >= max_queries:
                     break
                 text = f"{a.get('name', '')} {t} {hint}".strip()
                 if text.lower() in seen:
@@ -223,6 +228,20 @@ async def run_refresh(
 
         seen_url_hashes = _collect_seen_url_hashes(topic_hash, settings, exclude_run_id=refresh_run_id)
 
+        # Hand the captured corpus over as files. The analyst otherwise works from
+        # search snippets; this gives it the article text we already read.
+        evidence_dir = refresh_dir / "evidence"
+        evidence_index: dict[str, Any] = {"document_count": 0, "unreadable_count": 0}
+        if settings.refresh_evidence_max_documents:
+            try:
+                evidence_index = await export_evidence(
+                    topic_id,
+                    evidence_dir,
+                    max_documents=settings.refresh_evidence_max_documents,
+                )
+            except Exception:  # a corpus problem must not cancel the refresh
+                logger.exception("refresh.evidence_export_failed topic=%s", topic_id)
+
         (refresh_dir / "input.json").write_text(
             json.dumps({
                 "topic_id": str(topic_id),
@@ -235,6 +254,11 @@ async def run_refresh(
                 "max_age_hours": max_age_hours,
                 "seen_url_hashes": sorted(seen_url_hashes),
                 "today_iso": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                # Full text of documents already fetched for this topic. Read these
+                # before reaching for WebFetch — the text is here.
+                "evidence_dir": str(evidence_dir) if evidence_index["document_count"] else None,
+                "evidence_count": evidence_index["document_count"],
+                "evidence_unreadable_count": evidence_index["unreadable_count"],
             }),
             encoding="utf-8",
         )
