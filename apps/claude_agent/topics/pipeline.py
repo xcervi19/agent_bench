@@ -22,6 +22,7 @@ from .facets import (
     normalize_facets,
 )
 from .models import Topic, TopicEvent
+from .search_evidence import SearchEvidenceRecorder
 from .source_quality import load_whitelisted_domains, summarize_run
 from .webhooks import deliver_event
 
@@ -200,7 +201,14 @@ async def run_plan(topic_id: uuid.UUID, topic: str, settings: ClaudeAgentSetting
         await set_state(topic_id, STATE_FAILED, error=error)
         return
 
-    summary = await _run_slash(topic_id, leg="plan", command=PLAN_COMMAND, args=str(out_dir), settings=settings)
+    summary = await _run_slash(
+        topic_id,
+        leg="plan",
+        command=PLAN_COMMAND,
+        args=str(out_dir),
+        run_id=plan_run_id,
+        settings=settings,
+    )
     if summary is None:
         return
     await emit(topic_id, "intro.ready", summary)
@@ -233,7 +241,12 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
 
     await set_state(topic_id, STATE_DELIVERING)
     summary = await _run_slash(
-        topic_id, leg="deliver", command=DELIVER_COMMAND, args=str(out_dir), settings=settings
+        topic_id,
+        leg="deliver",
+        command=DELIVER_COMMAND,
+        args=str(out_dir),
+        run_id=deliver_run_id,
+        settings=settings,
     )
     if summary is None:
         return
@@ -248,9 +261,11 @@ async def _run_slash(
     leg: str,
     command: str,
     args: str,
+    run_id: str,
     settings: ClaudeAgentSettings,
 ) -> dict[str, Any] | None:
     await emit(topic_id, "stage.started", {"stage": leg})
+    evidence = SearchEvidenceRecorder(topic_id, run_id)
     req = RunRequest(
         command=command,
         args=args,
@@ -271,6 +286,7 @@ async def _run_slash(
             if kind == "assistant":
                 for block in event.get("message", {}).get("content", []) or []:
                     if block.get("type") == "tool_use":
+                        evidence.note_tool_use(block)
                         await emit(topic_id, "tool_use", {
                             "tool": block.get("name"),
                             "tool_use_id": block.get("id"),
@@ -279,6 +295,7 @@ async def _run_slash(
             elif kind == "user":
                 for block in event.get("message", {}).get("content", []) or []:
                     if block.get("type") == "tool_result":
+                        await evidence.note_tool_result(block)
                         await emit(topic_id, "tool_result", {
                             "tool_use_id": block.get("tool_use_id"),
                             "is_error": bool(block.get("is_error")),

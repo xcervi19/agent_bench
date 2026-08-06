@@ -12,14 +12,23 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
 from typing import Any
 
 from .config import ClaudeAgentSettings
 from .schemas import OutputFormat, PermissionMode, RunRequest, RunResult
+
+logger = logging.getLogger(__name__)
+
+# A single stream-json line can exceed the reader limit when a tool result embeds
+# a large page body (WebFetch). That line is lost either way; ending the run over
+# it loses everything else too, so we skip it and keep reading. The cap only
+# guards against a stream that is nothing but oversized lines.
+MAX_OVERSIZED_LINES = 50
 
 
 @dataclass(slots=True)
@@ -169,6 +178,59 @@ async def run_claude(req: RunRequest, settings: ClaudeAgentSettings) -> RunResul
     )
 
 
+async def stream_lines(
+    reader: asyncio.StreamReader,
+    *,
+    deadline: float,
+    limit: int,
+    kill: Callable[[], None],
+) -> AsyncIterator[str]:
+    """Yield stdout lines until EOF, the deadline, or too many oversized lines.
+
+    An oversized line is skipped rather than fatal. `readline` drops the buffered
+    chunk before raising, so continuing consumes the remainder of that line on the
+    following iterations; its trailing fragment is not valid JSON, and every
+    consumer already ignores lines that do not parse. Ending the run instead would
+    discard the whole topic over one large tool result.
+    """
+    oversized = 0
+    while True:
+        remaining = deadline - asyncio.get_running_loop().time()
+        if remaining <= 0:
+            kill()
+            yield json.dumps({"type": "error", "error": "timeout"})
+            return
+        try:
+            line = await asyncio.wait_for(reader.readline(), timeout=remaining)
+        except asyncio.TimeoutError:
+            kill()
+            yield json.dumps({"type": "error", "error": "timeout"})
+            return
+        except (asyncio.LimitOverrunError, ValueError) as exc:
+            oversized += 1
+            logger.warning("claude.stdout_line_oversized limit=%s skipped=%s", limit, oversized)
+            if oversized > MAX_OVERSIZED_LINES:
+                kill()
+                yield json.dumps({
+                    "type": "error",
+                    "error": (
+                        f"stdout exceeded the {limit} byte line limit more than "
+                        f"{MAX_OVERSIZED_LINES} times: {exc}"
+                    ),
+                })
+                return
+            yield json.dumps({
+                "type": "warning",
+                "warning": "oversized_line_skipped",
+                "limit_bytes": limit,
+            })
+            continue
+        if not line:
+            return
+        oversized = 0
+        yield line.decode(errors="replace").rstrip("\n")
+
+
 async def stream_claude(
     req: RunRequest, settings: ClaudeAgentSettings
 ) -> AsyncIterator[str]:
@@ -192,30 +254,13 @@ async def stream_claude(
 
     deadline = asyncio.get_running_loop().time() + built.timeout_sec
     try:
-        while True:
-            remaining = deadline - asyncio.get_running_loop().time()
-            if remaining <= 0:
-                proc.kill()
-                yield json.dumps({"type": "error", "error": "timeout"})
-                break
-            try:
-                line = await asyncio.wait_for(proc.stdout.readline(), timeout=remaining)
-            except asyncio.TimeoutError:
-                proc.kill()
-                yield json.dumps({"type": "error", "error": "timeout"})
-                break
-            except (asyncio.LimitOverrunError, ValueError) as exc:
-                # stream-json lines can exceed the default 64 KiB reader limit when
-                # tool results (e.g. WebFetch) embed large page bodies.
-                proc.kill()
-                yield json.dumps({
-                    "type": "error",
-                    "error": f"stdout line exceeded {settings.max_output_bytes} byte limit: {exc}",
-                })
-                break
-            if not line:
-                break
-            yield line.decode(errors="replace").rstrip("\n")
+        async for line in stream_lines(
+            proc.stdout,
+            deadline=deadline,
+            limit=settings.max_output_bytes,
+            kill=proc.kill,
+        ):
+            yield line
     finally:
         rc = await proc.wait()
         yield json.dumps({"type": "end", "exit_code": rc})

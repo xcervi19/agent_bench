@@ -34,6 +34,10 @@ RUN npm install -g @anthropic-ai/claude-code \
 COPY pyproject.toml README.md ./
 COPY libs ./libs
 COPY apps ./apps
+# The background article fetcher imports source_ingest.text_extract for HTML →
+# text. Its module-level imports are stdlib only (pypdf/ebooklib are function-
+# local), so this stays cheap; without it the fetcher loop dies on ImportError.
+COPY source_ingest ./source_ingest
 
 RUN pip install --upgrade pip && pip install -e .
 

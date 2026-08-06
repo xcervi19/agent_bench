@@ -188,6 +188,23 @@ class ClaudeAgentSettings(BaseSettings):
         ge=1,
         description="Max scheduled refreshes dispatched per poll / running at once.",
     )
+    # Background article fetcher (#42). Drains the unfetched search_documents
+    # queue so the later evaluation pass has text to read; runs independently of
+    # any topic run and never feeds the report.
+    content_fetch_enabled: bool = Field(
+        default=True,
+        description="Process-level switch for the background article fetcher loop.",
+    )
+    content_fetch_poll_interval_sec: int = Field(
+        default=300,
+        ge=10,
+        description="How often the fetcher scans for documents with no fetch outcome yet.",
+    )
+    content_fetch_batch_size: int = Field(
+        default=50,
+        ge=1,
+        description="Max documents attempted per poll.",
+    )
     schedule_min_interval_hours: int = Field(
         default=1,
         ge=1,

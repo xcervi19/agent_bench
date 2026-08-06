@@ -67,6 +67,18 @@ class UpdateMonitorBody(BaseModel):
 router = APIRouter(prefix="/v1/topics", tags=["topics"])
 
 
+# Declared before /{topic_id} so the literal path wins the match. Corpus-wide and
+# therefore service-only: the domain breakdown spans every owner's documents.
+@router.get("/search-coverage")
+async def search_coverage(principal: CurrentPrincipal) -> dict[str, Any]:
+    """Fetch outcomes across the whole evidence corpus — what we can and cannot read."""
+    if not principal.is_service:
+        raise HTTPException(status_code=403, detail="service principal required")
+    from .search_content import coverage
+
+    return await coverage()
+
+
 async def _owned(s: AsyncSession, topic_id: uuid.UUID, principal: Principal) -> Topic:
     """Load a topic the principal may access. 404 hides other users' topics."""
     row = await s.get(Topic, topic_id)

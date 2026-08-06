@@ -32,6 +32,7 @@ from ..schemas import RunRequest
 from .db import session_scope
 from .models import Topic, TopicRefreshDelta, TopicSubscription
 from .pipeline import emit, run_dir
+from .search_evidence import SearchEvidenceRecorder
 from .source_quality import SourceMix, load_whitelisted_domains, summarize_run
 
 logger = logging.getLogger(__name__)
@@ -365,6 +366,7 @@ async def _run_refresh_slash(
     duration_ms: int | None = None
     error: str | None = None
     success = False
+    evidence = SearchEvidenceRecorder(topic_id, refresh_dir.name)
 
     async for line in stream_claude(req, settings):
         event = _try_loads(line)
@@ -374,6 +376,7 @@ async def _run_refresh_slash(
         if kind == "assistant":
             for block in event.get("message", {}).get("content", []) or []:
                 if block.get("type") == "tool_use":
+                    evidence.note_tool_use(block)
                     await emit(topic_id, "tool_use", {
                         "tool": block.get("name"),
                         "tool_use_id": block.get("id"),
@@ -383,6 +386,7 @@ async def _run_refresh_slash(
         elif kind == "user":
             for block in event.get("message", {}).get("content", []) or []:
                 if block.get("type") == "tool_result":
+                    await evidence.note_tool_result(block)
                     await emit(topic_id, "tool_result", {
                         "tool_use_id": block.get("tool_use_id"),
                         "is_error": bool(block.get("is_error")),

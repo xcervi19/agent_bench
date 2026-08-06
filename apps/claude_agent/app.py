@@ -113,11 +113,21 @@ async def _lifespan(app: FastAPI):
         scheduler.start()
         app.state.scheduler = scheduler
 
+    app.state.content_fetcher = None
+    if settings.database_url and settings.content_fetch_enabled:
+        from .topics.search_content import ContentFetcher
+
+        fetcher = ContentFetcher(settings)
+        fetcher.start()
+        app.state.content_fetcher = fetcher
+
     try:
         yield
     finally:
         if app.state.scheduler is not None:
             await app.state.scheduler.stop()
+        if app.state.content_fetcher is not None:
+            await app.state.content_fetcher.stop()
 
 
 def _mount_cors(app: FastAPI, settings: ClaudeAgentSettings) -> None:
