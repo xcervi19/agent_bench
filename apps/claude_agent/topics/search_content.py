@@ -92,6 +92,17 @@ class FetchOutcome:
     error: str | None = None
 
 
+def strip_nul(text: str) -> str:
+    """Drop NUL bytes, which Postgres rejects in a text column.
+
+    A page served as text but carrying 0x00 — a mislabelled binary, a PDF behind
+    the wrong content-type — makes asyncpg raise CharacterNotInRepertoireError on
+    INSERT, and the whole attempt is lost rather than the one bad character. The
+    text is worth keeping; the NULs carry nothing.
+    """
+    return text.replace("\x00", "") if "\x00" in text else text
+
+
 def classify(response: httpx.Response) -> FetchOutcome:
     if response.status_code in BLOCKED_CODES:
         return FetchOutcome(STATUS_BLOCKED, error=f"HTTP {response.status_code}")
@@ -109,6 +120,9 @@ def classify(response: httpx.Response) -> FetchOutcome:
         text = html_article_text(response.text)
     else:
         return FetchOutcome(STATUS_UNSUPPORTED, error=media_type)
+    # Before the length test, so a page that is mostly NULs is measured on the
+    # text that will actually be stored and cannot pass as a full article.
+    text = strip_nul(text)
     if len(text) < MIN_TEXT_CHARS:
         return FetchOutcome(STATUS_THIN, text=text or None, error=f"{len(text)} chars")
     return FetchOutcome(STATUS_FETCHED, text=text)
@@ -221,7 +235,11 @@ async def record_attempt(
     duration_ms: int,
 ) -> None:
     """Append the attempt, then update the document only if this result is better."""
-    chars = len(outcome.text or "")
+    # `classify` already strips, so this is for outcomes built anywhere else —
+    # METHOD_AGENT text arrives from the model's WebFetch, not from our client.
+    # One NUL reaching the INSERT costs the whole attempt, so guard the boundary.
+    text = strip_nul(outcome.text) if outcome.text else outcome.text
+    chars = len(text or "")
     async with session_scope() as s:
         s.add(
             SearchDocumentFetch(
@@ -229,7 +247,7 @@ async def record_attempt(
                 method=method,
                 status=outcome.status,
                 error=outcome.error,
-                content=outcome.text,
+                content=text,
                 content_chars=chars,
                 duration_ms=duration_ms,
                 started_at=started_at,
@@ -243,7 +261,7 @@ async def record_attempt(
         # `>=` on a first attempt (both ranks (0, 0)) so an outcome carrying no
         # text still leaves the queue and gets recorded on the document.
         if document.fetch_status is None or rank_of(outcome.status, chars) > current:
-            document.content = outcome.text
+            document.content = text
             document.fetch_status = outcome.status
             document.fetch_error = outcome.error
             document.fetched_at = datetime.now(UTC)

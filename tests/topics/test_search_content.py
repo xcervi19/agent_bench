@@ -71,6 +71,22 @@ def test_classify_records_the_block_rather_than_raising(code, expected):
     assert str(code) in outcome.error
 
 
+def test_classify_drops_nul_bytes_rather_than_losing_the_whole_page():
+    """Postgres rejects 0x00 in a text column; one NUL used to cost the attempt."""
+    outcome = classify(_response(200, ARTICLE.replace("this week", "this\x00 week")))
+    assert outcome.status == STATUS_FETCHED
+    assert "\x00" not in outcome.text
+    assert "Tanker traffic" in outcome.text
+
+
+def test_a_page_of_nuls_is_thin_and_does_not_pass_as_a_full_article():
+    """Measured after stripping, so it cannot outrank real text already stored."""
+    body = "<html><body><p>" + "\x00" * 400 + "Subscribe to read.</p></body></html>"
+    outcome = classify(_response(200, body))
+    assert outcome.status == STATUS_THIN
+    assert outcome.text == "Subscribe to read."
+
+
 def test_classify_skips_non_text_instead_of_producing_garbage():
     outcome = classify(_response(200, "\xff\xd8\xff binary", content_type="image/jpeg"))
     assert outcome.status == STATUS_UNSUPPORTED
