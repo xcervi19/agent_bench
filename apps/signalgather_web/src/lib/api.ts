@@ -6,7 +6,14 @@
  * the UI shows a placeholder and re-fetches when the matching event arrives.
  */
 
-import { apiUrl, clearToken, getToken } from './session'
+import {
+  apiUrl,
+  clearSession,
+  getRefreshToken,
+  getToken,
+  setRefreshToken,
+  setToken,
+} from './session'
 import type {
   CreateTopicResponse,
   DeltaArtifact,
@@ -70,16 +77,72 @@ export async function errorFrom(res: Response): Promise<ApiError> {
   return new ApiError(res.status, detail)
 }
 
+/**
+ * `rejected` is the server refusing the refresh token — the session is over.
+ * `unavailable` is not reaching the server at all, which says nothing about
+ * whether the session is still good, so the tokens have to survive it.
+ */
+export type RenewalOutcome = 'renewed' | 'rejected' | 'unavailable'
+
+let renewal: Promise<RenewalOutcome> | null = null
+
+/**
+ * Trade the refresh token for a fresh pair.
+ *
+ * Single-flight on purpose. A page that fires five requests at once would
+ * otherwise spend five refresh tokens; four of those would arrive at a server
+ * that has already rotated them, which reads as a replay and signs the user out
+ * of everything — the opposite of what a renewal is for.
+ */
+export async function renewSession(): Promise<RenewalOutcome> {
+  if (!getRefreshToken()) return 'rejected'
+  renewal ??= (async (): Promise<RenewalOutcome> => {
+    try {
+      const res = await fetch(apiUrl('/auth/jwt/refresh'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: getRefreshToken() }),
+      })
+      if (!res.ok) return 'rejected'
+      const data = (await res.json()) as { access_token?: string; refresh_token?: string }
+      if (!data.access_token || !data.refresh_token) return 'rejected'
+      setToken(data.access_token)
+      setRefreshToken(data.refresh_token)
+      return 'renewed'
+    } catch {
+      return 'unavailable'
+    } finally {
+      renewal = null
+    }
+  })()
+  return renewal
+}
+
 async function request(path: string, init: RequestInit = {}): Promise<Response> {
   const res = await fetch(apiUrl(path), {
     ...init,
     headers: authHeaders(init.headers),
   })
   if (res.ok) return res
-  const error = await errorFrom(res)
-  // A dead token must not linger: the next render would retry with it forever.
-  if (error.isAuthError) clearToken()
-  throw error
+
+  // An expired access token is the ordinary case, not a sign-out: renew once
+  // and replay the call, so the user never sees the login screen mid-task.
+  if (res.status === 401) {
+    const outcome = await renewSession()
+    if (outcome === 'renewed') {
+      const retried = await fetch(apiUrl(path), { ...init, headers: authHeaders(init.headers) })
+      if (retried.ok) return retried
+      const retriedError = await errorFrom(retried)
+      if (retriedError.isAuthError) clearSession()
+      throw retriedError
+    }
+    // A dead session must not linger: the next render would retry with it
+    // forever. A dropped connection, though, is not evidence of one.
+    if (outcome === 'rejected') clearSession()
+    throw await errorFrom(res)
+  }
+
+  throw await errorFrom(res)
 }
 
 async function getJson<T>(path: string): Promise<T> {
@@ -109,8 +172,13 @@ async function getOptionalText(path: string): Promise<string | null> {
 
 // ---- auth ------------------------------------------------------------------
 
-/** fastapi-users login: form-encoded, `username` is the email. */
-export async function login(email: string, password: string): Promise<string> {
+export interface SessionTokens {
+  accessToken: string
+  refreshToken: string
+}
+
+/** Login: form-encoded, `username` is the email. Both tokens are issued here. */
+export async function login(email: string, password: string): Promise<SessionTokens> {
   const body = new URLSearchParams({ username: email, password })
   const res = await fetch(apiUrl('/auth/jwt/login'), {
     method: 'POST',
@@ -118,9 +186,34 @@ export async function login(email: string, password: string): Promise<string> {
     body,
   })
   if (!res.ok) throw await errorFrom(res)
-  const data = (await res.json()) as { access_token?: string }
+  const data = (await res.json()) as { access_token?: string; refresh_token?: string }
   if (!data.access_token) throw new ApiError(500, 'login response had no access_token')
-  return data.access_token
+  if (!data.refresh_token) throw new ApiError(500, 'login response had no refresh_token')
+  return { accessToken: data.access_token, refreshToken: data.refresh_token }
+}
+
+/**
+ * End the session server-side, then locally.
+ *
+ * The refresh token is a row, so this is what actually revokes it — dropping it
+ * from localStorage alone would leave a working credential on the server for
+ * whoever else had a copy.
+ */
+export async function logout(): Promise<void> {
+  const refreshToken = getRefreshToken()
+  if (refreshToken) {
+    try {
+      await fetch(apiUrl('/auth/jwt/logout'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      })
+    } catch {
+      // Signing out must succeed locally even with no network. The token then
+      // lives until it expires, which is why logout is not the only defence.
+    }
+  }
+  clearSession()
 }
 
 export interface RegisterInput {

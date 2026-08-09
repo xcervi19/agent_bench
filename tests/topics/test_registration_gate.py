@@ -37,3 +37,11 @@ def test_login_and_users_survive_either_way(build, public):
 
 def test_default_keeps_registration_for_library_callers(build):
     assert any("/auth/register" in p for p in paths(build()))
+
+
+@pytest.mark.parametrize("public", [True, False])
+def test_a_session_can_be_renewed_and_ended_without_signing_in_again(build, public):
+    """Login alone leaves a user stranded when the access token expires."""
+    served = paths(build(public_registration=public))
+    assert any("/auth/jwt/refresh" in p for p in served)
+    assert any("/auth/jwt/logout" in p for p in served)

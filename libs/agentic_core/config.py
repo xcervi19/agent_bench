@@ -15,6 +15,10 @@ class Settings(BaseSettings):
 
     jwt_secret: str = Field(default="change-me")
     jwt_lifetime_seconds: int = 3600
+    # The refresh token is a database row, so it can be revoked one session at a
+    # time. That is what lets it outlive the access token by weeks without
+    # becoming the un-cancellable credential a long-lived JWT would be.
+    jwt_refresh_lifetime_seconds: int = 60 * 60 * 24 * 30
 
     database_url: str
     redis_url: str

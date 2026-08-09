@@ -1,12 +1,18 @@
 /**
  * Where the UI points and who it says it is.
  *
- * Both values live in localStorage so a reload keeps you signed in and pointed
- * at the same slot. The token is a fastapi-users JWT (bearer transport), which
+ * All three values live in localStorage so a reload keeps you signed in and
+ * pointed at the same slot. The access token is a JWT (bearer transport), which
  * is why it can be read by JS at all — there is no cookie to fall back on.
+ *
+ * The access token expires within the hour; the refresh token is what turns
+ * that into a session you do not have to re-enter a password for. It is a
+ * server-side row, so signing out actually ends it rather than just forgetting
+ * it here.
  */
 
 const TOKEN_KEY = 'signalgather.token'
+const REFRESH_KEY = 'signalgather.refreshToken'
 const BASE_KEY = 'signalgather.apiBase'
 
 export interface ApiEnv {
@@ -54,6 +60,24 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   localStorage.removeItem(TOKEN_KEY)
+}
+
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_KEY)
+}
+
+export function setRefreshToken(token: string): void {
+  localStorage.setItem(REFRESH_KEY, token)
+}
+
+/**
+ * Forget the whole session. Used where the user is genuinely signed out — the
+ * refresh token failed, or they asked to leave — never for a single 401 that a
+ * renewal could still answer.
+ */
+export function clearSession(): void {
+  localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(REFRESH_KEY)
 }
 
 /** Absolute URL for an API path, honouring the selected slot. */

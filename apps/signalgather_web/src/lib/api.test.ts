@@ -7,10 +7,19 @@ import {
   getParsed,
   listTopics,
   login,
+  logout,
   proceedTopic,
   register,
 } from './api'
-import { apiUrl, getApiBase, getToken, setApiBase, setToken } from './session'
+import {
+  apiUrl,
+  getApiBase,
+  getRefreshToken,
+  getToken,
+  setApiBase,
+  setRefreshToken,
+  setToken,
+} from './session'
 
 interface Call {
   url: string
@@ -61,15 +70,22 @@ describe('session', () => {
 })
 
 describe('auth', () => {
-  it('logs in with form encoding and returns the access token', async () => {
-    mockFetch(() => json({ access_token: 'tok', token_type: 'bearer' }))
+  it('logs in with form encoding and returns both tokens', async () => {
+    mockFetch(() => json({ access_token: 'tok', refresh_token: 'ref', token_type: 'bearer' }))
 
-    expect(await login('a@b.co', 'pw')).toBe('tok')
+    expect(await login('a@b.co', 'pw')).toEqual({ accessToken: 'tok', refreshToken: 'ref' })
     const body = calls[0]!.init.body as URLSearchParams
     expect(calls[0]!.url).toBe('/auth/jwt/login')
-    // fastapi-users takes the email in the OAuth2 `username` field.
+    // The OAuth2 form takes the email in the `username` field.
     expect(body.get('username')).toBe('a@b.co')
     expect(body.get('password')).toBe('pw')
+  })
+
+  it('fails loudly when a login carries no refresh token', async () => {
+    // Without it the user is back to a one-hour session and no way to renew it,
+    // which is worse than a visible failure at sign-in.
+    mockFetch(() => json({ access_token: 'tok', token_type: 'bearer' }))
+    await expect(login('a@b.co', 'pw')).rejects.toBeInstanceOf(ApiError)
   })
 
   it('surfaces a bad-credentials response as an ApiError', async () => {
@@ -80,7 +96,7 @@ describe('auth', () => {
     })
   })
 
-  it('fails loudly when a 200 login carries no token', async () => {
+  it('fails loudly when a 200 login carries no access token', async () => {
     mockFetch(() => json({ token_type: 'bearer' }))
     await expect(login('a@b.co', 'pw')).rejects.toBeInstanceOf(ApiError)
   })
@@ -169,5 +185,94 @@ describe('artifact fetches', () => {
   it('still raises on a real server error', async () => {
     mockFetch(() => json({ detail: 'boom' }, 500))
     await expect(getParsed('t1')).rejects.toBeInstanceOf(ApiError)
+  })
+})
+
+describe('session renewal', () => {
+  it('renews on a 401 and replays the call, so the user never sees a login screen', async () => {
+    setToken('expired')
+    setRefreshToken('ref-1')
+    mockFetch((call) => {
+      if (call.url === '/auth/jwt/refresh') {
+        return json({ access_token: 'fresh', refresh_token: 'ref-2' })
+      }
+      const auth = new Headers(call.init.headers).get('Authorization')
+      if (auth === 'Bearer fresh') {
+        return json({ items: [], count: 0, limit: 50, offset: 0, state: null })
+      }
+      return json({ detail: 'Unauthorized' }, 401)
+    })
+
+    await expect(listTopics()).resolves.toMatchObject({ count: 0 })
+    expect(getToken()).toBe('fresh')
+    expect(getRefreshToken()).toBe('ref-2')
+  })
+
+  it('spends one refresh token for a burst of parallel 401s', async () => {
+    // Each extra spend would reach a server that already rotated it, which
+    // reads as a replay and ends every session the user has.
+    setToken('expired')
+    setRefreshToken('ref-1')
+    mockFetch((call) => {
+      if (call.url === '/auth/jwt/refresh') {
+        return json({ access_token: 'fresh', refresh_token: 'ref-2' })
+      }
+      const auth = new Headers(call.init.headers).get('Authorization')
+      return auth === 'Bearer fresh'
+        ? json({ items: [], count: 0, limit: 50, offset: 0, state: null })
+        : json({ detail: 'Unauthorized' }, 401)
+    })
+
+    await Promise.all([listTopics(), listTopics(), listTopics()])
+    expect(calls.filter((c) => c.url === '/auth/jwt/refresh')).toHaveLength(1)
+  })
+
+  it('signs out for real when the refresh token is rejected too', async () => {
+    setToken('expired')
+    setRefreshToken('revoked')
+    mockFetch((call) =>
+      call.url === '/auth/jwt/refresh'
+        ? json({ detail: 'invalid refresh token' }, 401)
+        : json({ detail: 'Unauthorized' }, 401),
+    )
+
+    await expect(listTopics()).rejects.toMatchObject({ status: 401 })
+    expect(getToken()).toBeNull()
+    expect(getRefreshToken()).toBeNull()
+  })
+
+  it('keeps the session when the renewal fails on the network, not on auth', async () => {
+    setToken('expired')
+    setRefreshToken('ref-1')
+    mockFetch((call) => {
+      if (call.url === '/auth/jwt/refresh') throw new TypeError('Failed to fetch')
+      return json({ detail: 'Unauthorized' }, 401)
+    })
+
+    await expect(listTopics()).rejects.toMatchObject({ status: 401 })
+    expect(getRefreshToken()).toBe('ref-1')
+  })
+
+  it('revokes the refresh token server-side on sign-out', async () => {
+    setToken('tok')
+    setRefreshToken('ref-1')
+    mockFetch(() => new Response(null, { status: 204 }))
+
+    await logout()
+    expect(calls[0]!.url).toBe('/auth/jwt/logout')
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual({ refresh_token: 'ref-1' })
+    expect(getToken()).toBeNull()
+    expect(getRefreshToken()).toBeNull()
+  })
+
+  it('still signs out locally when the revoke call cannot be delivered', async () => {
+    setToken('tok')
+    setRefreshToken('ref-1')
+    mockFetch(() => {
+      throw new TypeError('Failed to fetch')
+    })
+
+    await logout()
+    expect(getToken()).toBeNull()
   })
 })
