@@ -29,6 +29,18 @@ export type TopicState = (typeof TOPIC_STATES)[number]
 /** States after which no further pipeline work happens on its own. */
 export const TERMINAL_STATES: readonly TopicState[] = ['reported', 'failed', 'cancelled']
 
+/**
+ * States where the agent is working right now.
+ *
+ * Narrower than "not terminal": `planned_awaiting_review` is a topic sitting
+ * still, waiting on the user. Nothing is moving, so nothing needs watching.
+ */
+export const WORKING_STATES: readonly TopicState[] = ['planning', 'delivering']
+
+export function isPipelineWorking(state: TopicState): boolean {
+  return WORKING_STATES.includes(state)
+}
+
 export type TopicAction = 'proceed' | 'cancel'
 
 export interface TopicListItem {

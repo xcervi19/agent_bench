@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { absoluteTime, elapsed, relativeTime } from '../lib/format'
 import { markTopicSeen } from '../lib/lastSeen'
 import { useTopicStream } from '../lib/useTopicStream'
+import { isPipelineWorking } from '../lib/types'
 import type { TopicDetail } from '../lib/types'
 import { ActivityFeed } from '../components/ActivityFeed'
 import { PlanReview } from '../components/PlanReview'
@@ -72,6 +73,10 @@ export function TopicWorkspacePage() {
     )
   }
 
+  // A refresh runs while the topic sits in `reported`, so the state alone would
+  // miss it and the user would press "Refresh now" to no visible effect.
+  const working = isPipelineWorking(topic.state) || Boolean(stream.monitor?.refresh_locked)
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
       <StatusBar topic={topic} />
@@ -88,7 +93,12 @@ export function TopicWorkspacePage() {
         </div>
       )}
 
-      <div className="mt-5 grid min-h-0 gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+      <div
+        className={cx(
+          'mt-5 grid min-h-0 gap-5',
+          working && 'lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]',
+        )}
+      >
         <div className="min-w-0 space-y-5">
           <nav className="flex flex-wrap gap-1" role="tablist" aria-label="Topic sections">
             {tabs.map((entry) => (
@@ -146,9 +156,15 @@ export function TopicWorkspacePage() {
           )}
         </div>
 
-        <div className="min-w-0">
-          <ActivityFeed events={events} status={status} statusDetail={statusDetail} />
-        </div>
+        {/* Reassurance while the agent works, and nothing else. Once there is a
+            result the feed is a debugging tool, not a thing a reader wants
+            beside the report; the events stay available on /v1/topics/:id/events
+            for anyone who does. */}
+        {working && (
+          <div className="min-w-0">
+            <ActivityFeed events={events} status={status} statusDetail={statusDetail} />
+          </div>
+        )}
       </div>
     </div>
   )
@@ -215,7 +231,7 @@ function TabButton({
 
 function StatusBar({ topic }: { topic: TopicDetail }) {
   const [, tick] = useState(0)
-  const running = topic.state === 'planning' || topic.state === 'delivering'
+  const running = isPipelineWorking(topic.state)
 
   // Elapsed time is only interesting while work is happening; re-render each
   // second in that case and never otherwise.
