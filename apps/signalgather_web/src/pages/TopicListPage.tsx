@@ -68,7 +68,7 @@ export function TopicListPage() {
           </Card>
         ) : topics.length === 0 ? (
           <EmptyState title="No topics yet">
-            Describe what you want to track in plain language above. SignalGather plans the
+            Describe what you want to track in plain language above. Particle TICO plans the
             research, shows you the plan for approval, then gathers and reports on it.
           </EmptyState>
         ) : (

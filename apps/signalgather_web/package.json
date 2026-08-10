@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "SignalGather topic intelligence UI (#16) — talks to the claude_agent topic API.",
+  "description": "Particle TICO topic intelligence UI (#16) — talks to the claude_agent topic API.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
