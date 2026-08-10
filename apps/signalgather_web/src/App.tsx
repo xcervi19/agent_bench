@@ -61,7 +61,7 @@ function TopBar() {
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-4">
           <Link to={user ? '/' : PUBLIC_PREFIX} className="text-sm font-semibold tracking-tight text-ink">
-            SignalGather
+            Particle TICO
           </Link>
           <Link to={PUBLIC_PREFIX} className="text-xs text-ink-muted hover:text-ink">
             Shared topics
