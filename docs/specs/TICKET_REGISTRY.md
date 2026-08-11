@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#42` (assign to the next new ticket; then bump this line)
+**Next available number:** `#45` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -38,6 +38,8 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 || 39 | `docs/specs/active/source_authority_enforcement_39.md` | verified on prod; follow-ups open | Refresh was 0% primary sources -> 80% after two-tier freshness + source-mix measurement. Open: whitelist stance on state media, maritime/insurance coverage, nioc.ir returning 0 |
 || 38 | `docs/specs/active/multilingual_topic_grounding_38.md` | implemented, awaiting deploy | Diacritics/inflection matching + `topic_parse` leg so non-English topics ground against the whitelist; extends #29/#30/#36 |
 || 40 | `docs/specs/active/public_topic_sharing_40.md` | implemented, awaiting migration + deploy | Publish a finished topic: anonymous GET-only router, frozen actions, no spend without an account; extends #24/#16 |
+|| 43 | `docs/specs/active/claude_llm_judge_migration_43.md` | planned | Move the eval framework's LLM judge off OpenAI onto Claude Code |
+|| 44 | `docs/specs/active/insurance_vessel_tracking_sources_44.md` | planned | Marine war-risk / vessel-tracking source branch + Hormuz playbook routing; closes the #39 maritime/insurance follow-up and the baseline's `primary_source_discovery` 1.8/5 gap. **Needs an image rebuild — config is baked in** |
 
 ---
 ## Done (shipped)

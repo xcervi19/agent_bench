@@ -92,6 +92,16 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **Next step:** browser check on `https://agent-test1.particletico.com/app/shared/9f2607da-4a94-494d-83bc-2af3ad9a8842` (left published on test1). Nothing is shared on prod; that stays each owner's decision.
 - **Noticed while deploying (unrelated):** test1's `CLAUDE_AGENT_ALLOWED_COMMANDS` still lacks `/newsfind-topic-parse`, so #38's grounding leg degrades on that slot; prod got it in `1672fe9`. Also, the test1 worktree was carrying a stale destructive index (82 staged deletions) — stashed as `test1 slot-local before #40 deploy`, recoverable with `git stash pop`.
 
+### Insurance & vessel-tracking source branch (#44) — planned
+- **Spec:** `docs/specs/active/insurance_vessel_tracking_sources_44.md`
+- **Lane:** Product / quality — *whether the report can answer the question it was asked*
+- **Why:** the Hormuz baseline scores `primary_source_discovery` **1.8/5**, and the brief explicitly asks about war-risk premiums and whether underwriters withdrew cover. `source_whitelist.json` contains **no marine-insurance body at all** (602 `official` + 8 `data_feed`, none underwriting), and `strait_of_hormuz.md` names war-risk premiums as price driver #4 while routing them to *navies*. So the report answered the insurance question from trade press because nothing else was reachable.
+- **Two causes, both must be fixed:** inventory (no such source in the whitelist) *and* routing — `entities_named_in` (`sources/whitelist.py:82-95`) only matches entities **literally named in the brief**, so a whitelist entry not referenced by a matched playbook is unreachable. **The playbook is the routing layer; the whitelist is only the register.**
+- **Confirmed live 2026-08-10:** LMA states war cover *is* available (88 % of the Lloyd's marine war market still writing hull war risks) and that reduced traffic is driven by crew/vessel safety, not insurance availability; Lloyd's List separately debunks the "P&I clubs cancelled war risk cover" story (it was charterers' liability extensions only). The report's conclusion was right but undefendable on its own sourcing — exactly the gap #44 closes.
+- **Also in scope:** demote/drop `nioc.ir` (P1 in the playbook, `site:nioc.ir` returned 0 across both #39 cycles); record the empty official-social section as blocked on #31.
+- **Not a hot config change:** `docker/Dockerfile.claude_agent:49-50` bakes `source_whitelist.json` and `playbooks/` into the image (no volume mount), so this needs a rebuild + redeploy — do not land it on a slot about to be demoed.
+- **Next step:** pick the free-publishing insurance tier (JWC/LMA, IG P&I, IUMI, IMB), wire it into the playbook, rebuild, then re-run `topic.txt` verbatim and compare with `scripts/evaluate_output.sh relative`.
+
 ### Source authority enforcement (#39)
 - **Spec:** `docs/specs/active/source_authority_enforcement_39.md`
 - **Lane:** Product / quality — *what a report is allowed to stand on*
