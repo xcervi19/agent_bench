@@ -148,6 +148,23 @@ body {
   cursor: help;
 }
 
+/* The source a citation just jumped to. Arriving on a long list with no cue
+   leaves the reader hunting for the row they asked for (see lib/citationNav). */
+.citation-target {
+  animation: citation-target-flash 1.6s ease-out;
+}
+/* A ring rather than a background wash: SourceCard paints its own surface, and
+   animating that would flash back to the wrong colour on the last frame. */
+@keyframes citation-target-flash {
+  0%,
+  40% {
+    box-shadow: 0 0 0 2px var(--color-accent);
+  }
+  100% {
+    box-shadow: 0 0 0 2px transparent;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

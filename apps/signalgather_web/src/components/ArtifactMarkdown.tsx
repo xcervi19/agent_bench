@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { indexSources, linkCitations } from '../lib/citations'
+import { useCitationNav } from '../lib/citationNav'
 import { renderMarkdown } from '../lib/markdown'
 import { parseArtifact } from '../lib/widgets/parse'
 import type { SourceRef } from '../lib/widgets/types'
@@ -43,9 +44,30 @@ export function ArtifactMarkdown({
     [segments, index],
   )
 
+  // Citations are plain anchors in the sanitized HTML, so the click is caught by
+  // delegation rather than per-link handlers. A citation whose card is already
+  // rendered here (a `news-card` widget) keeps the native jump; only one whose
+  // anchor is absent — it lives on the Sources tab — is handed to the navigator.
+  const navigateToSource = useCitationNav()
+  const onClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!navigateToSource) return
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return
+      const anchor = (event.target as HTMLElement).closest?.('a.citation')
+      const href = anchor?.getAttribute('href')
+      if (!href?.startsWith('#src-')) return
+      if (document.getElementById(href.slice(1))) return
+      event.preventDefault()
+      navigateToSource(href.slice('#src-'.length))
+    },
+    [navigateToSource],
+  )
+
   return (
     <WidgetContext.Provider value={{ sources: index }}>
-      <div className={cx('text-sm text-ink', className)}>
+      {/* Delegation, not a widget: the click target is always a real <a>, so
+          keyboard activation bubbles here the same way a pointer click does. */}
+      <div className={cx('text-sm text-ink', className)} onClick={onClick}>
         {rendered.map((item, position) =>
           item.kind === 'html' ? (
             <div

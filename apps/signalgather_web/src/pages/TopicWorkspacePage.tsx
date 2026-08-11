@@ -8,6 +8,7 @@ import type { TopicDetail } from '../lib/types'
 import { ActivityFeed } from '../components/ActivityFeed'
 import { PlanReview } from '../components/PlanReview'
 import { StateBadge } from '../components/StateBadge'
+import { CitationNavContext, useCitationNavigation } from '../lib/citationNav'
 import { ReportView } from '../components/report/ReportView'
 import { SourcesPanel } from '../components/report/SourcesPanel'
 import { MonitorPanel } from '../components/monitor/MonitorPanel'
@@ -40,6 +41,9 @@ export function TopicWorkspacePage() {
     setChosen(null)
   }
   const tab = chosen ?? suggested
+
+  // A `[s04]` in the report has no anchor to jump to while Sources is unmounted.
+  const navigateToSource = useCitationNavigation<Tab>('sources', tab, setChosen)
 
   const tabs = useMemo(() => visibleTabs(topic), [topic])
 
@@ -99,6 +103,7 @@ export function TopicWorkspacePage() {
           working && 'lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]',
         )}
       >
+        <CitationNavContext.Provider value={navigateToSource}>
         <div className="min-w-0 space-y-5">
           <nav className="flex flex-wrap gap-1" role="tablist" aria-label="Topic sections">
             {tabs.map((entry) => (
@@ -155,6 +160,7 @@ export function TopicWorkspacePage() {
             <SharePanel topic={topic} onChanged={() => void stream.refresh([])} />
           )}
         </div>
+        </CitationNavContext.Provider>
 
         {/* Reassurance while the agent works, and nothing else. Once there is a
             result the feed is a debugging tool, not a thing a reader wants

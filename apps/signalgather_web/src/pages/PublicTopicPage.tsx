@@ -12,6 +12,7 @@ import type { PlannedQuery } from '../lib/types'
 import { Markdown } from '../components/Markdown'
 import { QueryTable } from '../components/QueryTable'
 import { StateBadge } from '../components/StateBadge'
+import { CitationNavContext, useCitationNavigation } from '../lib/citationNav'
 import { ReportView } from '../components/report/ReportView'
 import { SourcesPanel } from '../components/report/SourcesPanel'
 import { DeltaTimeline } from '../components/monitor/DeltaTimeline'
@@ -56,6 +57,9 @@ export function PublicTopicPage() {
   // Which sections exist depends on what was published, so a remembered choice
   // is only honoured while it still points at something.
   const tab = chosen && tabs.some((entry) => entry.id === chosen) ? chosen : tabs[0]?.id
+
+  // A `[s04]` in the report has no anchor to jump to while Sources is unmounted.
+  const navigateToSource = useCitationNavigation<Tab>('sources', tab, setChosen)
 
   if (shared.error) {
     return (
@@ -125,6 +129,7 @@ export function PublicTopicPage() {
       )}
 
       {!shared.loading && tabs.length > 0 && (
+        <CitationNavContext.Provider value={navigateToSource}>
         <div className="mt-5 space-y-5">
           {tabs.length > 1 && (
             <nav className="flex flex-wrap gap-1" role="tablist" aria-label="Sections">
@@ -177,6 +182,7 @@ export function PublicTopicPage() {
             />
           )}
         </div>
+        </CitationNavContext.Provider>
       )}
 
       {!user && (
