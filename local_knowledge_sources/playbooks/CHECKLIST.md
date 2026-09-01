@@ -1,4 +1,4 @@
-# Playbooks CHECKLIST (55 = A6+B7+C12+D8+E6+F8+G5+H3)
+# Playbooks CHECKLIST (56 = A6+B7+C12+D8+E6+F8+G6+H3)
 
 ## A Global (6)
 - [x] crude_oil_global.md
@@ -59,9 +59,10 @@
 - [x] nord_stream_alternatives_eu.md
 - [x] turkmenistan_uzbekistan_gas_cn.md
 
-## G Importers (5)
+## G Importers (6)
 - [x] china_oil_gas_imports.md
 - [x] india_discounted_crude.md
+- [x] india_gas_demand.md  <!-- #45 — authored 2026-08-20; ingest pending -->
 - [x] japan_korea_lng_demand.md
 - [x] europe_gas_storage_ttf.md
 - [x] southeast_asia_lng_imports.md
@@ -72,4 +73,4 @@
 - [x] israel_levant_gas.md
 
 ## Ingest
-- [x] All 55 preprocessed + ingested `document_type=playbook` (tenant `00000000-0000-0000-0000-000000000001`; artifacts under `artifacts/playbooks_preprocess/`)
+- [ ] All 56 preprocessed + ingested `document_type=playbook` (tenant `00000000-0000-0000-0000-000000000001`; artifacts under `artifacts/playbooks_preprocess/`)

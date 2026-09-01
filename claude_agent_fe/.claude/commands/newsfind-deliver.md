@@ -60,7 +60,16 @@ Echo `{"phase":"P1","status":"done"}`.
 
 ## Phase 2 — search
 
-For each query in `queries[]` (cap 15), call `WebSearch` with the `query` text. Run in batches of **up to 4 in parallel** to keep latency down. Take up to 5 candidate hits per query; use `WebFetch` only when the snippet is too thin (cap 3 fetches per query).
+For each query in `queries[]` (cap 15), call `WebSearch` with the `query` text — and with `allowed_domains` set to the query's `allowed_domains` when it has one. Run in batches of **up to 4 in parallel** to keep latency down. Take up to 5 candidate hits per query; use `WebFetch` only when the snippet is too thin (cap 3 fetches per query).
+
+**Pass `allowed_domains` when the entry carries one.** It is the structured form of a
+`site:` filter and the reason official sources are reachable at all — a batched filter
+takes one query to all of a playbook's domains. Send the list verbatim; do not re-add
+`site:` to the query text, and do not send an empty list (an absent field searches the
+whole web, an empty one allows nothing). If a filtered query returns nothing, that is a
+result worth having — record it and move on; do not silently retry it unfiltered, because
+"this domain had nothing" and "we gave up on the filter" must not look the same.
+
 
 If a single `WebSearch` fails, record `{"id":..., "error":"..."}` in `executed_queries[]` and continue. Never crash.
 

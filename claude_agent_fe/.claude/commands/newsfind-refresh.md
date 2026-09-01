@@ -12,7 +12,7 @@ You are a senior trading-desk research analyst. In ONE session you run the **per
   "previous_deliver_run_dir": "<absolute path with previous news.json/report.json> | null",
   "refresh_run_dir": "<same as $ARGUMENTS>",
   "short_term_queries": [
-    {"id":"st01","query":"...","language":"en","priority":1,"source":"report.next_queries","rationale":"..."},
+    {"id":"st01","query":"...","language":"en","priority":1,"source":"report.next_queries","rationale":"...","allowed_domains":["ppac.gov.in"]},
     ...
   ],
   "since_iso": "<iso timestamp of last refresh, or null on first refresh>",
@@ -87,7 +87,16 @@ Echo `{"phase":"R1","status":"done"}`.
 
 ## Phase R2 — search
 
-For each entry in `short_term_queries[]`, call `WebSearch` with the `query` text. Run in batches of **up to 4 in parallel**. Take up to **3 candidate hits per query** (refresh is cheaper than a full deliver).
+For each entry in `short_term_queries[]`, call `WebSearch` with the `query` text — and with `allowed_domains` set to the entry's `allowed_domains` when it has one. Run in batches of **up to 4 in parallel**. Take up to **3 candidate hits per query** (refresh is cheaper than a full deliver).
+
+**Pass `allowed_domains` when the entry carries one.** It is the structured form of a
+`site:` filter and the reason official sources are reachable at all — a batched filter
+takes one query to all of a playbook's domains. Send the list verbatim; do not re-add
+`site:` to the query text, and do not send an empty list (an absent field searches the
+whole web, an empty one allows nothing). If a filtered query returns nothing, that is a
+result worth having — record it and move on; do not silently retry it unfiltered, because
+"this domain had nothing" and "we gave up on the filter" must not look the same.
+
 
 **Before any `WebFetch`, check the corpus.** When a candidate's `url_hash` appears in
 `evidence_dir/index.json`, `Read` that file — you get the whole article rather than a

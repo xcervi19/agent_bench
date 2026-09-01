@@ -4878,5 +4878,101 @@
     "category": "international_agency",
     "notes": "Wilhelmshaven (FSRU + crude import); Brunsbüttel (FSRU); Rostock; Hamburg crude product arrivals; Kiel Canal transit monitoring",
     "agreement_count": 2
+  },
+  {
+    "entity": "Petroleum Planning & Analysis Cell (PPAC)",
+    "domain": "ppac.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Monthly natural gas production, LNG imports and sector-wise consumption (fertilizer, city gas, power, refinery); the official Indian gas balance",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Petroleum and Natural Gas Regulatory Board (PNGRB)",
+    "domain": "pngrb.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "CGD bidding rounds and geographical-area authorisations, minimum work programme, transmission and CGD tariff orders",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Central Electricity Authority (CEA)",
+    "domain": "cea.nic.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Monthly generation by fuel including gas-based; installed capacity, plant load factors, demand peaks",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Ministry of Power (India)",
+    "domain": "powermin.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Power policy, dispatch schemes and demand-side measures affecting gas-fired generation",
+    "agreement_count": 1
+  },
+  {
+    "entity": "National Power Portal (India)",
+    "domain": "npp.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Daily and monthly power generation, capacity and demand dashboards",
+    "agreement_count": 1
+  },
+  {
+    "entity": "GAIL (India)",
+    "domain": "gailonline.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "National gas transmission network, pipeline commissioning, LNG portfolio and marketing volumes",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Petronet LNG",
+    "domain": "petronetlng.in",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Dahej and Kochi regasification; terminal utilisation, capacity expansion, term contract renegotiation",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Indian Gas Exchange (IGX)",
+    "domain": "igxindia.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Traded domestic gas volumes and cleared prices; delivery-point spreads",
+    "agreement_count": 1
+  },
+  {
+    "entity": "IndianOil",
+    "domain": "iocl.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Refinery throughput and own city gas distribution arm",
+    "agreement_count": 1
+  },
+  {
+    "entity": "BPCL",
+    "domain": "bharatpetroleum.in",
+    "type": "official",
+    "category": "noc",
+    "notes": "Refinery throughput and own city gas distribution arm",
+    "agreement_count": 1
+  },
+  {
+    "entity": "HPCL",
+    "domain": "hindustanpetroleum.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Refinery throughput and own city gas distribution arm",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Gujarat Gas",
+    "domain": "gujaratgas.com",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Largest Indian city gas distributor; CNG stations and PNG household connections as the city gas growth proxy",
+    "agreement_count": 1
   }
 ]

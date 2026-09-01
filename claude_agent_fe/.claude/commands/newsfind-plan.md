@@ -126,11 +126,23 @@ Reason through the topic:
 2. **Current state** — 2–4 sentences synthesizing what RAG + WebSearch revealed.
 3. **Working thesis** — 1–3 sentences, the most actionable hypothesis.
 4. **Scenarios** — 2–4 entries: `{id, label, premise, probability?}`.
-5. **Queries** — 10–15 entries, each `{id (q01..q15), query, intent (monitoring|context), source_class, language, region, freshness (24h|7d|30d|any), priority (1..3), covers_entity[], rationale}`. Cover every tier-1 actor with ≥1 query.
+5. **Queries** — 10–15 entries, each `{id (q01..q15), query, intent (monitoring|context), source_class, language, region, freshness (24h|7d|30d|any), priority (1..3), covers_entity[], allowed_domains[]?, rationale}`. Cover every tier-1 actor with ≥1 query.
 
    Queries are the one place multilingual text belongs: a ministry publishes its own announcements in its own language, and an English-only query never reaches them. Draw the languages from `source_languages` in `facets.json`. Where it lists a language other than `en`, at least 30 % of queries are non-`en`, written in that language's native script. `language` records which one each query uses.
 
-   Every `source_targets.json` entity with `type: "official"` gets ≥1 query. Use its `known_domains` verbatim for site-scoped queries and its `signals` to choose the angle. Any domain not listed there is off-limits — express those angles as plain keyword queries instead.
+   Every `source_targets.json` entity with `type: "official"` gets ≥1 query. Use its `signals` to choose the angle. Any domain not in `source_targets.json` is off-limits — express those angles as plain keyword queries instead.
+
+   **Reach official domains through `allowed_domains`, not through `site:` in the query text.** `allowed_domains` is a list, so one query can cover many domains at once, while `site:` covers exactly one — that difference is what decides whether a run touches a handful of official sources or all of them. Measured on an India gas query: the same wording returned 1 primary source in 9 unfiltered results, and 10 in 10 with the domains passed as a filter, surfacing regulator demand projections that the unfiltered search never ranked.
+
+   So:
+
+   * Group the `known_domains` of related official entities into **batches of 5–8 domains of comparable authority and the same role** — regulators together, network operators together, power-system bodies together — and give each batch one query whose wording covers the shared angle. Prefer several such batched queries over single-domain ones.
+   * **Do not put a dominant source in the same batch as weaker peers.** Search still ranks inside the filter, so one strong domain eats the slots. Measured: a 10-domain India batch let `pngrb.gov.in` take 5 of 10 results while `cea.nic.in`, `npp.gov.in`, `powermin.gov.in`, `gailonline.com`, `igxindia.com` and `dghindia.gov.in` returned **nothing** — and the same six, given their own batch, returned 10 good hits including CEA's and NPP's monthly gas-to-power PDFs.
+   * **The same question asked against different domain batches returns disjoint results.** Three runs of one India question — unfiltered, then two different batches — produced 29 links with **zero URL overlap**, 20 of them primary. A filter is not only a precision tool, it multiplies how much of the web one question reaches: plan several filtered variants of an important question rather than one.
+   * Put the domains in `allowed_domains` **verbatim from `known_domains`**, bare hosts, no scheme and no `www.` (`ppac.gov.in`, not `https://www.ppac.gov.in/`).
+   * Leave `site:` out of the `query` text entirely. Writing both applies the filter twice and narrows the batch to one domain.
+   * Omit `allowed_domains` for open web queries. An absent field means "search the whole web"; an empty list would mean "allow nothing" and returns nothing.
+   * Keep some queries unfiltered. A domain filter can only return what we already know to look for, and part of the job is finding sources the register does not yet hold.
 6. **monitoring_plan** — `{trigger_terms[], cadence}`.
 
 Echo `{"phase":"P3","status":"done"}`.
@@ -159,7 +171,7 @@ cat > "$RUN_DIR/parsed.json" <<'JSON'
   "rag_context_refs": [ ... ],
   "web_seed_refs": [ ... ],
   "source_targets": [ { "entity": "...", "known_domains": ["..."], "playbook_refs": ["..."] } ],
-  "queries": [ ... ],
+  "queries": [ { "id": "q01", "query": "...", "allowed_domains": ["ppac.gov.in", "pngrb.gov.in"], "...": "..." } ],
   "monitoring_plan": { "trigger_terms": [...], "cadence": "..." }
 }
 JSON
