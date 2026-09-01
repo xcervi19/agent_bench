@@ -25,11 +25,11 @@ docs-only it is code-identical to `5b6d689`.
 
 ### What is NOT verified, and cannot be from here
 
-**Nobody has confirmed which commit prod is actually running.** The last prod deploy this
-file records is `bb924d7` (2026-08-01, #40) — which predates #42, the Particle TICO rename
-and everything since. Either prod is genuinely on `bb924d7` and the demo ran on an older
-build, or it was deployed later and no one wrote it down. The operator believes the last
-working pre-presentation commit is what is deployed; that is a belief, not a check.
+**ANSWERED 2026-09-01 — prod runs `de67d92`.** Checked on the box
+(`cd ~/agent_bench && git rev-parse --short HEAD`): production sits exactly on the rollback
+anchor. `~/agent_bench` is on `main`, clean apart from two `.env` backups and `claude_home/`.
+So the demoed build and the anchor are the same commit, and a rollback is a no-op rather
+than a revert. The line below is kept because the *mechanism* is still missing.
 
 **The application does not report its own build.** `GET /v1/agent/info` returns Claude
 binary, workspace and limits — no commit, no build SHA. So the running system cannot be
@@ -122,6 +122,20 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 ## In Progress
 
+### test1 slot — refreshed and verified 2026-09-01
+- **Why:** test1 is where the current code gets judged, and it was judging nothing: the slot ran `feature/report-from-evidence` (`3ea0fbe`), schema stood at `0010`, and every relevant change (#45 encoding, #46 build item 0, #50) existed only in a local working tree.
+- **The task shrank on inspection.** The RAG mirror was already done and still holds — prod and test1 agree byte for byte (`events_md5=8c74ea92…`, `summary_md5=76d06dd1…`, `docs_md5=1729f9b9…`, 141/9519 rows, tenant `0000…0001`, `ivfflat.probes=10`). Nothing was copied; the gap was code and schema.
+- **Branch:** `feat/india-pilot-and-live-sharing` (`26d66fb` #45/#46, `c07038d` #50), pushed and checked out in `~/agent_bench_test1`. `main` untouched; prod untouched.
+- **Schema:** `0010 → 0011 → 0012 → 0013`. **`0012_search_queries` and `0013_topic_share_mode` had never run on any database** — test1 is their first real application, and both applied clean. Corpus checksums are unchanged after the migrations, so nothing touched the corpus.
+- **Env fixes on the slot** (`apps/claude_agent/.env`, backup at `.env.bak_before_test1_refresh`): `/newsfind-topic-parse` added to `CLAUDE_AGENT_ALLOWED_COMMANDS` (the #38 grounding gap noted during the #40 deploy — closed), `CLAUDE_AGENT_SCHEDULER_ENABLED=true`, and `CLAUDE_AGENT_DATABASE_URL` repointed from `agentic` to `agentic_test1`. **That third one was a live landmine:** the slot's env file named the *production* database and only the compose `environment:` block, which overrides `env_file:`, kept the app off it.
+- **Ordering that matters for every future slot deploy:** `docker/Dockerfile` does `COPY database ./database`, so migrations are baked into the `rag_adhoc` image — **build before `alembic upgrade`**, or the upgrade silently sees only the migrations of the old image. That is why test1 sat at `0010`. Also: `scripts/devops/vps_setup_test_slot.sh` is **not** the tool for this — it overwrites `apps/claude_agent/.env` from prod and its `up -d` carries no `--build`.
+- **Verified on the slot:** `alembic current = 0013`; `/readyz` ready (claude 2.1.197); `scheduler.started` in the boot log; RAG returns rows for an India query through `$RAG_BASE_URL` with the tenant header (proves corpus + tenant + embeddings together); `discover_sources_for_topic` **inside the deployed image** returns 32 known sources with all 9 India primaries and the `india_gas_demand.md` playbook; `/v1/agent/info` lists `/newsfind-topic-parse`; `/app`, `/app/shared`, `/app/shared/<id>` and public `report.md` all 200; anonymous `GET /v1/topics` 401 and every write verb on the public router 405.
+- **#50 proven against real data, without spending:** the 0013 backfill flipped `9f2607da` to `share_mode=frozen` (it was shared under a fixed-state promise), the same owner call answers **409 while frozen and 200 while live**, and the public payload carries `share_mode` + `updates` with `cache-control: public, max-age=30` on GET (HEAD is 405 — the router is GET-only by construction). The topic is left **live** for the #40/#50 browser pass: `https://agent-test1.particletico.com/app/shared/9f2607da-4a94-494d-83bc-2af3ad9a8842`.
+- **Correction to the plan's own expectation:** `available_actions` stays `[]` on a live share — `_actions()` returns `[]` for any `reported` topic, shared or not. The flip that actually proves control returned is the 409 → 200 on an owner write, which is what was measured.
+- **Backup before the work:** `~/backups/agentic_test1_20260901_1627.dump` (78 MB, `pg_dump -Fc`).
+- **Not done, deliberately:** no India topic has been run — that costs real money and is a separate decision. Prod is still at `0011` and does not have #45/#46/#50.
+- **Next step:** run the India topic on test1 and read the source mix before touching anything else (`#45` next step), or drive `testing/ui_smoke_16.md` §7e against the live share.
+
 ### Register labels (#47) — blocker for `allowed_domains`
 - **Spec:** `docs/specs/active/register_labels_47.md`
 - **Why:** `entities_named_in` matches on the **entity name** and never looks at the domain, so it cannot know a country exists. Iran's `mop.ir` matches an India topic because "Ministry of Petroleum" is a token-subset of "Ministry of Petroleum and Natural Gas"; Bangladesh's `mpemr.gov.bd` matches because `_name_variants` splits its name at the comma down to "Ministry of Power", and the topic supplies `ministry` (from the *petroleum* ministry) and `power` (from "power generation") **115 characters apart** — the phrase "Ministry of Power" never appears. `covers` is a set operation with no phrase structure.
@@ -186,7 +200,7 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **Verified live on prod 2026-07-31.** Full journey exercised via API: topic created (JWT path), plan 375 s -> gate -> deliver 435 s -> `reported`, then two monitored refresh cycles. Widgets landed on the first run (5 fenced, 0 legacy, all types registered, all `news-card` ids resolving); all 25 report citations resolved against `news.json`; 33 % of plan queries were non-English from an English brief; the addendum provably did not modify the original report (byte-identical). Costs: report $3.36, refresh $1.41 / $1.86.
 - **What is still unexercised:** the UI itself. Everything above went through the API. Nobody has driven `testing/ui_smoke_16.md` in a browser — §5 (reconnect) and §11 (responsive) remain the criteria no automated check can close. Scheduled refresh is also unexercised: `CLAUDE_AGENT_SCHEDULER_ENABLED=false` on prod, so only the manual path has run (same `run_refresh` code, differing only in `trigger`).
 - **Also:** set `CLAUDE_AGENT_ALLOW_SERVICE_KEY_BYPASS=false` on any slot used as a real product surface — with the harness default an unauthenticated browser is the service role and sees every topic.
-- **DEPLOYED TO PROD 2026-07-27** (commit `1672fe9`, `agent.particletico.com`): image builds the SPA, `/app` serves it over HTTPS, anonymous `/v1/topics` is 401, service key still 200, `readyz` ready. Deployed to **prod rather than test1** deliberately — test1's RAG corpus is empty (0 documents vs 141 on prod), so the RAG-grounded plan stage cannot be exercised there at all.
+- **DEPLOYED TO PROD 2026-07-27** (commit `1672fe9`, `agent.particletico.com`): image builds the SPA, `/app` serves it over HTTPS, anonymous `/v1/topics` is 401, service key still 200, `readyz` ready. Deployed to **prod rather than test1** deliberately — at the time test1's RAG corpus was empty (0 documents vs 141 on prod). **No longer true (verified 2026-09-01):** test1 mirrors prod exactly — 141 documents / 9519 events, identical `md5` over both ids and summaries, same tenant `0000…0001`, same `ivfflat.probes = 10`. The RAG-grounded plan stage is exercisable on test1.
 - **Two problems surfaced by the deploy, both fixed:** the anonymous-read exposure above, and `/newsfind-topic-parse` missing from prod's `CLAUDE_AGENT_ALLOWED_COMMANDS` (which would have silently degraded #38's grounding leg — caught by the boot warning added in this same work).
 - **Still not exercised:** no topic has been run end to end on the new build. `CLAUDE_AGENT_SCHEDULER_ENABLED=false` on prod, so 16c's *scheduled* refresh path cannot be tested there until that is flipped (no subscription currently has `schedule_enabled`, so flipping it is safe); manual refresh works.
 - **Next step:** work `testing/ui_smoke_16.md` end to end against `https://agent.particletico.com/app` — §7b (widgets), §7d (monitoring/deltas), §5 (reconnect) and §11 (responsive) are what unit tests cannot close.
