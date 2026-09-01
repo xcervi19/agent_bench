@@ -8,7 +8,7 @@ import {
 } from '../lib/publicApi'
 import { usePublicTopic } from '../lib/usePublicTopic'
 import { useAuth } from '../lib/useAuth'
-import type { PlannedQuery } from '../lib/types'
+import type { PlannedQuery, PublicTopic } from '../lib/types'
 import { Markdown } from '../components/Markdown'
 import { QueryTable } from '../components/QueryTable'
 import { StateBadge } from '../components/StateBadge'
@@ -36,6 +36,11 @@ const PUBLIC_LOADERS: DeltaLoaders = {
  * through (`publicApi.ts`) has no write call to make, and the server's public
  * router has no write route to answer, so there is nothing here that can cost
  * anybody anything.
+ *
+ * On a **live** share (#50) the page keeps up: `usePublicTopic` polls, and what
+ * arrives is always a completed state. The header says which kind of share this
+ * is and how fresh it is, because "read-only" and "out of date" are different
+ * promises and a reader deserves to know which one they are holding.
  */
 export function PublicTopicPage() {
   const { topicId = '' } = useParams()
@@ -99,18 +104,19 @@ export function PublicTopicPage() {
           </h1>
           <StateBadge state={topic.state} />
         </div>
-        <p className="mt-2 text-xs text-ink-faint">
-          <span className="rounded-full border border-line px-2 py-0.5">Read-only</span>{' '}
-          {topic.published_at ? (
-            <span title={absoluteTime(topic.published_at)}>
-              Shared {relativeTime(topic.published_at)} — this is the state of the research at
-              that moment.
-            </span>
-          ) : (
-            <span>This is a shared snapshot of someone else&apos;s research.</span>
-          )}
-        </p>
+        <Freshness topic={topic} />
       </header>
+
+      {shared.updatesSinceOpened > 0 && (
+        <div
+          role="status"
+          className="mt-4 rounded-xl border border-accent/40 bg-accent/10 px-4 py-2.5 text-sm text-ink"
+        >
+          {shared.updatesSinceOpened === 1
+            ? 'One update has landed since you opened this page.'
+            : `${shared.updatesSinceOpened} updates have landed since you opened this page.`}
+        </div>
+      )}
 
       {shared.loading && (
         <div className="mt-5">
@@ -178,7 +184,11 @@ export function PublicTopicPage() {
               deltas={shared.deltas}
               loading={false}
               loaders={PUBLIC_LOADERS}
-              title="Updates while this topic was monitored"
+              title={
+                topic.updates.live
+                  ? 'Updates as this topic is monitored'
+                  : 'Updates while this topic was monitored'
+              }
             />
           )}
         </div>
@@ -195,6 +205,47 @@ export function PublicTopicPage() {
         </footer>
       )}
     </div>
+  )
+}
+
+/**
+ * Which kind of share this is, and how current it is.
+ *
+ * A live share says when it last moved, not when it was shared: "shared in June"
+ * would read as stale on a page that updated an hour ago. A snapshot says the
+ * opposite, because there the share date *is* the freshness.
+ */
+function Freshness({ topic }: { topic: PublicTopic }) {
+  const { live, last_updated_at: updatedAt } = topic.updates
+  const pinned = topic.frozen_at ?? topic.published_at
+
+  return (
+    <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-faint">
+      <span className="rounded-full border border-line px-2 py-0.5">Read-only</span>
+      {live ? (
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-positive/40 bg-positive/10 px-2 py-0.5 font-medium text-positive">
+          <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-positive" />
+          Live
+        </span>
+      ) : (
+        <span className="rounded-full border border-line px-2 py-0.5">Snapshot</span>
+      )}
+      {live ? (
+        updatedAt ? (
+          <span title={absoluteTime(updatedAt)}>
+            Updated {relativeTime(updatedAt)} — this page keeps up as the topic does.
+          </span>
+        ) : (
+          <span>This page keeps up as the topic does.</span>
+        )
+      ) : pinned ? (
+        <span title={absoluteTime(pinned)}>
+          As of {absoluteTime(pinned)} — the state of the research at that moment.
+        </span>
+      ) : (
+        <span>This is a shared snapshot of someone else&apos;s research.</span>
+      )}
+    </p>
   )
 }
 

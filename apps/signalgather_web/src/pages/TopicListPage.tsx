@@ -112,9 +112,13 @@ function TopicRow({ topic }: { topic: TopicListItem }) {
         {topic.is_public && (
           <span
             className="rounded-full bg-positive/15 px-2 py-0.5 font-medium text-positive"
-            title="Published — anyone with the link can read it, and it is frozen until you stop sharing"
+            title={
+              topic.share_mode === 'frozen'
+                ? 'Shared as a snapshot — anyone with the link can read it, and it stays pinned until you unpin or stop sharing'
+                : 'Shared live — anyone with the link can read it as it updates; you keep full control'
+            }
           >
-            Shared
+            {topic.share_mode === 'frozen' ? 'Shared · snapshot' : 'Shared · live'}
           </span>
         )}
         {needsYou && (

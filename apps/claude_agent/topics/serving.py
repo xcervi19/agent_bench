@@ -9,12 +9,16 @@ does not.
 
 from __future__ import annotations
 
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import HTTPException
 from fastapi.responses import FileResponse
 
 from ..config import ClaudeAgentSettings
+from .db import session_scope
+from .models import Topic
 
 MEDIA_TYPES = {
     ".json": "application/json",
@@ -39,3 +43,29 @@ def artifact_response(
 ) -> FileResponse:
     path = artifact_path(settings, topic_hash, run_id, filename)
     return FileResponse(str(path), media_type=MEDIA_TYPES.get(path.suffix, "application/json"))
+
+
+async def advance_public_view(
+    topic_id: uuid.UUID, *, deliver_run_id: str | None = None
+) -> None:
+    """Move the public view forward — called only after work has finished (#50).
+
+    A live shared topic keeps running, so a reader has to be shown *some*
+    consistent state while the next cycle is in flight. That state is whatever
+    completed last, and this is the single place it advances:
+
+      * `run_deliver` succeeded  -> point the public view at the new report;
+      * a refresh cycle completed -> the report is the same file, but the topic
+        now says something newer, so only the stamp moves.
+
+    Nothing calls this on failure. A deliver that crashes leaves the previous
+    report shared and readable rather than replacing it with 404s, which is the
+    behaviour you want on a link that is already in somebody's inbox.
+    """
+    async with session_scope() as s:
+        row = await s.get(Topic, topic_id)
+        if row is None:
+            return
+        if deliver_run_id is not None:
+            row.public_deliver_run_id = deliver_run_id
+        row.public_updated_at = datetime.now(timezone.utc)

@@ -30,6 +30,14 @@ function baseState(over: Partial<PublicTopicState> = {}): PublicTopicState {
       created_at: '2026-07-30T10:00:00+00:00',
       updated_at: '2026-07-31T10:00:00+00:00',
       read_only: true,
+      share_mode: 'live',
+      frozen_at: null,
+      updates: {
+        live: true,
+        last_updated_at: '2026-08-02T09:00:00+00:00',
+        update_count: 3,
+        latest_seq: 3,
+      },
       has_plan: true,
       has_report: true,
     },
@@ -42,6 +50,7 @@ function baseState(over: Partial<PublicTopicState> = {}): PublicTopicState {
     deltas: [],
     loading: false,
     error: null,
+    updatesSinceOpened: 0,
     ...over,
   }
 }
@@ -108,5 +117,38 @@ describe('a shared topic', () => {
   it('invites a signed-out reader to sign in for their own research', () => {
     renderPage()
     expect(screen.getByRole('link', { name: /sign in/i })).toBeTruthy()
+  })
+})
+
+describe('freshness', () => {
+  it('tells a reader a live share keeps up, and when it last moved', () => {
+    renderPage()
+
+    expect(screen.getByText('Live')).toBeTruthy()
+    expect(screen.getByText(/this page keeps up as the topic does/i)).toBeTruthy()
+  })
+
+  it('dates a snapshot instead, because there the share date is the freshness', () => {
+    const base = baseState()
+    state = baseState({
+      topic: {
+        ...base.topic!,
+        share_mode: 'frozen',
+        frozen_at: '2026-08-01T09:00:00+00:00',
+        updates: { ...base.topic!.updates, live: false },
+      },
+    })
+    renderPage()
+
+    expect(screen.getByText('Snapshot')).toBeTruthy()
+    expect(screen.getByText(/the state of the research at that moment/i)).toBeTruthy()
+    expect(screen.queryByText(/keeps up as the topic does/i)).toBeNull()
+  })
+
+  it('says when updates landed under the reader rather than swapping silently', () => {
+    state = baseState({ updatesSinceOpened: 2 })
+    renderPage()
+
+    expect(screen.getByRole('status').textContent).toMatch(/2 updates have landed/i)
   })
 })

@@ -2,12 +2,31 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class TopicsBase(DeclarativeBase):
     pass
+
+
+# Share modes (#50). `live` is the default: sharing a topic publishes a
+# read-only view of it and takes nothing away from its owner. `frozen` is the
+# original #40 behaviour, kept for "here is the picture as of today" — it stops
+# the topic dead for everyone, owner included, until it is unshared.
+SHARE_LIVE = "live"
+SHARE_FROZEN = "frozen"
+
+
+def is_frozen(row: "Topic") -> bool:
+    """True when this topic is shared *and* pinned — the only case that blocks
+    the owner, and the only case where nothing may spend against the topic.
+
+    A private topic is never frozen, whatever `share_mode` happens to say: the
+    mode is meaningless until the row is shared, and reading it the other way
+    would let an unshared topic lock its own owner out.
+    """
+    return bool(row.is_public) and row.share_mode == SHARE_FROZEN
 
 
 class Topic(TopicsBase):
@@ -25,11 +44,25 @@ class Topic(TopicsBase):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     last_event_seq: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     # Sharing (#40). is_public is the only thing the anonymous read API consults:
-    # true means "this snapshot is world-readable and frozen", false means the
-    # row does not exist as far as /v1/public/* is concerned. Default false so a
-    # topic is private unless its owner says otherwise.
+    # true means "this row is world-readable", false means it does not exist as
+    # far as /v1/public/* is concerned. Default false so a topic is private
+    # unless its owner says otherwise.
     is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # What sharing does to the *owner* (#50) — never to visibility. `live` keeps
+    # every control and lets the public view follow the topic; `frozen` is the
+    # #40 snapshot, where the topic stops moving until it is unshared.
+    share_mode: Mapped[str] = mapped_column(String(16), nullable=False, default=SHARE_LIVE)
+    frozen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # The public view's read pointer (#50). Distinct from deliver_run_id, which
+    # is set *before* a deliver run writes anything: a stranger must never be
+    # pointed at a run that has produced no files, so this advances only when a
+    # run has finished. public_updated_at is the same fact as a timestamp — the
+    # "last updated" a reader sees, and the stamp their tab polls against.
+    public_deliver_run_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    public_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
@@ -179,6 +212,38 @@ class SearchDocumentFetch(TopicsBase):
     )
 
 
+class SearchQuery(TopicsBase):
+    """Append-only: one row per WebSearch call, whether or not it returned anything.
+
+    `search_observations` can only record a query that produced a hit. That makes
+    "we asked and search returned nothing" indistinguishable from "nobody asked",
+    and the two need opposite fixes — the first is a dead source, the second is a
+    gap in the query plan. This table is what tells them apart.
+
+    It also records the domain filter the call carried. Once the whitelist is
+    passed as `allowed_domains` (#46), the filter is the most important thing
+    about a search: a domain that was never in an `allowed_domains` list was
+    never reachable, no matter how the query was worded.
+    """
+
+    __tablename__ = "search_queries"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    topic_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("topics.id", ondelete="CASCADE"), nullable=False
+    )
+    run_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    query: Mapped[str] = mapped_column(Text, nullable=False)
+    # NULL means the call carried no filter at all, which is different from an
+    # empty list (a filter that allows nothing) — keep them distinguishable.
+    allowed_domains: Mapped[list[str] | None] = mapped_column(ARRAY(Text), nullable=True)
+    blocked_domains: Mapped[list[str] | None] = mapped_column(ARRAY(Text), nullable=True)
+    hit_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    searched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class SearchObservation(TopicsBase):
     """Append-only: one row every time a query returned a document, at a rank.
 
@@ -194,6 +259,10 @@ class SearchObservation(TopicsBase):
     )
     document_id: Mapped[int] = mapped_column(
         BigInteger, ForeignKey("search_documents.id", ondelete="CASCADE"), nullable=False
+    )
+    # Nullable: rows written before #46 have no query row to point at.
+    query_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("search_queries.id", ondelete="CASCADE"), nullable=True
     )
     run_id: Mapped[str] = mapped_column(String(64), nullable=False)
     query: Mapped[str] = mapped_column(Text, nullable=False)

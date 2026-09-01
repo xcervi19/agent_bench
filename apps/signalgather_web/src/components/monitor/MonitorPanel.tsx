@@ -74,16 +74,19 @@ export function MonitorPanel({
     )
   }
 
-  // A published topic is frozen (#40) and the API refuses every control below,
-  // so show why instead of a panel full of buttons that answer 409.
-  if (topic.is_public) {
+  // A *frozen* share is pinned (#50) and the API refuses every control below, so
+  // show why instead of a panel full of buttons that answer 409. A live share
+  // falls through to the ordinary panel: monitoring is exactly what keeps the
+  // shared page worth reading, so it stays the owner's to run.
+  if (topic.is_public && topic.share_mode === 'frozen') {
     return (
       <Card>
         <SectionHeading>Monitoring</SectionHeading>
         <p className="px-4 py-6 text-sm text-ink-muted">
-          Monitoring is paused while this topic is shared publicly, so what readers see stays
-          the snapshot you published — and a shared topic never spends on its own. Stop sharing
-          on the <span className="text-ink">Share</span> tab to control it again.
+          Monitoring is paused while this topic is shared as a snapshot, so what readers see
+          stays the state you pinned — and a pinned topic never spends on its own. Switch it
+          back to live sharing on the <span className="text-ink">Share</span> tab to run it
+          again; readers keep the same link either way.
         </p>
       </Card>
     )

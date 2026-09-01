@@ -23,6 +23,7 @@ from .facets import (
 )
 from .models import Topic, TopicEvent
 from .search_evidence import SearchEvidenceRecorder
+from .serving import advance_public_view
 from .source_quality import load_whitelisted_domains, summarize_run
 from .webhooks import deliver_event
 
@@ -251,6 +252,10 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
     if summary is None:
         return
     source_mix = summarize_run(out_dir, load_whitelisted_domains())
+    # The run has written its files; only now may a shared link point at it (#50).
+    # `deliver_run_id` was set before the run started, so it is not safe to serve
+    # publicly — see serving.advance_public_view.
+    await advance_public_view(topic_id, deliver_run_id=deliver_run_id)
     await emit(topic_id, "report.ready", {**summary, "source_mix": source_mix.as_payload()})
     await set_state(topic_id, STATE_REPORTED)
 

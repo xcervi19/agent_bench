@@ -31,9 +31,10 @@ from ..runner import CommandNotAllowedError, stream_claude
 from ..schemas import RunRequest
 from .db import session_scope
 from .evidence_export import export_evidence
-from .models import Topic, TopicRefreshDelta, TopicSubscription
+from .models import Topic, TopicRefreshDelta, TopicSubscription, is_frozen
 from .pipeline import emit, run_dir
 from .search_evidence import SearchEvidenceRecorder
+from .serving import advance_public_view
 from .source_quality import SourceMix, load_whitelisted_domains, summarize_run
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,41 @@ def _recency_hint(today_iso: str) -> str:
     return f"latest {today_iso[:7]}"  # e.g. "latest 2026-05"
 
 
+def _entry(
+    text: str,
+    origin: dict[str, Any] | None,
+    *,
+    language: str,
+    priority: int,
+    source: str,
+    rationale: Any,
+) -> dict[str, Any]:
+    """One monitoring-plan entry, preserving the origin query's domain filter.
+
+    `allowed_domains` is omitted rather than set to null when the origin had
+    none, so "no filter" stays absent from the artifact instead of arriving at
+    the agent as an empty instruction.
+    """
+    entry: dict[str, Any] = {
+        "query": text,
+        "language": language,
+        "priority": priority,
+        "source": source,
+        "rationale": rationale,
+    }
+    domains = _domains(origin)
+    if domains:
+        entry["allowed_domains"] = domains
+    return entry
+
+
+def _domains(origin: dict[str, Any] | None) -> list[str]:
+    if not isinstance(origin, dict):
+        return []
+    raw = origin.get("allowed_domains") or []
+    return [str(d).strip().lower().removeprefix("www.") for d in raw if str(d).strip()]
+
+
 def build_short_term_queries(
     parsed: dict[str, Any],
     report: dict[str, Any] | None,
@@ -65,7 +101,13 @@ def build_short_term_queries(
       - top-priority `parsed.queries` annotated with a recency hint
       - tier-1 actors × `parsed.monitoring_plan.trigger_terms` as fallback
 
-    Each entry: {id, query, language, priority, source}. IDs are `st01`, `st02`, …
+    Each entry: {id, query, language, priority, source, allowed_domains?}. IDs are
+    `st01`, `st02`, …
+
+    `allowed_domains` is carried through verbatim when the plan set one (#46). It
+    is the structured form of what used to be `site:` text inside the query, and
+    it is what makes the whitelist reachable: dropping it here would silently
+    turn a domain-filtered monitoring plan back into an open web search.
 
     `max_queries` bounds the plan. It is the main lever on corpus size: search
     returns roughly nine links per query, so the cap — not fetch success — is what
@@ -81,13 +123,14 @@ def build_short_term_queries(
             if not q:
                 continue
             text = f"{q} {hint}"
-            out.append({
-                "query": text,
-                "language": nq.get("language", "en"),
-                "priority": 1,
-                "source": "report.next_queries",
-                "rationale": nq.get("rationale") or nq.get("intent"),
-            })
+            out.append(_entry(
+                text,
+                nq,
+                language=nq.get("language", "en"),
+                priority=1,
+                source="report.next_queries",
+                rationale=nq.get("rationale") or nq.get("intent"),
+            ))
 
     seen = {e["query"].lower() for e in out}
     for q in sorted(parsed.get("queries") or [], key=lambda x: x.get("priority", 3)):
@@ -97,13 +140,14 @@ def build_short_term_queries(
         if not text or text.lower() in seen:
             continue
         seen.add(text.lower())
-        out.append({
-            "query": text,
-            "language": q.get("language", "en"),
-            "priority": q.get("priority", 2),
-            "source": "parsed.queries",
-            "rationale": q.get("rationale"),
-        })
+        out.append(_entry(
+            text,
+            q,
+            language=q.get("language", "en"),
+            priority=q.get("priority", 2),
+            source="parsed.queries",
+            rationale=q.get("rationale"),
+        ))
 
     if len(out) < 4:
         actors = (parsed.get("entities") or {}).get("actors") or []
@@ -116,13 +160,14 @@ def build_short_term_queries(
                 if text.lower() in seen:
                     continue
                 seen.add(text.lower())
-                out.append({
-                    "query": text,
-                    "language": "en",
-                    "priority": 2,
-                    "source": "monitoring_plan",
-                    "rationale": "actor × trigger_term",
-                })
+                out.append(_entry(
+                    text,
+                    None,
+                    language="en",
+                    priority=2,
+                    source="monitoring_plan",
+                    rationale="actor × trigger_term",
+                ))
 
     for i, q in enumerate(out, start=1):
         q["id"] = f"st{i:02d}"
@@ -149,11 +194,16 @@ async def _try_acquire_lock(subscription_id: int) -> bool:
         return result.scalar_one_or_none() is not None
 
 
-async def _is_published(topic_id: uuid.UUID) -> bool:
-    """True when the topic has been shared publicly (#40) and is therefore frozen."""
+async def _is_frozen(topic_id: uuid.UUID) -> bool:
+    """True when the topic is shared *and pinned* (#50) — the only share that
+    must not spend.
+
+    Not "is it shared": a live share (the default) keeps monitoring exactly as it
+    was before the link was handed out, which is the whole point of it.
+    """
     async with session_scope() as s:
         topic = await s.get(Topic, topic_id)
-        return topic is not None and bool(topic.is_public)
+        return topic is not None and is_frozen(topic)
 
 
 async def _release_lock(subscription_id: int) -> None:
@@ -177,11 +227,12 @@ async def run_refresh(
     *,
     trigger: str = "manual",
 ) -> None:
-    # A published topic is a frozen snapshot (#40): refusing here means no code
-    # path — manual, scheduled, or a task queued before the topic was shared —
+    # A frozen share is a pinned snapshot (#40/#50): refusing here means no code
+    # path — manual, scheduled, or a task queued before the topic was pinned —
     # can run a search against it and bill us for a topic nobody can act on.
-    if await _is_published(topic_id):
-        await emit(topic_id, "refresh.skipped", {"reason": "topic_published", "trigger": trigger})
+    # A live share falls straight through: its readers are meant to see this run.
+    if await _is_frozen(topic_id):
+        await emit(topic_id, "refresh.skipped", {"reason": "topic_frozen", "trigger": trigger})
         return
 
     if not await _try_acquire_lock(subscription_id):
@@ -326,6 +377,10 @@ async def run_refresh(
                 "trigger": trigger,
             })
         else:
+            # The cycle's artifacts exist and its delta row now reads
+            # `completed`, so this is the moment a shared link may show it (#50).
+            # Before this line the public router filters the cycle out entirely.
+            await advance_public_view(topic_id)
             await emit(topic_id, "refresh.completed", {
                 "subscription_id": subscription_id,
                 "refresh_seq": delta_seq,
@@ -472,14 +527,20 @@ def _result_preview(content: Any) -> str:
 # ---------------------------------------------------------------------------
 
 
-async def list_deltas(topic_id: uuid.UUID, limit: int = 50) -> list[dict[str, Any]]:
+async def list_deltas(
+    topic_id: uuid.UUID, limit: int = 50, *, statuses: tuple[str, ...] | None = None
+) -> list[dict[str, Any]]:
+    """Refresh history. `statuses` narrows it in the query, not afterwards —
+    the public view passes `("completed",)` so a cycle that is still running (its
+    row is inserted at the start) can never be advertised to a reader (#50).
+    """
     async with session_scope() as s:
+        stmt = select(TopicRefreshDelta).where(TopicRefreshDelta.topic_id == topic_id)
+        if statuses is not None:
+            stmt = stmt.where(TopicRefreshDelta.status.in_(statuses))
         rows = (
             await s.execute(
-                select(TopicRefreshDelta)
-                .where(TopicRefreshDelta.topic_id == topic_id)
-                .order_by(desc(TopicRefreshDelta.seq))
-                .limit(limit)
+                stmt.order_by(desc(TopicRefreshDelta.seq)).limit(limit)
             )
         ).scalars().all()
         return [

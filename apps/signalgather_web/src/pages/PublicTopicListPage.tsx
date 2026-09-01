@@ -51,8 +51,8 @@ export function PublicTopicListPage() {
       <Card className="p-5">
         <h1 className="text-lg font-semibold tracking-tight text-ink">Shared topics</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Research other people have published. Each one is a finished snapshot — free to read,
-          nothing to run.
+          Research other people have published — free to read, nothing to run. A live one keeps
+          up with its topic; a snapshot is the state it was pinned at.
         </p>
         <form
           className="mt-4 flex flex-wrap gap-2"
@@ -118,10 +118,28 @@ export function PublicTopicListPage() {
                     <StateBadge state={topic.state} />
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-faint">
-                    {topic.published_at && (
-                      <span title={absoluteTime(topic.published_at)}>
-                        Shared {relativeTime(topic.published_at)}
+                    {topic.updates.live ? (
+                      <span className="inline-flex items-center gap-1.5 font-medium text-positive">
+                        <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-positive" />
+                        Live
                       </span>
+                    ) : (
+                      <span>Snapshot</span>
+                    )}
+                    <span aria-hidden="true">·</span>
+                    {/* On a live row the useful date is when it last moved, not
+                        when it was shared — "shared in June" reads as stale on a
+                        page that updated an hour ago. */}
+                    {topic.updates.live && topic.updates.last_updated_at ? (
+                      <span title={absoluteTime(topic.updates.last_updated_at)}>
+                        Updated {relativeTime(topic.updates.last_updated_at)}
+                      </span>
+                    ) : (
+                      topic.published_at && (
+                        <span title={absoluteTime(topic.published_at)}>
+                          Shared {relativeTime(topic.published_at)}
+                        </span>
+                      )
                     )}
                     {topic.has_report && (
                       <>

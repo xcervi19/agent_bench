@@ -49,6 +49,8 @@ function topic(state: TopicState, over: Partial<TopicDetail> = {}): TopicDetail 
     is_public: false,
     published_at: null,
     public_path: null,
+    share_mode: null,
+    frozen_at: null,
     ...over,
   }
 }

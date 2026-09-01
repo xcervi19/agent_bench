@@ -3,7 +3,7 @@ import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
@@ -14,7 +14,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth import CurrentPrincipal, Principal
 from ..config import ClaudeAgentSettings, get_settings
 from .db import session_scope
-from .models import Topic, TopicEvent, TopicRefreshDelta, TopicSubscription, TopicWebhook
+from .models import (
+    SHARE_FROZEN,
+    SHARE_LIVE,
+    Topic,
+    TopicEvent,
+    TopicRefreshDelta,
+    TopicSubscription,
+    TopicWebhook,
+    is_frozen,
+)
 from .pipeline import (
     STATE_PLANNED,
     STATE_PLANNING,
@@ -56,6 +65,18 @@ class MonitorBody(BaseModel):
     )
 
 
+class ShareBody(BaseModel):
+    """POST/PATCH /publish — how the share should behave for the *owner* (#50).
+
+    `live` (the default) publishes a read-only view and takes nothing away: the
+    topic keeps refreshing, monitoring keeps running, and readers see the newest
+    completed state. `frozen` is the #40 snapshot — the topic stops for everyone,
+    the owner included, until it is unshared or set back to live.
+    """
+
+    mode: Literal["live", "frozen"] = SHARE_LIVE
+
+
 class UpdateMonitorBody(BaseModel):
     """PATCH /monitor — all fields optional; only provided fields change."""
 
@@ -90,16 +111,20 @@ async def _owned(s: AsyncSession, topic_id: uuid.UUID, principal: Principal) -> 
 async def _mutable(s: AsyncSession, topic_id: uuid.UUID, principal: Principal) -> Topic:
     """Load a topic the principal may *change*.
 
-    Publishing (#40) freezes a topic: what was shared is the state at that
-    moment, so every route that could move it — or spend money on it — refuses
-    while `is_public` is set. The owner unpublishes to get control back; that is
-    the one write a published topic accepts.
+    Sharing does not, by itself, take control away (#50) — a live share is
+    read-only to the public and fully owned by its owner. Only a **frozen** share
+    pins the topic: what was shared is the state at that moment, so every route
+    that could move it refuses until the owner sets it back to live or unshares
+    it. Those two writes are the only ones a frozen topic accepts.
     """
     row = await _owned(s, topic_id, principal)
-    if row.is_public:
+    if is_frozen(row):
         raise HTTPException(
             status_code=409,
-            detail="topic is published and read-only; unpublish it first",
+            detail=(
+                "topic is shared as a frozen snapshot and is read-only; "
+                "switch it to live sharing or unpublish it first"
+            ),
         )
     return row
 
@@ -174,7 +199,7 @@ def _summary(row: Topic) -> dict[str, Any]:
         "id": str(row.id),
         "topic": row.topic,
         "state": row.state,
-        "available_actions": _actions(row.state, row.is_public),
+        "available_actions": _actions(row.state, is_frozen(row)),
         "last_event_seq": row.last_event_seq,
         "created_at": row.created_at.astimezone(timezone.utc).isoformat(),
         "updated_at": row.updated_at.astimezone(timezone.utc).isoformat(),
@@ -193,13 +218,22 @@ def _share_payload(row: Topic) -> dict[str, Any]:
         # Where anyone — signed in or not — can read this snapshot. Null while
         # private so a client cannot advertise a link that would 404.
         "public_path": f"/v1/public/topics/{row.id}" if row.is_public else None,
+        # What sharing does to the owner (#50). Meaningless while private, and
+        # reported as such, so a client never shows "live" on an unshared topic.
+        "share_mode": row.share_mode if row.is_public else None,
+        "frozen_at": (
+            row.frozen_at.astimezone(timezone.utc).isoformat()
+            if row.is_public and row.frozen_at is not None
+            else None
+        ),
     }
 
 
-def _actions(state: str, is_public: bool = False) -> list[str]:
-    # A published topic is frozen (#40); offering an action the API will refuse
-    # would only invite a click.
-    if is_public:
+def _actions(state: str, frozen: bool = False) -> list[str]:
+    # A frozen share refuses every action (#40/#50); offering one the API will
+    # refuse would only invite a click. A live share changes nothing here — its
+    # owner keeps the same controls they had before they shared it.
+    if frozen:
         return []
     if state == STATE_PLANNED:
         return ["proceed", "cancel"]
@@ -212,64 +246,134 @@ def _actions(state: str, is_public: bool = False) -> list[str]:
 
 
 @router.post("/{topic_id}/publish", status_code=status.HTTP_200_OK)
-async def publish_topic(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
+async def publish_topic(
+    topic_id: uuid.UUID, principal: CurrentPrincipal, body: ShareBody | None = None
+) -> dict[str, Any]:
     """Share a finished topic: anyone may read it, nobody may change it.
 
-    Only a `reported` topic can be published — publishing means "here is the
-    finished picture", and a topic still moving through the pipeline has no
-    finished picture to hand over. Freezing is enforced in `_mutable`; here we
-    also *stop* the two things that would keep spending money on a topic nobody
-    can steer any more: the monitoring subscription and its refresh schedule.
+    Two shares, one link (#50):
+
+      * **live** (default) — the public view follows the topic. Monitoring keeps
+        running, refresh keeps working, and readers see the newest *completed*
+        state. The owner loses nothing; what the public loses is every write, and
+        it loses those structurally — the anonymous router has no write route.
+      * **frozen** — the #40 snapshot. The topic stops for everyone, monitoring
+        pauses, and nothing can spend against it until it is unshared or set
+        back to live.
+
+    Only a `reported` topic can be shared either way: sharing means "here is the
+    finished picture", and a topic still moving through the pipeline has none.
 
     Idempotent: publishing an already-published topic keeps the original
-    `published_at`, so the snapshot's date does not drift on a double click.
+    `published_at` and its current mode, so a double click neither drifts the
+    date nor silently re-modes the share. Changing mode is PATCH.
     """
+    mode = (body or ShareBody()).mode
     async with session_scope() as s:
         row = await _owned(s, topic_id, principal)
         if row.is_public:
-            return {**_share_payload(row), "already_published": True}
+            return {**_share_payload(row), "already_published": True, "monitoring_paused": False}
         if row.state != STATE_REPORTED:
             raise HTTPException(
                 status_code=409,
                 detail=f"cannot publish from state={row.state}; topic must be 'reported'",
             )
-        sub = (await s.execute(
-            select(TopicSubscription).where(TopicSubscription.topic_id == topic_id)
-        )).scalar_one_or_none()
-        # A cycle already running would write new artifacts *after* the share —
-        # `run_refresh` only checks `is_public` on the way in. Rather than
-        # publishing a snapshot that is about to change underneath its readers,
-        # say wait.
-        if sub is not None and sub.refresh_locked:
-            raise HTTPException(
-                status_code=409,
-                detail="a refresh is running; publish once it finishes so the shared state is final",
-            )
+
+        # Pin first: freezing is refused while a cycle is in flight, and a
+        # publish that is going to be refused must not have half happened.
+        monitoring_paused = await _pin(s, row) if mode == SHARE_FROZEN else False
 
         row.is_public = True
         row.published_at = datetime.now(timezone.utc)
-
-        monitoring_paused = False
-        if sub is not None and (sub.status == "active" or sub.schedule_enabled):
-            sub.status = "paused"
-            sub.schedule_enabled = False
-            sub.next_refresh_at = None
-            monitoring_paused = True
+        row.share_mode = mode
+        # A reported topic's deliver run has finished, so it is safe to serve.
+        # Older rows predate the pointer; adopt the current run for them here.
+        if row.public_deliver_run_id is None:
+            row.public_deliver_run_id = row.deliver_run_id
+        if row.public_updated_at is None:
+            row.public_updated_at = row.updated_at
         payload = _share_payload(row)
 
     await emit(topic_id, "topic.published", {
         "published_at": payload["published_at"],
+        "share_mode": mode,
         "monitoring_paused": monitoring_paused,
     })
     return {**payload, "already_published": False, "monitoring_paused": monitoring_paused}
+
+
+@router.patch("/{topic_id}/publish", status_code=status.HTTP_200_OK)
+async def set_share_mode(
+    topic_id: uuid.UUID, body: ShareBody, principal: CurrentPrincipal
+) -> dict[str, Any]:
+    """Switch a live share to a snapshot, or a snapshot back to live (#50).
+
+    The link is untouched either way — this changes what the owner may do and
+    whether the public view is allowed to move, not who can read it.
+
+    Going back to live does **not** resume monitoring. Freezing turned spending
+    off; turning it back on is a decision the owner should make deliberately,
+    the same argument #40 made for unpublish.
+    """
+    async with session_scope() as s:
+        row = await _owned(s, topic_id, principal)
+        if not row.is_public:
+            raise HTTPException(status_code=409, detail="topic is not shared; publish it first")
+        previous = row.share_mode
+        if previous == body.mode:
+            return {**_share_payload(row), "changed": False, "monitoring_paused": False}
+
+        monitoring_paused = False
+        if body.mode == SHARE_FROZEN:
+            monitoring_paused = await _pin(s, row)
+        else:
+            row.share_mode = SHARE_LIVE
+            row.frozen_at = None
+        payload = _share_payload(row)
+
+    await emit(topic_id, "topic.share_mode_changed", {
+        "from": previous,
+        "to": body.mode,
+        "monitoring_paused": monitoring_paused,
+    })
+    return {**payload, "changed": True, "monitoring_paused": monitoring_paused}
+
+
+async def _pin(s: AsyncSession, row: Topic) -> bool:
+    """Freeze a share: stop the topic, and stop it spending. Returns whether
+    monitoring was actually paused.
+
+    Refused while a cycle is in flight, because that cycle would finish *after*
+    the freeze and move the snapshot readers were promised — `run_refresh` only
+    checks the mode on the way in.
+    """
+    sub = (await s.execute(
+        select(TopicSubscription).where(TopicSubscription.topic_id == row.id)
+    )).scalar_one_or_none()
+    if sub is not None and sub.refresh_locked:
+        raise HTTPException(
+            status_code=409,
+            detail="a refresh is running; freeze once it finishes so the shared state is final",
+        )
+
+    row.share_mode = SHARE_FROZEN
+    row.frozen_at = datetime.now(timezone.utc)
+    if sub is not None and (sub.status == "active" or sub.schedule_enabled):
+        sub.status = "paused"
+        sub.schedule_enabled = False
+        sub.next_refresh_at = None
+        return True
+    return False
 
 
 @router.delete("/{topic_id}/publish", status_code=status.HTTP_200_OK)
 async def unpublish_topic(topic_id: uuid.UUID, principal: CurrentPrincipal) -> dict[str, Any]:
     """Take a shared topic back. Existing links stop resolving immediately.
 
-    Monitoring stays paused — publishing turned it off deliberately, and turning
-    it back on is a spending decision the owner should make explicitly.
+    Monitoring is left exactly as it is. After a live share there is nothing to
+    restore — it never stopped. After a frozen one it stays paused, because
+    freezing turned spending off deliberately and turning it back on is the
+    owner's call.
     """
     async with session_scope() as s:
         row = await _owned(s, topic_id, principal)
@@ -277,6 +381,8 @@ async def unpublish_topic(topic_id: uuid.UUID, principal: CurrentPrincipal) -> d
             return {**_share_payload(row), "already_private": True}
         row.is_public = False
         row.published_at = None
+        row.frozen_at = None
+        row.share_mode = SHARE_LIVE
         payload = _share_payload(row)
 
     await emit(topic_id, "topic.unpublished", {})

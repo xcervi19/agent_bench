@@ -34,6 +34,8 @@ function item(state: TopicState, topic = 'Hormuz closure'): TopicListItem {
     is_public: false,
     published_at: null,
     public_path: null,
+    share_mode: null,
+    frozen_at: null,
   }
 }
 

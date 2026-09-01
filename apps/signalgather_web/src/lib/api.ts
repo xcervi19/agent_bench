@@ -23,6 +23,7 @@ import type {
   NewsArtifact,
   ParsedArtifact,
   PublishResponse,
+  ShareMode,
   ReportArtifact,
   TopicDetail,
   TopicListResponse,
@@ -277,11 +278,34 @@ export async function cancelTopic(topicId: string): Promise<void> {
 // ---- sharing (#40) ---------------------------------------------------------
 
 /**
- * Publish the topic: anyone can read it, nobody — including the owner — can
- * change it until it is unpublished. 409 while the topic is not `reported`.
+ * Publish the topic so anyone can read it. 409 while it is not `reported`.
+ *
+ * `live` (the default) publishes a read-only view and leaves the owner every
+ * control — the topic keeps refreshing and readers see it keep up. `frozen` is
+ * the snapshot: the topic stops for everyone until it is unshared (#50).
  */
-export async function publishTopic(topicId: string): Promise<PublishResponse> {
-  const res = await request(`/v1/topics/${topicId}/publish`, { method: 'POST' })
+export async function publishTopic(
+  topicId: string,
+  mode: ShareMode = 'live',
+): Promise<PublishResponse> {
+  const res = await request(`/v1/topics/${topicId}/publish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  })
+  return (await res.json()) as PublishResponse
+}
+
+/** Switch a live share to a snapshot, or back. The link is unaffected. */
+export async function setShareMode(
+  topicId: string,
+  mode: ShareMode,
+): Promise<PublishResponse> {
+  const res = await request(`/v1/topics/${topicId}/publish`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode }),
+  })
   return (await res.json()) as PublishResponse
 }
 

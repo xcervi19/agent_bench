@@ -61,6 +61,8 @@ function topic(overrides: Partial<TopicDetail> = {}): TopicDetail {
     is_public: false,
     published_at: null,
     public_path: null,
+    share_mode: null,
+    frozen_at: null,
     error: null,
     ...overrides,
   }

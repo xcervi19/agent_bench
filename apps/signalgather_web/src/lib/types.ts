@@ -51,11 +51,18 @@ export interface TopicListItem {
   last_event_seq: number
   created_at: string
   updated_at: string
-  /** Sharing (#40). Published topics are world-readable and frozen. */
+  /** Sharing (#40). Published topics are world-readable. */
   is_public: boolean
   published_at: string | null
   /** API path anyone can read while published; null when private. */
   public_path: string | null
+  /**
+   * What sharing does to the owner (#50): `live` publishes a read-only view and
+   * takes nothing away; `frozen` pins the topic until it is unshared. `null`
+   * while private — the mode is meaningless before there is a link.
+   */
+  share_mode: ShareMode | null
+  frozen_at: string | null
 }
 
 export interface TopicListResponse {
@@ -80,16 +87,22 @@ export interface CreateTopicResponse {
 
 // ---- sharing (#40) ---------------------------------------------------------
 
+export type ShareMode = 'live' | 'frozen'
+
 export interface ShareState {
   is_public: boolean
   published_at: string | null
   public_path: string | null
+  share_mode: ShareMode | null
+  frozen_at: string | null
 }
 
 export interface PublishResponse extends ShareState {
   already_published?: boolean
   already_private?: boolean
-  /** Publishing pauses monitoring — the UI says so rather than letting it surprise. */
+  /** Set by PATCH: false when the topic was already in the requested mode. */
+  changed?: boolean
+  /** Freezing pauses monitoring — the UI says so rather than letting it surprise. */
   monitoring_paused?: boolean
 }
 
@@ -105,8 +118,26 @@ export interface PublicTopic {
   created_at: string
   updated_at: string
   read_only: true
+  /** `live` keeps up with the topic; `frozen` is the state it was pinned at. */
+  share_mode: ShareMode
+  frozen_at: string | null
+  updates: PublicUpdates
   has_plan: boolean
   has_report: boolean
+}
+
+/**
+ * Freshness from the reader's side (#50). The refresh *schedule* is deliberately
+ * not here: when the next run happens is the owner's spending decision, and
+ * "updated 2 hours ago" is the question a reader actually has.
+ */
+export interface PublicUpdates {
+  /** Whether this page is still moving — false on a frozen share. */
+  live: boolean
+  last_updated_at: string | null
+  /** Completed refresh cycles. Null on the listing, which does not count them. */
+  update_count: number | null
+  latest_seq: number | null
 }
 
 export interface PublicTopicListResponse {

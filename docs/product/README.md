@@ -10,19 +10,23 @@
 3. User **approves** the plan.
 4. System **delivers** — web search, sources, strategic `report.md`.
 5. User **monitors** — periodic refresh for new news only (deltas, deduped).
-6. User **shares** (#40, optional) — publishing a finished topic makes it
-   world-readable at `/app/shared/<id>` and freezes it: no account is needed to
-   read it, and no caller (owner included) can run anything on it until it is
-   unpublished. Nothing anonymous can spend money.
+6. User **shares** (#40, extended by #50, optional) — publishing a finished topic
+   makes it world-readable at `/app/shared/<id>`, no account needed. Two modes:
+   **live** (the default) keeps the topic the owner's — it goes on refreshing and
+   monitoring, and the shared page follows it, showing whatever cycle completed
+   last; **snapshot** pins it, which stops the topic for everyone including the
+   owner until it is unpinned. Readers only ever read, in both: the public router
+   has no write route, so nothing anonymous can spend money.
 
 **API:** `POST /v1/topics`, SSE `/events`, `/proceed`, `/monitor`, `/refresh`, artifact routes,
-`POST|DELETE /publish`, plus the unauthenticated read-only `GET /v1/public/topics/*`.  
+`POST|PATCH|DELETE /publish`, plus the unauthenticated read-only `GET /v1/public/topics/*`.  
 **Public URL (prod):** `https://agent.particletico.com`  
 **Web UI (#16a):** `/app` on the same host — sign-in, topic list, NL topic
 creation, live activity, plan review + Proceed/Cancel. Report reading (16b) and
 monitoring controls (16c) are still API-only.  
-**Shared topics (#40):** `/app/shared` (browse) and `/app/shared/<topic-id>` — the
-only routes that render without an account.
+**Shared topics (#40, #50):** `/app/shared` (browse) and `/app/shared/<topic-id>` —
+the only routes that render without an account. A live share re-checks itself
+once a minute while its tab is visible, so a reader sees new cycles land.
 
 ## Shipped stack (main)
 

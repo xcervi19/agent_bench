@@ -181,6 +181,12 @@ grounding leg degrades on that slot (prod got it in `1672fe9`). Not touched here
 
 ## Known gaps
 
+- **The freeze is being replaced (#50).** Publishing kills the thing that made
+  the topic worth sharing: monitoring stops and the report never moves again.
+  `docs/specs/active/live_public_sharing_50.md` keeps everything below and above
+  about *anonymous read* and makes the freeze one of two share modes, `live`
+  becoming the default.
+
 - **Discovery is a substring match** (`ILIKE %q%`) over published topics. Fine at
   pilot scale; it is not an index and will not stay fine at thousands of rows.
 - **Publishing is all-or-nothing.** There is no partial share (report but not
@@ -198,3 +204,4 @@ grounding leg degrades on that slot (prod got it in `1672fe9`). Not touched here
 - `docs/specs/active/signalgather_frontend_v1_16.md` — UI this extends
 - `docs/specs/done/topic_refresh_scheduler_22.md` — the scheduler that must skip published topics
 - Incident: commit `1672fe9` — why anonymous read is opt-in per row, not a config flag
+- `docs/specs/active/live_public_sharing_50.md` — makes the freeze optional; a live shared topic keeps refreshing under its owner

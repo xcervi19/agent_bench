@@ -147,28 +147,46 @@ This is the point of the widget registry — check it actually fired.
 - [ ] Delta detail shows new sources, key changes, and trigger terms hit
 - [ ] DevTools → Network: delta artifacts are fetched **only** when a row is opened
 
-## 7e. Sharing (#40)
+## 7e. Sharing (#40, #50)
 
 The one section to run in **two windows**: signed in, and a private/incognito
 window with no account at all.
 
+**Live share (the default)**
+
 - [ ] **Share** tab appears once the topic is `reported`
-- [ ] Before publishing it names the trade-off: monitoring pauses, actions stop
-- [ ] **Share publicly** → badge flips to Shared, a banner appears on every tab
+- [ ] Before publishing, the panel offers **Live** (preselected) and **Snapshot**
+      and says what each costs
+- [ ] **Share publicly** → badge reads *Shared · live*, banner appears on every tab
 - [ ] **Copy link** yields `…/app/shared/<topic-id>`
-- [ ] Monitoring tab now explains the freeze instead of showing controls
-- [ ] Plan tab's Proceed/Cancel stay disabled and say why
-- [ ] `curl -X POST .../v1/topics/<id>/refresh` with the owner's JWT → **409**
-- [ ] Topic list shows a **Shared** badge on the row
+- [ ] Monitoring tab still shows its controls; Plan tab does not claim a lockout
+- [ ] `curl -X POST .../v1/topics/<id>/refresh` with the owner's JWT → **202**
+- [ ] Topic list row reads **Shared · live**
 - [ ] **Incognito:** open the copied link → report, sources, plan and updates all
-      render; the page says Read-only
+      render; header shows **Read-only · Live · Updated …**
 - [ ] **Incognito:** DevTools → Network shows only `GET /v1/public/topics/*`, no
       `Authorization` header, and no request to `/v1/topics/*`
 - [ ] **Incognito:** nothing on the page runs anything — no Proceed, Cancel,
       Refresh, monitoring or Share control anywhere
-- [ ] **Incognito:** `/app/shared` lists the topic and its search finds it
+- [ ] **Incognito:** `/app/shared` lists the topic (as *Live*) and search finds it
+- [ ] **The live claim itself:** run a refresh as the owner and leave the
+      incognito tab open. While the cycle runs, the page keeps showing the
+      previous state and the Updates tab does **not** list the running cycle.
+      Within ~60s of `refresh.completed` the tab picks it up and says
+      "1 update has landed since you opened this page"
+- [ ] **Incognito, backgrounded:** switch to another tab for two minutes → no
+      `GET /v1/public/topics/*` in Network until you switch back
+
+**Snapshot, and taking it back**
+
+- [ ] **Pin to a snapshot** → badge reads *Shared · snapshot*; Monitoring tab now
+      explains the pin; Plan tab's Proceed/Cancel disabled and say why
+- [ ] `curl -X POST .../v1/topics/<id>/refresh` with the owner's JWT → **409**
+- [ ] **Incognito:** header shows **Snapshot · as of …** and stops updating
+- [ ] **Switch to live** → owner actions work again; monitoring stays paused
+      until turned back on
 - [ ] **Stop sharing** → incognito reload shows "not shared", `/app/shared` no
-      longer lists it, owner actions work again, monitoring stays paused
+      longer lists it
 - [ ] Publishing a topic that is not `reported` is refused (button disabled)
 
 ## 8. Cancel (second topic)

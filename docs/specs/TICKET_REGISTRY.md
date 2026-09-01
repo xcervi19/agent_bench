@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#45` (assign to the next new ticket; then bump this line)
+**Next available number:** `#51` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -40,6 +40,12 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 || 40 | `docs/specs/active/public_topic_sharing_40.md` | implemented, awaiting migration + deploy | Publish a finished topic: anonymous GET-only router, frozen actions, no spend without an account; extends #24/#16 |
 || 43 | `docs/specs/active/claude_llm_judge_migration_43.md` | planned | Move the eval framework's LLM judge off OpenAI onto Claude Code |
 || 44 | `docs/specs/active/insurance_vessel_tracking_sources_44.md` | planned | Marine war-risk / vessel-tracking source branch + Hormuz playbook routing; closes the #39 maritime/insurance follow-up and the baseline's `primary_source_discovery` 1.8/5 gap. **Needs an image rebuild — config is baked in** |
+|| 45 | `docs/specs/active/india_gas_country_pilot_45.md` | in progress | First **country fundamentals** topic (first customer after the presentation): India gas playbook + 12 India gas primary sources in the whitelist + measured topic string + weekly monitored pile. **Needs an image rebuild — config is baked in.** Template for country #2 |
+|| 46 | `docs/specs/active/topic_onboarding_loop_46.md` | planned | **Method ticket** — five gates every new customer topic runs, plus 3 build items (selection audit trail, per-query yield, topic `shape`). Turns per-demo bending into accumulated capability. India (#45) is its first test case |
+|| 47 | `docs/specs/active/register_labels_47.md` | planned | **Blocks #46 build item 0.** Restore `country`/`authority_type`/`sector`/`signals` on the whitelist — the catalog annotated them and the merge dropped them, which is why name matching routes Iran and Bangladesh into an India topic. 84 % rejoins by domain; 213 catalog domains never merged |
+|| 48 | `docs/specs/active/topic_bootstrap_job_48.md` | planned | The India onboarding done by hand, automated: acquire topic education into RAG (the corpus has none), derive the authority skeleton from the commodity's value chain (the catalog's 10 slots are crude-export shaped), verify every domain in code. Needs #47 |
+|| 49 | `docs/specs/active/discovery_lane_and_promotion_49.md` | planned | Stops the register closing in on itself: a budgeted unfiltered discovery lane, known-source polling off the search budget, and a promotion path for unknown domains built from evidence #42 already collects. Needs #42, #47 |
+|| 50 | `docs/specs/active/live_public_sharing_50.md` | implemented, awaiting migration + deploy | **Supersedes the freeze half of #40.** A published report stays live, owner-controlled and read-only in public: owner picks `live` or `frozen` at publish, live topics keep refreshing and monitoring, and the public view resolves only completed runs so a reader never sees work in flight. Needs #40, #24, #22, #16; feeds #37 |
 
 ---
 ## Done (shipped)
