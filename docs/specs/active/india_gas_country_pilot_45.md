@@ -1,6 +1,6 @@
 # India gas — country fundamentals pilot topic (#45)
 
-**Status:** in progress (2026-08-20)  
+**Status:** in progress — first run delivered on test1 2026-09-03  
 **Lane:** Product / business value — *first paying-prospect topic*  
 **Depends on:** #30 (playbooks), #32 (source discover), #36 (hybrid pipeline), #39 (source authority), #22 (refresh scheduler)  
 **Blocks:** country-fundamentals expansion beyond India  
@@ -132,10 +132,70 @@ this ticket freezes — see Open questions.
 - [x] `discover_sources_for_topic(discovery_query(facets))` returns `india_gas_demand.md` and its primary sources (19 of them)
 - [ ] Cross-country contamination removed from the routed set — `mop.ir` (Iran) and two Bangladeshi power ministries currently match this topic; blocked on **#47**
 - [ ] Playbook preprocessed + ingested with `document_type=playbook`
-- [ ] Image rebuilt and deployed (whitelist + playbooks are **baked in**, see Deploy note)
-- [ ] Topic run end to end; report cites PPAC / PNGRB / CEA, not only trade press
+- [x] Image rebuilt and deployed — **test1** 2026-09-03 (`c07038d`); prod still on `de67d92`
+- [x] Topic run end to end — `d19908b3` on test1, `reported`
+- [~] Report cites **PNGRB, CEA, MoPNG, GAIL, IndianOil** — but **not PPAC**; see First run below
 - [ ] Monitoring enabled with a weekly-review cadence; two cycles produce a non-empty, non-duplicative pile
 - [ ] Operator review of one weekly pile → tuning list
+
+
+## First run — test1, 2026-09-03
+
+Topic `d19908b3-8016-4d70-ac1b-e87792a0fa79`, the measured topic string above,
+plan `$1.10` / 222 s + deliver `$2.70` / 716 s = **$3.79**.
+
+### The mechanism worked
+
+| | Hormuz baseline (2026-08-01) | India, this run |
+|---|---|---|
+| `primary_official` share of cited sources | **6 / 28 (21 %)** | **18 / 34 (53 %)** |
+| whitelisted | 7 / 28 | 17 / 34 |
+| domain targeting | `site:` text, 1 domain/query | `allowed_domains`, **8 of 15 queries, 33 domains, zero `site:`** |
+
+18 search calls recorded, 8 filtered, **none empty** — the fear that a domain
+filter returns nothing did not materialise. 149 documents captured, 70+ fetched.
+Five of fifteen queries were Hindi from an English brief (#38), the same 33 % as
+the Hormuz run. Cited India primaries: `pngrb` ×2, `mopng` ×2, `gailonline` ×2,
+`iocl`, `cea.nic`, `powermin`.
+
+### PPAC did not surface — and for the first time we can say why
+
+`ppac.gov.in` contributed **zero** documents. #46's capture makes that
+determinate rather than a shrug:
+
+- exactly **one** search call carried `ppac.gov.in` in its filter;
+- that call returned a full **10 hits**, none of them from PPAC;
+- its three sibling domains in the same filter (`dghindia`, `mopng`, `pngrb`) all
+  returned documents.
+
+So the register, the filter and the search all worked. The gap is **query
+design**: the only PPAC-filtered query was *"India domestic gas production
+licensing rounds allocation priority policy"* — licensing and policy, which is
+DGH/MoPNG territory. PPAC's asset is the **monthly consumption balance**, and no
+query asked for it. The report reached the same conclusion unprompted, listing
+under Risks & blind spots that "independent PPAC primary data was queried but did
+not surface a matching monthly release in this pass" — leaving every granular
+June-2026 mmscmd figure resting on a single brokerage note republished by one
+outlet.
+
+**Tuning item #1:** add a monthly-balance query (`India monthly natural gas
+consumption sector-wise mmscmd PPAC`) with `ppac.gov.in` in the filter. This is
+exactly the loop #46 exists to run: one variable, measured.
+
+### Other findings from the first run
+
+- **China coverage returned almost nothing.** The competing-Asian-demand query
+  filtered to `cnpc.com.cn`, `nea.gov.cn`, `customs.gov.cn` and four more
+  produced no usable demand or import data — the price-competition side of the
+  thesis is unconfirmed. (These `.cn` domains are deliberate scope, not the #47
+  contamination; **no Iranian or Bangladeshi domain appeared at all** in this
+  run.)
+- **Fertilizers** were covered only by an unfiltered Hindi query — the known gap
+  from having no fertilizer primary source stands, and shows.
+- **Two-tier freshness (#39) held.** Monthly-cadence material survived: the
+  report carries June-2026 monthly figures and IEA Q3-2026 projections, which a
+  uniform recency window would have deleted. This was the ticket's main worry.
+- A PIB release on the 11-A CGD round returned **403** and could not be read.
 
 ## Deploy note
 
