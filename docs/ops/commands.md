@@ -161,6 +161,41 @@ uv run pytest tests/sources/test_discover.py -q
 
 ---
 
+## Official data feeds (#45)
+
+Statistical agencies are polled directly rather than searched for — we know the
+URL, and the index serves staler files than the publisher does. `source_crawler`
+is deliberately **not** in the runtime image (it is an operator tool), so it runs
+in a container with the worktree mounted:
+
+```bash
+cd ~/agent_bench_test1 && export COMPOSE_PROJECT_NAME=test1
+C="docker compose -f docker-compose.yml -f infra/docker-compose.test1.yml -f infra/docker-compose.slot-minimal.yml"
+
+# The container runs as uid 1001; artifacts/ must be writable by it.
+mkdir -p artifacts state_test1/feeds && chown -R 1001:1001 artifacts state_test1/feeds
+
+$C run --rm --no-deps -v "$PWD/source_crawler:/app/source_crawler:ro" -v "$PWD/artifacts:/app/artifacts" \
+  --entrypoint python claude_agent -m source_crawler crawl --seed india_gas_official
+$C run --rm --no-deps -v "$PWD/source_crawler:/app/source_crawler:ro" -v "$PWD/artifacts:/app/artifacts" \
+  --entrypoint python claude_agent -m source_crawler extract
+
+# Publish into the state volume, where the runtime reads it. No rebuild needed:
+# feeds are monthly data, an image rebuild is the wrong unit of freshness.
+$C run --rm --no-deps -v "$PWD/artifacts:/app/artifacts" --entrypoint python claude_agent -c \
+  "from pathlib import Path; from apps.claude_agent.topics.feeds import publish; \
+   print(publish(Path('/app/artifacts/collected_text'), '/state'))"
+```
+
+Deliver and refresh then pass `feeds_dir` to the analyst for any topic whose
+facets match the feed's `commodity` + `region`. Check what a slot holds:
+
+```bash
+docker exec test1-claude_agent-1 ls /state/feeds
+```
+
+---
+
 ## Local Knowledge Ingest
 
 ```bash
