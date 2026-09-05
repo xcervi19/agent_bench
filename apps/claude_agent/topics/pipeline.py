@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import json
+import logging
 import uuid
 from json import JSONDecodeError
 from pathlib import Path
@@ -23,9 +24,12 @@ from .facets import (
 )
 from .models import Topic, TopicEvent
 from .search_evidence import SearchEvidenceRecorder
+from .feeds import FEEDS_DIRNAME, export_feeds
 from .serving import advance_public_view
 from .source_quality import load_whitelisted_domains, summarize_run
 from .webhooks import deliver_event
+
+logger = logging.getLogger(__name__)
 
 STATE_PLANNING = "planning"
 STATE_PLANNED = "planned_awaiting_review"
@@ -222,16 +226,37 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
         row = await s.get(Topic, topic_id)
         plan_run_id = row.plan_run_id
         hash_ = row.topic_id_hash
+        topic_text = row.topic
+
+    # Cached by the plan leg (#38); the same facets decide which feeds apply.
+    facets = load_cached_facets(facets_cache_path(settings.state_dir, hash_), topic_text)
 
     deliver_run_id = str(uuid.uuid4())
     plan_dir = run_dir(settings.state_dir, hash_, plan_run_id)
     out_dir = run_dir(settings.state_dir, hash_, deliver_run_id)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Official data feeds for this topic's commodity and geography (#45). The
+    # first India report cited five Indian regulators but not PPAC, whose
+    # monthly balance is the one number set the whole brief rests on — because
+    # search reaches PPAC's stale PDFs, not its current workbook. Here the
+    # analyst is handed the workbook itself.
+    feeds_dir = out_dir / FEEDS_DIRNAME
+    feeds_index = {"feed_count": 0}
+    try:
+        feeds_index = export_feeds(settings.state_dir, feeds_dir, facets or {})
+    except Exception:  # a feed problem must not cost us the report
+        logger.exception("deliver.feeds_export_failed topic=%s", topic_id)
+
     (out_dir / "input.json").write_text(
         json.dumps({
             "plan_run_dir": str(plan_dir),
             "deliver_run_dir": str(out_dir),
             "run_id": deliver_run_id,
+            # Official statistics, already fetched. Prefer these over a search
+            # for the same numbers: they are the publisher's current file.
+            "feeds_dir": str(feeds_dir) if feeds_index["feed_count"] else None,
+            "feeds_count": feeds_index["feed_count"],
         }),
         encoding="utf-8",
     )

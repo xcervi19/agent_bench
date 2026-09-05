@@ -45,12 +45,19 @@ def extract_one(content_path: Path, text_root: Path) -> ExtractResult:
             path=None,
             reason="data_feed / skip_rag",
         )
-    if content_path.suffix.lower() in {".zip", ".csv", ".xlsx", ".xls"}:
+    # `.xlsx` is no longer here: for a statistical agency the workbook is the
+    # only form the numbers come in (#45), so skipping it threw away the source
+    # rather than the format. `extract_text` converts it.
+    #
+    # `.zip` is a container — what is worth reading inside one differs per feed.
+    # `.xls` is the pre-2007 OLE format, which needs a second library; both are
+    # recorded as a named gap rather than silently treated as absent.
+    if content_path.suffix.lower() in {".zip", ".csv", ".xls"}:
         return ExtractResult(
             source_id=source_id,
             status="skipped",
             path=None,
-            reason=f"non-text artifact ({content_path.suffix})",
+            reason=f"no converter for {content_path.suffix}",
         )
 
     source_digest = meta.get("sha256")

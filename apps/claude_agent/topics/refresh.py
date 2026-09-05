@@ -31,6 +31,8 @@ from ..runner import CommandNotAllowedError, stream_claude
 from ..schemas import RunRequest
 from .db import session_scope
 from .evidence_export import export_evidence
+from .facets import facets_cache_path, load_cached_facets
+from .feeds import FEEDS_DIRNAME, export_feeds
 from .models import Topic, TopicRefreshDelta, TopicSubscription, is_frozen
 from .pipeline import emit, run_dir
 from .search_evidence import SearchEvidenceRecorder
@@ -267,6 +269,7 @@ async def run_refresh(
             plan_run_id = topic.plan_run_id
             previous_deliver_run_id = topic.deliver_run_id
             topic_hash = topic.topic_id_hash
+            topic_text = topic.topic
 
         plan_dir = run_dir(settings.state_dir, topic_hash, plan_run_id) if plan_run_id else None
         prev_deliver_dir = (
@@ -293,6 +296,23 @@ async def run_refresh(
             except Exception:  # a corpus problem must not cancel the refresh
                 logger.exception("refresh.evidence_export_failed topic=%s", topic_id)
 
+        # Official data feeds for this topic (#45) — the same statistics the
+        # deliver leg gets, refreshed on the publisher's cadence rather than
+        # searched for. `topic_facets` is cached per topic by the plan leg.
+        feeds_dir = refresh_dir / FEEDS_DIRNAME
+        feeds_index = {"feed_count": 0}
+        try:
+            feeds_index = export_feeds(
+                settings.state_dir,
+                feeds_dir,
+                load_cached_facets(
+                    facets_cache_path(settings.state_dir, topic_hash), topic_text
+                )
+                or {},
+            )
+        except Exception:  # a feed problem must not cancel the refresh
+            logger.exception("refresh.feeds_export_failed topic=%s", topic_id)
+
         (refresh_dir / "input.json").write_text(
             json.dumps({
                 "topic_id": str(topic_id),
@@ -310,6 +330,11 @@ async def run_refresh(
                 "evidence_dir": str(evidence_dir) if evidence_index["document_count"] else None,
                 "evidence_count": evidence_index["document_count"],
                 "evidence_unreadable_count": evidence_index["unreadable_count"],
+                # Official statistics already in hand. Read these before
+                # searching for the same numbers — they are the publisher's
+                # current file, not what an index last crawled.
+                "feeds_dir": str(feeds_dir) if feeds_index["feed_count"] else None,
+                "feeds_count": feeds_index["feed_count"],
             }),
             encoding="utf-8",
         )

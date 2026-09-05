@@ -166,6 +166,52 @@ def pdf_bytes_to_text(data: bytes, label: str = "<bytes>") -> str:
     return text
 
 
+def xlsx_bytes_to_text(data: bytes, label: str = "<bytes>", *, max_rows: int = 400) -> str:
+    """Render a spreadsheet as pipe-separated text, one line per row.
+
+    Statistical agencies publish their series as spreadsheets — PPAC's Indian gas
+    balance, sector by sector and month by month, is a workbook rather than a
+    page (#45). Everything downstream of here reads text, so a table nobody
+    converts is a source nobody can cite, however cleanly it downloaded.
+
+    Deliberately literal: no header detection, no reshaping, no unit inference.
+    The layout an agency chose carries meaning we would be guessing at, and a
+    wrong guess about which row is a header silently mislabels every number under
+    it. Cells are joined with ` | ` and sheets are titled, so the shape survives
+    for a reader; anything cleverer belongs in a parser written against one
+    known workbook, not in a generic converter.
+
+    Formulas are read as their last cached value (`data_only`), which is what the
+    publisher saw. A workbook saved without cached values yields empty cells
+    rather than `=SUM(...)` noise.
+    """
+    from io import BytesIO
+
+    from openpyxl import load_workbook
+
+    workbook = load_workbook(BytesIO(data), data_only=True, read_only=True)
+    try:
+        blocks: list[str] = []
+        for sheet in workbook.worksheets:
+            lines: list[str] = []
+            for row in sheet.iter_rows(max_row=max_rows, values_only=True):
+                cells = ["" if cell is None else str(cell).strip() for cell in row]
+                while cells and not cells[-1]:
+                    cells.pop()
+                if any(cells):
+                    lines.append(" | ".join(cells))
+            if lines:
+                truncated = sheet.max_row and sheet.max_row > max_rows
+                note = f"\n[... {sheet.max_row - max_rows} more rows]" if truncated else ""
+                blocks.append(f"## {sheet.title}\n" + "\n".join(lines) + note)
+    finally:
+        workbook.close()
+
+    if not blocks:
+        raise ValueError(f"no rows extracted from spreadsheet: {label}")
+    return "\n\n".join(blocks)
+
+
 def pdf_to_text(path: Path) -> str:
     return pdf_bytes_to_text(path.read_bytes(), str(path))
 
@@ -215,6 +261,10 @@ def epub_to_text(path: Path) -> str:
 def detect_kind(raw_bytes: bytes, suffix: str) -> str:
     if suffix == ".epub":
         return "epub"
+    # Checked before the magic-byte tests: an .xlsx *is* a zip, so sniffing bytes
+    # first would only ever report "unknown zip" for a workbook.
+    if suffix in {".xlsx", ".xlsm"}:
+        return "spreadsheet"
     head = raw_bytes[:16].lstrip()
     if head.startswith(b"%PDF"):
         return "pdf"
@@ -245,4 +295,6 @@ def extract_text(path: Path) -> str:
         return json_to_text(raw_bytes.decode("utf-8", errors="replace"), path)
     if kind == "txt":
         return raw_bytes.decode("utf-8", errors="replace")
+    if kind == "spreadsheet":
+        return xlsx_bytes_to_text(raw_bytes, str(path))
     raise ValueError(f"unsupported file type: {path}")

@@ -22,6 +22,8 @@ dependencies = [
     "openai>=1.40",
     "pypdf>=5.0",
     "ebooklib>=0.18",
+    # Statistical agencies publish their series as workbooks, not pages (#45).
+    "openpyxl>=3.1",
 ]
 
 [project.optional-dependencies]
