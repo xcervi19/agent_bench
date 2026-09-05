@@ -32,6 +32,7 @@ Missing acknowledgment → crawl/promote blocked.
 ```bash
 uv run python -m source_crawler crawl
 uv run python -m source_crawler crawl --seed agency_oil_data  # OPEC MOMR/ASB + JODI
+uv run python -m source_crawler crawl --seed india_gas_official  # PPAC gas balance (#45)
 uv run python -m source_crawler extract
 # /source-qa in Cursor → writes artifacts/collected_text/qa_audit.json
 uv run python -m source_crawler apply-qa --dry-run

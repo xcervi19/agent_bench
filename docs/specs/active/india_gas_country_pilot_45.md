@@ -178,9 +178,48 @@ not surface a matching monthly release in this pass" — leaving every granular
 June-2026 mmscmd figure resting on a single brokerage note republished by one
 outlet.
 
-**Tuning item #1:** add a monthly-balance query (`India monthly natural gas
-consumption sector-wise mmscmd PPAC`) with `ppac.gov.in` in the filter. This is
-exactly the loop #46 exists to run: one variable, measured.
+**Tuning item #1 — superseded by the fix below.** The obvious repair was a
+monthly-balance query with `ppac.gov.in` in the filter. Probing the source
+showed that would still have failed, for a reason no query can fix.
+
+### PPAC probed directly, 2026-09-05 — and now crawled
+
+Reading the site settled what the search evidence could not:
+
+| Check | Result |
+|---|---|
+| `robots.txt` | none — nothing disallowed |
+| Sectoral consumption `.xlsx`, our own UA, one request | **HTTP 200**, 142 KB, `last-modified` **27 Aug 2026** |
+| Monthly gas report PDF | **HTTP 200**, 548 KB |
+| Domain-filtered search for the monthly balance | reaches PPAC, but the newest report the index served was **December 2024** |
+| Format the current numbers are published in | `.xlsx` — which `topics/search_content.py` records as `unsupported` |
+
+So PPAC never fought us. It hands the balance over on the first polite request.
+Two things stood between the report and the data, and **neither is a query**:
+search returns an index two years stale, and the evidence fetcher cannot read a
+spreadsheet.
+
+The conclusion is the one #49 argues for: **we know this URL, so we should ask
+for it rather than search for it.** PPAC is now a crawled source, off the search
+budget:
+
+- `source_crawler/adapters/landing_link.py` — new adapter for a source whose
+  *page* is stable while its *file* is republished under a new timestamped name
+  each month. Neither `static_file` (fixed URL) nor `opec_assetdb`
+  (`{month}/{year}` template) can express that.
+- `source_crawler/seeds/india_gas_official.py` — `ppac_gas_sectoral_consumption`
+  (the four demand blocks) and `ppac_gas_lng_import` (import dependence), weekly
+  poll, `data_feed` / `skip_rag`.
+
+Verified end to end on 2026-09-05: `crawl --seed india_gas_official` wrote both
+files, the re-run reported `unchanged` against the sha256, and the spreadsheet
+contains exactly the split the operator brief is built on — **Fertilizer, CGD,
+Power, Refinery, Petrochemical, Total, FY 2026-27**.
+
+**Deliberately not seeded:** the `consumption` and `production` pages build their
+download links in JavaScript. Those go through the semi-automatic `browser-fetch`
+route, where a person saves the file once — defeating a scripted download is out
+of scope, and the adapter says so by name when `discover` finds nothing.
 
 ### Other findings from the first run
 
