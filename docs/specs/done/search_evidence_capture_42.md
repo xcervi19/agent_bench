@@ -1,9 +1,10 @@
 # Search evidence capture — #42
 
-**Status:** done (2026-08-02)
+**Status:** done (2026-08-02) — deployment gaps closed 2026-09-01; open items listed under *Still open* below
 **Lane:** Platform / Backend
 **Depends on:** #36 (`execute_search` stub — search still lives in the deliver agent)
 **Blocks:** later evaluation pass over the corpus (cheap-model reading, strategy TBD)
+**Consumed by:** **#51** (report grounding) — the ticket that finally hands this store to the deliver leg; three items in *Still open* below are its scope
 
 ---
 
@@ -109,8 +110,24 @@ honest accounting beats an unmaintainable arms race.
   is recorded not raised.
 - Full suite: 264 passed.
 - Ruff: no new findings (6 pre-existing errors in `models.py`/`refresh.py` untouched).
-- **Migrations not yet applied against Postgres** — Docker daemon was down locally.
-  `alembic upgrade head` still needs to run on a real database before deploy.
-- **The fetcher has never run against the live web.** Every test uses a mocked
-  transport, so the real block/success ratio is unmeasured. First production run
-  should be read as a measurement, not a smoke test.
+- ~~**Migrations not yet applied against Postgres**~~ — **resolved.** Applied on prod, and
+  `0012_search_queries` applied on test1 2026-09-01. Schema head is `0013`.
+- ~~**The fetcher has never run against the live web.**~~ — **resolved, and measured.**
+  In prod: ~9 links per query, **~89 % read successfully**, a 121-document run averaging
+  ~16k characters. `ab6b98f` (NUL bytes breaking an asyncpg INSERT) was diagnosed against a
+  29k-character live article.
+
+### Still open, and now owned elsewhere
+
+- **The judging pass over the captured corpus was explicitly out of scope here** and is still
+  not designed. Owned by **#46** build item 4.
+- **The deliver leg never receives the corpus.** `export_evidence` is called only from
+  `run_refresh`; `run_deliver` passes `feeds_dir` and no `evidence_dir`, and
+  `newsfind-deliver.md` has no section for one. So the foundational report — the artefact a
+  customer reads first — is written from search snippets. Tracked against **#45**.
+- **Spreadsheets are still recorded `unsupported`.** `xlsx_bytes_to_text` exists in
+  `source_ingest/text_extract.py` and `openpyxl` is a declared dependency, but
+  `search_content.py` imports only the HTML and PDF converters and its `Accept` header asks
+  for neither. One `elif` beside the PDF branch closes it. Tracked against **#45**.
+- **`refresh_max_queries` cannot bind.** It defaults to 40, but the plan emits 10–15 queries
+  and the deliver contract 3–6 `next_queries`, so the real ceiling is ~21.

@@ -1,6 +1,14 @@
  # Hybrid Pipeline Orchestration — #36
 
-**Status:** planned  
+**Status:** done (2026-07-24, `83c4d5f`)  
+**Delivered:** the Python `source_discover` pre-plan stage runs in
+`apps/claude_agent/topics/pipeline.py` (`run_source_discover` → `source_targets.json`), the
+plan agent consumes pre-resolved domains, and topic→entity resolution is deterministic (no
+LLM).  
+**Explicitly not delivered:** `execute_search` — the contract is documented here, the
+implementation is not built. Its social-channel half is blocked on **#31**; its known-source
+polling half is now owned by **#49** (third channel) and was prototyped for statistical
+agencies by `source_crawler` under **#45**.  
 **Lane:** Platform / Backend  
 **Goal:** Refactor the Newsfind pipeline so Python orchestrates deterministic steps and agents handle only judgment-heavy stages — improving reliability, debuggability, eval separation (P1–P3), and token cost.
 
@@ -156,7 +164,7 @@ Two-level orchestration model (Python conductor + agent CLI SDK):
 - `claude_agent_fe/.claude/commands/newsfind-plan.md` — thin down
 - `source_whitelist.json` — ground truth input
 - `local_knowledge_sources/playbooks/` — RAG input (#30)
-- `docs/specs/active/plan_source_integration_33.md` — superseded approach
+- `docs/specs/done/plan_source_integration_33.md` — superseded approach
 
 ## Suggested execution order (Platform lane)
 

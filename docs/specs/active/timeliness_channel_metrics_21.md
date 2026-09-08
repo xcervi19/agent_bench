@@ -1,6 +1,6 @@
 # Timeliness & source-channel coverage metrics — #21
 
-**Status:** active (planned)  
+**Status:** planned  
 **Depends on:** #11 (run harness / `evaluation.json`)  
 **Lane:** Instrumentation (feeds #15, #18, #20)  
 **Related tickets:** #15 (technical thresholds), #18 (business evaluation), #20 (monitoring over time)
@@ -71,7 +71,7 @@ From `source_class` across `news.json` (and refresh `news.json`):
 
 ## Related
 
-- `docs/specs/active/business_output_evaluation_18.md`
+- `docs/specs/done/business_output_evaluation_18.md`
 - `docs/specs/active/continuous_monitoring_evaluation_20.md`
 - `docs/specs/done/newsfind_application_verification_15.md`
 - `scripts/test_vector_runner.sh` (evaluation.json builder)

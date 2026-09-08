@@ -1,6 +1,15 @@
 # Graph Retrieval Layer (Source Graph v2) — #35
 
-**Status:** planned  
+**Status:** retired (2026-09-08)  
+**Retired because:** the problem this ticket names — *"vektor RAG sám dává široké/nepřesné
+výsledky u vztahových dotazů"* — is being answered as a **set query over labels**, not as
+activation spreading over a graph. **#47** restores `country` / `authority_type` / `sector`
+/ `signals` on the register so selection becomes `country=IN AND sector IN {gas,power}`,
+and **#49** supplies the growth path a static graph would still have lacked. Its own
+condition for starting (*"řešit až po změření kvality retrievalu, pokud vektor selhává na
+vztazích"*) was never met: the measured failure was **inventory and routing**, not
+relational reasoning. Reopen only if labelled set selection is measured and still misses
+relational topics.  
 **Lane:** Platform / Data  
 **Goal:** Postavit nad whitelist/katalogem a playbooky grafovou orchestrační vrstvu pro přesnější výběr zdrojů k danému topicu.
 

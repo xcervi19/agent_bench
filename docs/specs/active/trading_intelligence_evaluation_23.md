@@ -1,6 +1,10 @@
 # Trading Intelligence Evaluation Framework — #23
 
-**Status:** active (in progress — framework implemented; live write-up pending)
+**Status:** in progress — framework implemented; live write-up pending  
+**Absorbs #18** (retired 2026-09-08): the phase-aware rubric reasoning P1–P4 and the Output
+Quality Curator role came from there and are implemented here.  
+**Blocked on #43** for the LLM path: `--evaluator llm` still runs on OpenAI, so no number it
+produces should be tuned against.
 **Depends on:** #11 (run harness artifacts), #15 (technical PASS gate)
 **Extends / generalizes:** #18 (business output evaluation, Lane A)
 **Pairs with:** #20 (continuous monitoring eval), #21 (timeliness & channel metrics)
@@ -108,7 +112,7 @@ Bloomberg-/Reuters-style reports. New providers register via
 
 ## Related
 
-- `docs/specs/active/business_output_evaluation_18.md`
+- `docs/specs/done/business_output_evaluation_18.md`
 - `docs/specs/done/rag_full_stable_evaluation_11.md`
 - `docs/specs/done/newsfind_application_verification_15.md`
 - `testing/output_evaluation_rubric.md`, `testing/README.md`

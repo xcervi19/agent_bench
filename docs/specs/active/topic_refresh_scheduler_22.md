@@ -1,6 +1,10 @@
 # Topic refresh scheduler — #22
 
-**Status:** active (in progress — backend + tests done; live VPS verification pending)  
+**Status:** in progress — backend + tests done; scheduled path never exercised live  
+**What is left:** confirm a `refresh.completed` with `trigger=scheduled` on a slot.
+`CLAUDE_AGENT_SCHEDULER_ENABLED=true` on test1 since 2026-09-01; still `false` on prod. The
+scheduled and manual paths share `run_refresh` and differ only in `trigger`, so the risk is
+in dispatch, not in the cycle.  
 **Depends on:** #17 (monitor + manual `/refresh` shipped), #13 (multi-env VPS)  
 **Blocks:** #16 phase 16c (scheduled monitoring UX), #20 (realistic longitudinal cadence)  
 **Lane:** Product / backend — *automatic monitoring without external cron*

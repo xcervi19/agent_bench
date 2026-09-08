@@ -1,6 +1,13 @@
 # Source Whitelist Seed (Top 50) — #29
 
-**Status:** planned  
+**Status:** done (2026-09-08)  
+**Delivered:** `source_whitelist.json`, **622 entries** (614 `official`, 8 `data_feed`),
+committed and baked into the runtime image (`docker/Dockerfile.claude_agent`). The register
+is in daily use: `sources/whitelist.py` loads it for `source_discover`, and
+`topics/source_quality.py` scores every run's source mix against it.  
+**Carried forward:** the top-20 sign-off is absorbed into **#47**, which re-labels every
+entry (`country` / `authority_type` / `sector` / `signals`) and triages the 213 catalog
+domains that never merged — a per-entry pass that supersedes a sample sign-off.  
 **Lane:** Platform / Data  
 **Goal:** Vytvořit minimální "anchor" (whitelist) pro agenta, aby nemohl halucinovat neexistující domény.
 

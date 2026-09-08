@@ -88,6 +88,6 @@ bash scripts/devops/ci_run_vps_e2e_ssh.sh
 ## Related
 
 - `docs/specs/done/newsfind_application_verification_15.md`
-- `docs/specs/active/business_output_evaluation_18.md`
+- `docs/specs/done/business_output_evaluation_18.md`
 - `.github/workflows/`, `.github/README.md`
 - `scripts/devops/vps_setup_test_slot.sh`

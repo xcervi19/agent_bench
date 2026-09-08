@@ -1,6 +1,11 @@
 # Public topic sharing — #40
 
-**Status:** deployed to test1 + **prod** 2026-08-01 (`bb924d7`) — browser pass outstanding
+**Status:** done (2026-08-01, `bb924d7`)  
+**Delivered and verified on prod and test1** — see the verification sections below.  
+**Carried forward:** the freeze half of this ticket is superseded by **#50** (a shared topic
+stays live and owner-controlled by default; `frozen` is now a mode, not the only behaviour).
+The outstanding logged-out browser pass of `testing/ui_smoke_16.md` §7e is #50's, since #50
+changes what that pass must show.
 **Lane:** Product / frontend + API — *letting a finished topic leave the account that made it*
 **Depends on:** #24 (topic ownership), #16 (SignalGather UI), #22 (refresh scheduler)
 
@@ -202,6 +207,6 @@ grounding leg degrades on that slot (prod got it in `1672fe9`). Not touched here
 
 - `docs/specs/done/topic_user_ownership_24.md` — the ownership model this scopes against
 - `docs/specs/active/signalgather_frontend_v1_16.md` — UI this extends
-- `docs/specs/done/topic_refresh_scheduler_22.md` — the scheduler that must skip published topics
+- `docs/specs/active/topic_refresh_scheduler_22.md` — the scheduler that must skip published topics
 - Incident: commit `1672fe9` — why anonymous read is opt-in per row, not a config flag
 - `docs/specs/active/live_public_sharing_50.md` — makes the freeze optional; a live shared topic keeps refreshing under its owner

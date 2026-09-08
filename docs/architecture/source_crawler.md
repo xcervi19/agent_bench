@@ -144,6 +144,6 @@ from source_crawler import (
 
 - `oil_rag_collector/` — one-shot curated downloads
 - `source_ingest/from_collected.py` — consumes content + `.meta.json`
-- `docs/specs/active/hybrid_pipeline_orchestration_36.md` — Python conductor pattern
+- `docs/specs/done/hybrid_pipeline_orchestration_36.md` — Python conductor pattern
 - `docs/specs/active/scraping_infrastructure_31.md` — social adapters later
 - `source_whitelist.json` — domain allowlist for enrollment

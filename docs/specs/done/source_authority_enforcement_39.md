@@ -1,6 +1,15 @@
 # Source authority enforcement — #39
 
-**Status:** verified on prod 2026-07-31 (commit `ad60e09`) — one contract rule outstanding, follow-ups open
+**Status:** done (2026-07-31, `ad60e09`)  
+**Verified on prod:** refresh source mix moved **0 % → 80 % primary/official**, Sputnik gone,
+contract rules 1–4 held on the first live run. Two-tier freshness held again on the India run
+(2026-09-03), which is the case it was built for — monthly-cadence material survived a window
+that would previously have deleted it.  
+**Carried forward, with owners:**
+- the `thesis_status` divergence rule that did not take → batch with the next
+  deliver/refresh prompt change (**#45**);
+- whitelist stance on state-affiliated media → **#47** (register labels);
+- maritime / insurance primary coverage and `site:nioc.ir` returning 0 → **#44**.  
 **Lane:** Product / quality — *what the report is allowed to stand on*
 **Depends on:** #29 (whitelist), #30 (playbooks), #36 (source_discover), #16b (report UI)
 

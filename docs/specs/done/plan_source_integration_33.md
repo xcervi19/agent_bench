@@ -1,6 +1,11 @@
 # Plan Source Integration — #33
 
-**Status:** superseded (by #36)  
+**Status:** retired (2026-09-08)  
+**Retired because:** superseded by **#36**, which shipped 2026-07-24. Source discovery
+runs as a deterministic Python pre-plan stage (`pipeline.py` → `run_source_discover` →
+`source_targets.json`), not as agent-inline `/source-discover` calls from
+`newsfind-plan.md`. This ticket's acceptance criteria describe a design we deliberately
+did not take; nothing in it remains to build.  
 **Lane:** Platform / Agent Skills  
 **Goal:** ~~Upravit `newsfind-plan.md`, aby používal `/source-discover` skill.~~ → See #36 `hybrid_pipeline_orchestration_36.md`.
 

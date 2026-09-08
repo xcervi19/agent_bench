@@ -1,6 +1,14 @@
 # Multilingual Topic Grounding — #38
 
-**Status:** implemented, awaiting deploy
+**Status:** done (2026-09-01)  
+**Deployed:** prod received `/newsfind-topic-parse` in `CLAUDE_AGENT_ALLOWED_COMMANDS` with
+`1672fe9`; test1 was fixed 2026-09-01 and `/v1/agent/info` lists the command on both. The
+boot warning `claude_agent.pipeline_commands_not_allowed` (`app.py`) now catches a slot that
+drops the leg.  
+**Known interaction, not a defect of this ticket:** the `entities` this leg emits are fed
+verbatim into `discovery_query()`, and a name like *"Ministry of Petroleum and Natural Gas"*
+routes an India topic into Iranian and Bangladeshi domains through `entities_named_in`. That
+is the register's missing country label — **#47** — not a grounding fault.
 **Lane:** Platform / Backend
 **Goal:** Make source grounding work for topics written in any language, by converging every internal representation on English while still accepting multilingual input from operators and from the web.
 

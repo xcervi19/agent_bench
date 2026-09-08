@@ -275,7 +275,7 @@ Use for timing, cost, tool errors, artifact counts — **verification hints**, n
 
 ## Business output evaluation (Lane A)
 
-Judgment of **information value** for trading/analyst users — see `docs/specs/active/business_output_evaluation_18.md`.
+Judgment of **information value** for trading/analyst users — see `docs/specs/done/business_output_evaluation_18.md`.
 
 ### 0. Trading Intelligence Evaluation Framework (#23)
 

@@ -29,7 +29,7 @@ topic
   → [Python] refresh               scheduler + delta (#22)
 ```
 
-Spec: `docs/specs/active/hybrid_pipeline_orchestration_36.md`
+Spec: `docs/specs/done/hybrid_pipeline_orchestration_36.md`
 
 ### Stage artifact contracts
 
@@ -107,7 +107,7 @@ Two roles; do not conflate:
 
 ## Related
 
-- `docs/specs/active/hybrid_pipeline_orchestration_36.md` — Level 1 implementation ticket
+- `docs/specs/done/hybrid_pipeline_orchestration_36.md` — Level 1 implementation ticket
 - `docs/specs/done/source_discover_skill_32.md` — first Level 1 + Level 2 module
 - `docs/specs/done/coverage_playbooks_seed_30.md` — playbook corpus
 - `apps/claude_agent/topics/pipeline.py` — orchestrator shell

@@ -3,7 +3,8 @@
 **Status:** in progress — first run delivered on test1 2026-09-03  
 **Lane:** Product / business value — *first paying-prospect topic*  
 **Depends on:** #30 (playbooks), #32 (source discover), #36 (hybrid pipeline), #39 (source authority), #22 (refresh scheduler)  
-**Blocks:** country-fundamentals expansion beyond India  
+**Blocks:** country-fundamentals expansion beyond India
+**Blocked by (for the second run):** **#51** — the deliver leg reads neither the captured corpus nor the plan's RAG context, and spreadsheets are unreadable; re-running before #51 lands measures the same blind analyst  
 **Related:** #44 (insurance/vessel sources — same inventory+routing failure mode), #20 (monitoring evaluation)
 
 ---

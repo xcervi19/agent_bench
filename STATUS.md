@@ -59,11 +59,29 @@ is the second time the deployed state has had to be reconstructed from memory.
 **Do not deploy any of this to the slot the customer sees until India (#45) has run on a
 non-demo slot and been read.** #44 touches the same baked files — batch the rebuilds.
 
-**And do not ship `allowed_domains` before #47.** The domain filter turns the register from
-a list into an instruction. Today that instruction would send an India gas topic to `mop.ir`
-(Iran) and two Bangladeshi power ministries — they would burn slots in a batch of 5–8,
-return nothing, and fill `search_queries` with zero-hit rows that look like dead sources
-rather than misrouting. The evidence layer shipped 2026-08-22; the filter waits for labels.
+**`allowed_domains` shipped before #47, and the guard was never in code.** This section used
+to read *"do not ship `allowed_domains` before #47"*. It shipped anyway on 2026-08-22, and
+the India run put a domain filter on 8 of 15 queries. The filter turns the register from a
+list into an instruction, and the instruction is only as good as the routing behind it.
+
+Measured 2026-09-08, on the *facets-expanded* query the pipeline actually passes to
+`source_discover` (not the bare topic #45 was tuned against):
+
+```
+"India gas demand: …"                                    → 32 targets, 0 foreign
+"India gas demand: …" + "Ministry of Petroleum and Natural Gas"
+                                                         → 54 targets
+  doe.ir mop.ir nioc.ir pmo.ir cbi.ir irica.gov.ir mfa.gov.ir irica.ir shana.ir
+  mpemr.gov.bd powerdivision.gov.bd
+  playbooks gain iran_oil_geopolitics.md + china_oil_gas_imports.md
+"India gas demand: …" + "PPAC PNGRB GAIL Petronet CEA"   → 32 targets, 0 foreign
+```
+
+One phrase does it — and `newsfind-topic-parse.md` gives *"Ministry of Petroleum"* as its own
+worked example of an entity to emit. **Before the next India run, read `facets.json` and
+`source_targets.json` from the test1 run (`d19908b3`) and count the `.ir` / `.bd` entries.**
+"No Iranian domain appeared in the cited sources" is not the same claim: a misrouted domain
+that returns nothing is indistinguishable from a dead source. #47 is the fix.
 
 ---
 
@@ -73,18 +91,22 @@ _Order for improving search reliability and grounding. Separate from the V1 UI q
 
 | Order | Ticket | Why now | Unblocks |
 |------|--------|---------|----------|
-| 1 | **#31** Scraping infrastructure | Social channel reads; fills the #36 `execute_search` contract | Live social in deliver/refresh |
-| — | **#33** Plan source integration | **Superseded by #36** — do not implement separately | — |
-| later | **#35** Graph retrieval layer | v2 after #36 MVP measured | Precision on relational topics |
+| 1 | **#47** Register labels | The register carries no country, so `entities_named_in` routes an India topic into Iranian and Bangladeshi ministries. Makes selection a set query instead of a lexical guess | #46 Gate 3, #48, #49, safe `allowed_domains` |
+| 2 | **#49** Discovery lane + promotion | A domain filter is a closed world; without a reserved unfiltered budget and a promotion path the register can never grow | Register growth, third channel |
+| 3 | **#48** Topic bootstrap job | The India onboarding, automated — the work that recurs for every customer topic | Country #2 at acceptable cost |
+| 4 | **#31** Scraping infrastructure | Social channel reads; the unbuilt half of #36's `execute_search` | Live social in deliver/refresh |
 
-**Shipped:** **#30** playbooks, **#32** `apps/claude_agent/sources` + `/source-discover` skill, **#36** hybrid pipeline (`source_discover` pre-plan stage; `execute_search` documented, not built). **#29** whitelist mostly done; finish commit + top-20 sign-off.
+**Shipped:** **#29** whitelist (622 entries), **#30** playbooks (57), **#32** `apps/claude_agent/sources` + `/source-discover`, **#36** hybrid pipeline (`source_discover` pre-plan stage; `execute_search` documented, not built), **#42** search evidence capture + content fetcher, **#38** multilingual grounding, **#39** source authority.
+
+**Retired 2026-09-08:** **#33** (superseded by #36) and **#35** (graph retrieval — the relational-retrieval problem is being answered as a labelled set query by #47 + #49, and #35's own start condition was never met). See the registry's Retired table.
 
 **Dependency sketch (platform):**
 
 ```
-#29 (whitelist, mostly done) ──► #30 (playbooks, done) ──► #32 (discover, done) ──► #36 (hybrid pipeline, done)
-                                                                              └──► #31 (scraping) ──► #36 execute_search
-#35 (graph) — after #36 quality baseline
+#29 (done) ──► #30 (done) ──► #32 (done) ──► #36 (done) ──► #42 (done)
+                                                  └──► #31 (scraping) ──► #36 execute_search
+#47 (labels) ──► #48 (bootstrap) ──► country #2
+            └──► #49 (discovery lane + promotion)
 ```
 
 ---
@@ -95,27 +117,31 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 | Order | Ticket | Why now | Unblocks |
 |------|--------|---------|----------|
-| 1 | **#22** Topic refresh scheduler *(in progress — code done, VPS verify pending)* | Automatic monitoring cadence — product expectation for pilot; #16's monitoring UI is its first user-facing surface | #16 monitoring, #20 |
-| 2 | **#16** SignalGather frontend V1 *(16a–d verified on prod via API — **browser smoke pending**)* | User-facing setup, approval, report, and monitoring journey on shipped API (#17, #24 done) | Pilot flow without curl; #37 |
-| 3 | **#37** Pilot first-use experience | Make the completed topic journey self-explanatory and trustworthy before broad pilot acquisition | Self-serve pilot onboarding |
-| 4 | **#50** Live public sharing | Removes the #40 freeze: a shared report stays live and owner-controlled. A link that keeps updating is the cheapest demo we have, and today sharing one costs the owner their monitoring | #37 (a prospect-facing link), public demos |
-| 5 | **#21** Timeliness & channel metrics | Measurable inputs for eval lanes | #18, #20 (richer verdicts) |
-| 6 | **#23** Trading Intelligence Evaluation Framework | Lane A — runnable framework (generalizes #18); offline + LLM judge | Pilot go/no-go narrative; version-vs-version verdicts |
-| 7 | **#18** Business output evaluation | Lane A rubric/playbook narrative — folded into #23 framework | Pilot go/no-go narrative |
-| 8 | **#20** Continuous monitoring evaluation | Lane A over time — needs scheduler + rubric | Longitudinal product proof |
+| 1 | **#45** India gas pilot | The first paying prospect's topic. Second run + weekly monitoring is the decision the customer is waiting on | Country-fundamentals expansion |
+| 2 | **#51** Report grounding | The deliver leg reads neither the captured corpus nor the plan's RAG context, and spreadsheets are unreadable. Land it **before** the second India run, or that run measures the same blind analyst | A report written from what we actually hold |
+| 3 | **#47** Register labels | Promoted to demo-critical 2026-09-08: the India topic's own entity list routes it into Iranian and Bangladeshi domains | Safe `allowed_domains`, #46, #48, #49 |
+| 4 | **#16** SignalGather frontend V1 *(16a–d verified through the API — **browser smoke pending**)* | A demo is a browser, and nothing in the UI has been driven in one | Pilot flow without curl; #37 |
+| 5 | **#50** Live public sharing | A link that keeps updating is the cheapest demo we have. Implemented; needs prod migration + the logged-out browser pass | #37, public demos |
+| 6 | **#22** Topic refresh scheduler *(code done, scheduled path never fired)* | The weekly pile is the product for a country topic | #16 monitoring, #20 |
+| 7 | **#37** Pilot first-use experience | Make the journey self-explanatory before broad pilot acquisition | Self-serve onboarding |
+| 8 | **#43** Claude LLM judge | Until this lands, no `--evaluator llm` number is worth tuning against | #23, #41 |
+| 9 | **#23** Trading Intelligence Evaluation Framework | Lane A framework shipped; needs one live write-up. **Absorbs #18** | Pilot go/no-go narrative |
+| 10 | **#21** Timeliness & channel metrics | Measurable inputs for the eval lanes | #23, #20 |
+| 11 | **#20** Continuous monitoring evaluation | Lane A over time — needs #22 firing scheduled and #23's rubric | Longitudinal product proof |
 
-**Suggested next pick:** **drive `testing/ui_smoke_16.md` in a browser against prod `/app`.** The full pipeline is now verified end to end on prod *through the API* (plan -> gate -> report -> two refresh cycles, #39 included), so what remains unproven is the UI itself — reconnect (§5) and responsive (§11) are the criteria no automated check can close. Then **#37** (first-use, loading/error/recovery, return-use clarity, new-account pilot smoke) before broad pilot acquisition. **#22**'s scheduled path is still unexercised (`CLAUDE_AGENT_SCHEDULER_ENABLED=false` on prod); it shares `run_refresh` with the verified manual path, differing only in `trigger`. **CI:** add GitHub secrets (`.github/README.md`) then run workflow “VPS E2E test1” for a live green artifact.
+**Suggested next pick:** **read `facets.json` and `source_targets.json` from the test1 India run (`d19908b3`) before changing anything.** It costs ten minutes and it decides whether #47 is demo-blocking or merely urgent — `run_plan` calls `source_discover` with the *facets-expanded* query, while #45's topic string was tuned against the bare topic. Then **#51** (deliver reads the evidence corpus and the plan's RAG context; `.xlsx` branch in `search_content.py`), then re-run India and read the primary share — in that order, or the re-run measures the same blind analyst. Then **#16**'s browser pass — reconnect (§5) and responsive (§11) are the criteria no automated check can close. **CI:** add GitHub secrets (`.github/README.md`) then run workflow “VPS E2E test1” for a live green artifact.
 
-**Parallel (when deps met):** #21 after harness artifacts (#11); #18 can start rubric using `testing/results/test1/latest` (Lane B PASS); do not start #20 until **#22** + **#18** rubric exist.
+**Parallel (when deps met):** #21 after harness artifacts (#11); #23's write-up can start on `testing/results/test1/latest` with the heuristic evaluator; do not start #20 until **#22** has fired a scheduled cycle and **#23** has a rubric write-up.
 
 **Dependency sketch:**
 
 ```
-#11,#13,#15,#17,#19,#24 (done) ──► #16 (16a–d built) ──► #37 (pilot first-use) ──► pilot acquisition
-                       └──► #22 ──► #16 monitoring verified on test1
-                       └──► #21 ──┐
-#15 PASS (test1/latest) ───────► #18 ──► #20
-#22 + #18 + #21 ───────────────────────────► #20
+#11,#13,#15,#17,#19,#24,#40 (done) ──► #16 (16a–d built) ──► #37 ──► pilot acquisition
+                            └──► #50 (implemented) ──► #37
+#42,#38,#39 (done) ──► #45 (India) ──► #46 (loop) ──► #48 ──► country #2
+                  └──► #47 (labels) ──┘        └──► #49
+#22 ──► #16 monitoring · #20
+#43 ──► #23 ──► #20 ;  #21 ──► #23, #20
 ```
 
 ---
@@ -135,6 +161,14 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **Backup before the work:** `~/backups/agentic_test1_20260901_1627.dump` (78 MB, `pg_dump -Fc`).
 - **Not done, deliberately:** no India topic has been run — that costs real money and is a separate decision. Prod is still at `0011` and does not have #45/#46/#50.
 - **Next step:** run the India topic on test1 and read the source mix before touching anything else (`#45` next step), or drive `testing/ui_smoke_16.md` §7e against the live share.
+
+### Report grounding (#51) — everything we already hold reaches the analyst
+- **Spec:** `docs/specs/active/report_grounding_completion_51.md` · **Status:** planned (2026-09-08)
+- **Why:** four shipped mechanisms collect material for a topic — the #42 evidence store, the RAG corpus, #45's official feeds, and the plan leg's own retrieval — and the leg that writes the report consumes almost none of it. `export_evidence` is called only from `run_refresh`; `newsfind-deliver.md:79` drops `rag_context_refs` and `current_state`; `search_content.py` records every spreadsheet `unsupported` although the converter and `openpyxl` are already in the image. The foundational report — the most-read artefact, and the one the India run produced — is written from one-to-two-sentence search snippets.
+- **Also in scope, because they make the above verifiable or defeat it silently:** feed staleness marking; a visible signal when degraded facets zero the feed channel (`fallback_facets` empties `commodity`/`geo`, and `feeds.matches` then returns `False` for every feed); `evidence_count` / `feeds_count` / `facets_degraded` on the stage events; one definition of `source_mix` (the frontend recomputes a narrower one and ignores the emitted payload); and `PATCH /monitor` accepting `short_term_queries`, without which no query change can reach a monitored topic.
+- **Deliberate boundary:** this changes **what the analyst can read**, not what search finds. Routing is #47, yield analysis is #46, corpus seeding is #48, discovery is #49. Conflating the two is how a quality change becomes unattributable.
+- **Sequencing:** land before the second India run. Prompt-contract edits change every existing monitored topic, so batch them with #39's outstanding `thesis_status` divergence rule.
+- **Next step:** implement scope items 1–3 (corpus into deliver, RAG context into deliver, `.xlsx` in the fetcher) — they are the three that change report content; 4–8 make the result measurable and are cheaper.
 
 ### Register labels (#47) — blocker for `allowed_domains`
 - **Spec:** `docs/specs/active/register_labels_47.md`
@@ -220,17 +254,6 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **Still not exercised:** no topic has been run end to end on the new build. `CLAUDE_AGENT_SCHEDULER_ENABLED=false` on prod, so 16c's *scheduled* refresh path cannot be tested there until that is flipped (no subscription currently has `schedule_enabled`, so flipping it is safe); manual refresh works.
 - **Next step:** work `testing/ui_smoke_16.md` end to end against `https://agent.particletico.com/app` — §7b (widgets), §7d (monitoring/deltas), §5 (reconnect) and §11 (responsive) are what unit tests cannot close.
 
-### Public topic sharing (#40) — deployed to test1 + prod, browser pass outstanding
-- **Spec:** `docs/specs/active/public_topic_sharing_40.md`
-- **Lane:** Product / API + frontend — *a finished topic leaving the account that made it*
-- **Why:** a report is worth something to more people than its owner, but everything under `/v1/topics/*` is owner-scoped (#24) and no UI route renders without a session. The two constraints that shaped the design: anonymous read must be **per-row opt-in**, not a config flag (the 2026-07-27 incident, `1672fe9`, was exactly the loose version), and no anonymous request may cause a Claude run — we do not check permissions before spending, there is simply no route that spends.
-- **Shipped (code):** migration `0007_topic_public` (`is_public` NOT NULL default false, `published_at`, partial index); `POST|DELETE /v1/topics/{id}/publish`; `_mutable()` → 409 on proceed/cancel/subscribe/monitor/refresh while published, `available_actions` empty; publishing pauses monitoring + clears its schedule, and is itself refused while a cycle is in flight; scheduler due-query and `run_refresh` both skip published topics; new **GET-only, auth-free** router `/v1/public/topics/*` (list + detail + plan/report/news artifacts + deltas, no SSE, no owner/run-id leakage); `serving.py` shared by both routers. Frontend: `/app/shared` + `/app/shared/<id>` render with no session via a token-free client (`lib/publicApi.ts`), Share tab + published banner, monitoring/plan panels explain the freeze. 24 backend + 17 frontend tests (`tests/topics/test_public_sharing.py`, `publicApi.test.ts`, `SharePanel.test.tsx`, `PublicTopicPage.test.tsx`).
-- **Verified on test1 (2026-08-01, `fda0876`):** migration `0006 -> 0007` applied, images rebuilt, boot clean. Anonymous `GET /v1/topics` **401**; anonymous `GET /v1/public/topics` **200** listing only the published row; all four write verbs on the public router **405**; report/news/parsed/intro/deltas all readable with no credentials; refresh/proceed/cancel/monitor **409 with a valid service key**; unpublish → 404 + empty listing + owner regains control. Details in the spec.
-- **Deployed to prod (2026-08-01, `bb924d7`):** migration applied before the restart; boot clean. All 8 existing topics `is_public = f` — the deploy published nothing. Anonymous `GET /v1/topics` **401**, `GET /v1/public/topics` **200 but empty**, all four write verbs **405**, and a *real* unpublished prod topic **404s** on every public route. `/app/shared` resolves.
-- **What's missing:** browser pass of `testing/ui_smoke_16.md` §7e in a logged-out window — the DevTools check (only `GET /v1/public/topics/*`, no `Authorization` header) is the one no automated check closes.
-- **Next step:** browser check on `https://agent-test1.particletico.com/app/shared/9f2607da-4a94-494d-83bc-2af3ad9a8842` (left published on test1). Nothing is shared on prod; that stays each owner's decision.
-- **Noticed while deploying (unrelated):** test1's `CLAUDE_AGENT_ALLOWED_COMMANDS` still lacks `/newsfind-topic-parse`, so #38's grounding leg degrades on that slot; prod got it in `1672fe9`. Also, the test1 worktree was carrying a stale destructive index (82 staged deletions) — stashed as `test1 slot-local before #40 deploy`, recoverable with `git stash pop`.
-
 ### Live public sharing (#50) — implemented 2026-09-01, awaiting migration + deploy
 - **Spec:** `docs/specs/active/live_public_sharing_50.md`
 - **Lane:** Product / API + frontend — *a shared report that keeps up with its topic*
@@ -244,17 +267,6 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **What's missing:** migration applied on test1/prod, and the browser pass — publish live → refresh as owner → logged-out tab picks the cycle up → pin → it stops moving → unpublish → 404.
 - **Watch out on deploy:** the migration backfills existing published rows to `frozen` — test1's `9f2607da` was shared under a promise of "this exact state". Prod has nothing published, so there it is a no-op. Apply the migration **before** the restart, as #40 did: `0012_search_queries` → `0013_topic_share_mode`.
 
-### Search evidence capture + report-from-evidence (#42) — shipped, running in prod, **undocumented here until 2026-08-20**
-- **Spec:** `docs/specs/done/search_evidence_capture_42.md` (status says done 2026-08-02; the spec is **stale** — see below)
-- **Lane:** Platform / backend — *content acquisition and processing of everything search returns*
-- **What it does:** every hit web search returns is captured — `search_documents` (dedup per topic+URL) and `search_observations` (append-only per query/run/rank) — then `search_content.py` reads the page behind it in the background under a self-identifying, robots-respecting client. Outcomes are first-class data, not errors: `fetched` / `thin` / `blocked` / `not_found` / `disallowed` / `unsupported` / `error`, accumulating into a **per-domain accessibility map**. JSON-LD `articleBody` and PDFs are read; one retry on 429/503. No verdict at capture time — by design.
-- **Then `3ea0fbe` closed the loop:** the corpus is exported into the run dir (one file per document, provenance front matter + index) and the refresh command reads it **before** WebFetch and prefers it — "WebFetch returns a model's answer to a prompt, a corpus file is the article". Unreadable documents are counted in the index so absence is not mistaken for silence.
-- **Query breadth:** the plan was capped at a literal `12` in three places — now `settings.refresh_max_queries`, **default 40**. The cap, not fetch success, is what bounds corpus size.
-- **Measured in prod:** ~9 links per query, **~89 % read successfully**, last pre-change run = **121 documents** averaging ~16k chars. `ab6b98f` (NUL bytes breaking an asyncpg INSERT) was diagnosed against a 29k-char article in prod.
-- **The spec is stale on two points:** it says "migrations not yet applied" and "the fetcher has never run against the live web". Both were true on 2026-08-02 and are not true now.
-- **What #42 deliberately did NOT do:** the judging pass over the corpus. Recording is separate from using; the strategy for a cheap model reading the articles is **not designed**. That is now the real gap behind "correctly filter" in the business requirements.
-- **Why this matters for #46/#45:** the Hormuz baseline (2026-08-01) is the last run *before* this landed, so its opaque `drops` describe a system state that no longer exists. Any claim about "we cannot tell what was discarded" must be re-checked against a post-#42 run.
-
 ### Insurance & vessel-tracking source branch (#44) — planned
 - **Spec:** `docs/specs/active/insurance_vessel_tracking_sources_44.md`
 - **Lane:** Product / quality — *whether the report can answer the question it was asked*
@@ -265,14 +277,6 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **Not a hot config change:** `docker/Dockerfile.claude_agent:49-50` bakes `source_whitelist.json` and `playbooks/` into the image (no volume mount), so this needs a rebuild + redeploy — do not land it on a slot about to be demoed.
 - **Next step:** pick the free-publishing insurance tier (JWC/LMA, IG P&I, IUMI, IMB), wire it into the playbook, rebuild, then re-run `topic.txt` verbatim and compare with `scripts/evaluate_output.sh relative`.
 
-### Source authority enforcement (#39)
-- **Spec:** `docs/specs/active/source_authority_enforcement_39.md`
-- **Lane:** Product / quality — *what a report is allowed to stand on*
-- **Why:** the first monitored refresh on prod returned 8/8 secondary sources, 0 primary, 0 whitelisted — including Russian state media behind its highest-confidence finding. Cause was not grounding: four queries were site-scoped to official domains, returned three hits, and all three were dropped as `too_old`. Primary sources publish on an event cadence, news outlets continuously, so a uniform freshness window structurally deletes the authoritative tier.
-- **Shipped:** `topics/source_quality.py` (deterministic `SourceMix`, emitted on `report.ready` / `refresh.completed`, no migration); two-tier freshness + authority-aware ranking + confidence caps + mandatory source-mix statement in the deliver/refresh contracts; `SourceMixNote` in the report and every delta detail. 23 backend + 6 frontend tests.
-- **Verified on prod:** refresh source mix went **0 % -> 80 % primary/official**, Sputnik gone, contract rules 1–4 all held on the first live run.
-- **Outstanding:** the `thesis_status` divergence rule did not take (cycle reported `supported` against the report's `weakened` without noting the contrast) — prompt rewording, batch with the next contract change. Follow-ups: whitelist stance on state-affiliated media, maritime/insurance primary coverage, and `site:nioc.ir` returning 0 across both cycles.
-
 ### Topic refresh scheduler (#22)
 - **Spec:** `docs/specs/active/topic_refresh_scheduler_22.md`
 - **Lane:** Product / backend — *automatic refresh cadence per monitored topic*
@@ -282,35 +286,21 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 ### Trading Intelligence Evaluation Framework (#23)
 - **Spec:** `docs/specs/active/trading_intelligence_evaluation_23.md`
-- **Lane:** A — *Is the deliverable valuable for users' business decisions?* (generalizes #18)
+- **Lane:** A — *Is the deliverable valuable for users' business decisions?* (**absorbs #18**, retired 2026-09-08)
 - **What's done:** `libs/eval_framework/` package — configurable 3-layer/14-category rubric (Information Discovery 40% / Research 30% / Trading 30%, 0–5), absolute + relative (Better/Equal/Worse) modes, win-rate aggregation, offline deterministic `HeuristicEvaluator` + `LLMEvaluator` (Output Quality Curator), pluggable benchmark-provider registry, `quality_review.{json,md}` rendering, CLI (`python -m eval_framework`) + `scripts/evaluate_output.sh`, rubric doc (`testing/output_evaluation_rubric.md`), 25 offline tests in `tests/eval/`
 - **What's missing:** one **LLM-judge** write-up on `test1/latest` referencing a #15 PASS; adoption in pilot go/no-go; optional #21 timeliness/channel hints wired into latency scoring
 - **Next step:** Run `scripts/evaluate_output.sh absolute --run-dir testing/results/test1/latest --evaluator llm` on a technically-passing run and attach the verdict to the pilot checklist
 
-### Business output evaluation (#18)
-- **Spec:** `docs/specs/active/business_output_evaluation_18.md`
-- **Lane:** A — *Is the deliverable valuable for users' business decisions?*
-- **What's done:** Evaluator-agent (Output Quality Curator) role defined; phase-aware rubric (P1 comprehension, P2a/P2b query disciplines, P3 latest-news effectiveness, P4 monitoring value); server evaluation flow
-- **What's missing:** `testing/output_evaluation_rubric.md`, `quality_review.json` schema + evaluator playbook, one phase-aware write-up on test1
-- **Next step:** Publish rubric + curator playbook; run one evaluated test1 run referencing technical PASS from #15
-
 ### Continuous monitoring evaluation & valuable-update feedback (#20)
 - **Spec:** `docs/specs/active/continuous_monitoring_evaluation_20.md`
-- **Lane:** A — *monitoring-over-time variant of #18*
+- **Lane:** A — *monitoring-over-time variant of #23* (#18 retired 2026-09-08, absorbed by #23)
 - **What's done:** Gap framed; two modes (A: `/refresh` smoke, B: scheduler window + timeline + retrospective P4); `monitoring_timeline.json` + evaluator bundle specified
 - **What's missing:** Timeline assembly, Mode B harness, monitoring-quality rubric, valuable-update labels, one retrospective evaluator run
 - **Next step:** After #22 cadence exists, run one monitoring window on test1 → assemble timeline → P4 evaluator review
 
-### Topic refresh scheduler (#22)
-- **Spec:** `docs/specs/active/topic_refresh_scheduler_22.md`
-- **Lane:** Product / backend — *automatic refresh cadence per monitored topic*
-- **What's done:** Gap framed; manual `/refresh` + monitor shipped (#17); scheduler container defined but not running on VPS
-- **What's missing:** Schedule fields on subscription, internal scheduler job, VPS scheduler service, harness tests for scheduled vs manual refresh
-- **Next step:** Decide interval model (hours vs cron); extend `POST/PATCH /monitor`; implement scheduler job calling `run_refresh`
-
 ### Timeliness & source-channel coverage metrics (#21)
 - **Spec:** `docs/specs/active/timeliness_channel_metrics_21.md`
-- **Lane:** Instrumentation — *feeds #15, #18, #20*
+- **Lane:** Instrumentation — *feeds #15, #23, #20*
 - **What's done:** Gap framed (no time-to-surface or channel-coverage metrics today); metric definitions drafted
 - **What's missing:** `timeliness`/`channels` blocks in `evaluation.json`, field docs, verification on a real run
 - **Next step:** Implement metric calculators in `scripts/test_vector_runner.sh` and document fields in `testing/README.md`
@@ -358,8 +348,13 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 | What | Date | Spec |
 |---|---|---|
+| **#40 Public topic sharing** — anonymous GET-only router, per-row opt-in, all four write verbs 405; deployed prod + test1. Freeze half superseded by #50 | Aug 1, 2026 | `docs/specs/done/public_topic_sharing_40.md` |
+| **#42 Search evidence capture + content fetcher** — `search_documents` / `search_observations` / `search_queries`, robots-respecting fetcher, per-domain accessibility map; ~89 % read rate measured in prod. **Judging pass deliberately out of scope** → #46 item 4 | Aug 2, 2026 | `docs/specs/done/search_evidence_capture_42.md` |
+| **#39 Source authority enforcement** — `source_quality.py`, two-tier freshness, authority-aware ranking, confidence caps; refresh source mix 0 % → 80 % primary/official on prod. Residual `thesis_status` rule batched with the next prompt change (#45) | Jul 31, 2026 | `docs/specs/done/source_authority_enforcement_39.md` |
+| **#38 Multilingual topic grounding** — diacritics folding, Unicode tokenizer, `topic_parse` leg; deployed on prod (`1672fe9`) and test1 (2026-09-01) | Sep 1, 2026 | `docs/specs/done/multilingual_topic_grounding_38.md` |
+| **#29 Source whitelist seed** — `source_whitelist.json`, 622 entries, baked into the image; top-20 sign-off absorbed into #47 | Sep 8, 2026 (closed out) | `docs/specs/done/source_whitelist_seed_29.md` |
 | **#24 Topic user ownership** — `owner_user_id` + migration `0006`; JWT auth on all topic routes; service-key bypass for harness; verified on test1 | Jul 26, 2026 | `docs/specs/done/topic_user_ownership_24.md` |
-| **#36 Hybrid pipeline orchestration** — Python `source_discover` pre-plan stage writes `source_targets.json`; deterministic topic→entity resolution (no LLM); plan agent consumes pre-resolved domains; `execute_search` contract documented only | Jul 24, 2026 | `docs/specs/active/hybrid_pipeline_orchestration_36.md` |
+| **#36 Hybrid pipeline orchestration** — Python `source_discover` pre-plan stage writes `source_targets.json`; deterministic topic→entity resolution (no LLM); plan agent consumes pre-resolved domains; `execute_search` contract documented only | Jul 24, 2026 | `docs/specs/done/hybrid_pipeline_orchestration_36.md` |
 | **#32 `/source-discover`** — Python `apps/claude_agent/sources` (whitelist + local playbooks) + Cursor skill; CLI `python -m apps.claude_agent.sources`; pipeline wire-up = #36 | Jul 23, 2026 | `docs/specs/done/source_discover_skill_32.md` |
 | **#30 Coverage playbooks seed** — 55 playbooks in `local_knowledge_sources/playbooks/`; ingest `document_type=playbook`; Meta-RAG ready (pipeline wiring = #36) | Jul 23, 2026 | `docs/specs/done/coverage_playbooks_seed_30.md` |
 | **#25 Slim main — archive legacy stack** — tag `archive/pre-slim-2026`, branch `archive/signal_gather-platform`; removed `signal_gather` + CrewAI deps; slim compose | Jun 16, 2026 | `docs/specs/done/slim_main_archive_25.md` |

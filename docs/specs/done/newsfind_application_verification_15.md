@@ -74,6 +74,6 @@ scripts/qa_check_run.sh --run-dir testing/results/test1/latest
 
 - `docs/specs/done/rag_full_stable_evaluation_11.md` — harness
 - `docs/specs/done/pilot_ops_v1_17.md` — thin gate + runner wiring
-- `docs/specs/active/business_output_evaluation_18.md` — Lane A (needs technical PASS)
+- `docs/specs/done/business_output_evaluation_18.md` — Lane A (needs technical PASS)
 - `docs/specs/done/devops_vps_test_execution_19.md` — wire `unit-tests` + `qa-gate` checks
 - `testing/README.md` — [Verification flow](../../../testing/README.md#verification-flow-real-run-vs-unit-tests)

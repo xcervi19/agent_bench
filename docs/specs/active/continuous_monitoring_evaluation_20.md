@@ -1,6 +1,7 @@
 # Continuous monitoring evaluation & valuable-update feedback — #20
 
-**Status:** active (planned)  
+**Status:** planned  
+**Depends on:** #22 (cadence, code done), #23 (rubric + framework). Do not start before both.  
 **Depends on:** #11 (run harness), #18 (evaluator agent + rubric), #21 (timeliness/channel metrics), **#22** (scheduler cadence for realistic windows)  
 **Lane:** A (business) — *monitoring-over-time variant*  
 **Related tickets:** #15 (technical verification), #18 (single-run + retrospective business evaluation), #19 (execution), #22 (periodic refresh)
@@ -127,7 +128,7 @@ Evaluated by the **#18 evaluator agent** with a monitoring-specific rubric:
 
 ## Related
 
-- `docs/specs/active/business_output_evaluation_18.md`
+- `docs/specs/done/business_output_evaluation_18.md`
 - `docs/specs/active/timeliness_channel_metrics_21.md`
 - `apps/claude_agent/topics/refresh.py`
 - `claude_agent_fe/.claude/commands/newsfind-refresh.md`

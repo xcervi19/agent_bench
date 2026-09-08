@@ -125,5 +125,5 @@ app.
 - `testing/baselines/README.md`, `testing/baselines/hormuz_90d_2026-08-01/`
 - `testing/vectors.json` — existing vector concept to build the set from
 - `docs/specs/active/trading_intelligence_evaluation_23.md`
-- `docs/specs/active/source_authority_enforcement_39.md` — the change whose
+- `docs/specs/done/source_authority_enforcement_39.md` — the change whose
   effect this ticket would let us actually measure

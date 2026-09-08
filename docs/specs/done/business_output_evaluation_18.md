@@ -1,6 +1,12 @@
 # Business output evaluation — #18
 
-**Status:** active (planned)  
+**Status:** retired (2026-09-08)  
+**Retired because:** folded into **#23**, which generalises it. The rubric this ticket
+asked for shipped as `testing/output_evaluation_rubric.md`, the `quality_review.{json,md}`
+schema and renderer live in `libs/eval_framework/`, and the Output Quality Curator role is
+implemented there. What remained — one phase-aware write-up on a `test1` run — is #23's
+outstanding item, not a second ticket. Kept for the phase-aware rubric reasoning (P1–P4),
+which #23 reuses.  
 **Depends on:** #11 (run harness artifacts), #15 (technical PASS), #19 (execution visibility)  
 **Feeds / pairs with:** #20 (continuous monitoring evaluation), #21 (timeliness & channel instrumentation)  
 **Lane:** A — *Is the result valuable for users' business decisions?*  

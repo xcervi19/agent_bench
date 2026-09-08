@@ -86,8 +86,8 @@ Search via `rag_adhoc` with filter/query intent for `document_type: playbook` (w
 
 ## Related
 
-- #29 `docs/specs/active/source_whitelist_seed_29.md` (or done path when closed)
+- #29 `docs/specs/done/source_whitelist_seed_29.md` (or done path when closed)
 - #32 source discover skill/module
-- #36 `docs/specs/active/hybrid_pipeline_orchestration_36.md`
+- #36 `docs/specs/done/hybrid_pipeline_orchestration_36.md`
 - `docs/knowledge/oil_rag_source_strategy.md`
 - `docs/ops/commands.md` — Local Knowledge Ingest

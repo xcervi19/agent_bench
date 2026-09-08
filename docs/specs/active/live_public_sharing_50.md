@@ -344,9 +344,9 @@ watch it stop, unpublish, link 404s.
 
 ## Related
 
-- `docs/specs/active/public_topic_sharing_40.md` — the sharing model this changes; its anonymous-read design is kept whole
+- `docs/specs/done/public_topic_sharing_40.md` — the sharing model this changes; its anonymous-read design is kept whole
 - `docs/specs/done/topic_user_ownership_24.md` — the ownership scoping the public router sits outside of
-- `docs/specs/done/topic_refresh_scheduler_22.md` — the scheduler whose due-query changes here
+- `docs/specs/active/topic_refresh_scheduler_22.md` — the scheduler whose due-query changes here
 - `docs/specs/active/signalgather_frontend_v1_16.md` — the UI surface; `testing/ui_smoke_16.md` §7e is the logged-out browser pass
 - `docs/specs/active/pilot_first_use_experience_37.md` — a live link is the first thing a prospect sees
 - Incident `1672fe9` (2026-07-27) — why anonymous read stays per-row opt-in, and why `is_public` alone gates the public router

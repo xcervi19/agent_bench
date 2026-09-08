@@ -69,7 +69,7 @@ result = discover_sources("NIOC")
 ## Related
 
 - `docs/architecture/agent_orchestration.md` — two-level model (orchestrator + agent CLI SDK)
-- #29 `docs/specs/active/source_whitelist_seed_29.md` (mostly done)
+- #29 `docs/specs/done/source_whitelist_seed_29.md` (mostly done)
 - #30 `docs/specs/done/coverage_playbooks_seed_30.md`
-- #36 `docs/specs/active/hybrid_pipeline_orchestration_36.md`
-- #33 `docs/specs/active/plan_source_integration_33.md` (superseded)
+- #36 `docs/specs/done/hybrid_pipeline_orchestration_36.md`
+- #33 `docs/specs/done/plan_source_integration_33.md` (superseded)
