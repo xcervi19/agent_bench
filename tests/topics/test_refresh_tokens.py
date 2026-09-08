@@ -58,11 +58,21 @@ def _row(
     user_id: str = "user-1",
     expires_in: int = LIFETIME,
     revoked_at: datetime | None = None,
+    now: datetime = NOW,
 ) -> RefreshToken:
+    """A stored token, expiring `expires_in` after `now`.
+
+    `now` defaults to the frozen `NOW` the pure-function tests assert against.
+    Tests that drive production code must pass the real clock instead: `revoke_all`
+    reads `datetime.now(UTC)` itself, so a row anchored to a fixed past date is
+    already expired by the time the code sees it, and revocation then correctly
+    does nothing. That is how these tests silently stopped exercising revocation
+    30 days after `NOW`.
+    """
     return RefreshToken(
         user_id=user_id,
         token_hash=hash_token(raw),
-        expires_at=NOW + timedelta(seconds=expires_in),
+        expires_at=now + timedelta(seconds=expires_in),
         revoked_at=revoked_at,
     )
 
@@ -208,23 +218,25 @@ async def test_changing_a_password_ends_every_session_it_opened(monkeypatch):
     """Resetting usually means the old password leaked; its sessions must go with it."""
     from agentic_core.api import users
 
-    session = FakeSession([_row("laptop"), _row("phone")])
+    live = datetime.now(UTC)
+    session = FakeSession([_row("laptop", now=live), _row("phone", now=live)])
     monkeypatch.setattr(users, "session_scope", lambda: _Scope(session))
 
     manager = object.__new__(users.UserManager)
     await manager.on_after_update(_User(), {"password": "new-one"})
 
-    assert all(not is_live(row, datetime.now(UTC)) for row in session.rows)
+    assert all(not is_live(row, live) for row in session.rows)
 
 
 @pytest.mark.asyncio
 async def test_an_unrelated_profile_update_leaves_sessions_alone(monkeypatch):
     from agentic_core.api import users
 
-    session = FakeSession([_row("laptop")])
+    live = datetime.now(UTC)
+    session = FakeSession([_row("laptop", now=live)])
     monkeypatch.setattr(users, "session_scope", lambda: _Scope(session))
 
     manager = object.__new__(users.UserManager)
     await manager.on_after_update(_User(), {"email": "new@example.com"})
 
-    assert is_live(session.rows[0], datetime.now(UTC))
+    assert is_live(session.rows[0], live)
