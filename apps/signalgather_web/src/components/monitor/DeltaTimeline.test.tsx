@@ -15,6 +15,7 @@ vi.mock('../../lib/api', () => ({
   getDelta: (...a: unknown[]) => getDelta(...(a as [])),
   getDeltaNews: (...a: unknown[]) => getDeltaNews(...(a as [])),
   getDeltaReportMarkdown: (...a: unknown[]) => getDeltaReportMarkdown(...(a as [])),
+  getDeltaSourceMix: async () => null,
 }))
 
 function delta(over: Partial<DeltaSummary> = {}): DeltaSummary {

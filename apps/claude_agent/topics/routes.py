@@ -36,9 +36,15 @@ from .pipeline import (
     set_state,
     topic_id_hash,
 )
-from .refresh import build_short_term_queries, list_deltas, run_refresh
+from .refresh import (
+    build_short_term_queries,
+    list_deltas,
+    run_refresh,
+    validate_short_term_queries,
+)
 from .scheduler import compute_next_refresh_at, normalize_interval
 from .serving import artifact_response
+from .source_quality import SOURCE_MIX_FILENAME
 
 
 class CreateTopicBody(BaseModel):
@@ -83,6 +89,17 @@ class UpdateMonitorBody(BaseModel):
     max_age_hours: int | None = Field(default=None, ge=1, le=720)
     schedule_enabled: bool | None = None
     schedule_interval_hours: int | None = Field(default=None, ge=1)
+    short_term_queries: list[dict[str, Any]] | None = Field(
+        default=None,
+        description=(
+            "Replace the persistent monitoring plan. Validated on the shape "
+            "`build_short_term_queries` produces, `allowed_domains` included. "
+            "Without this the plan is written once at POST /monitor and no query "
+            "improvement can ever reach a topic already under monitoring (#51). "
+            "*Which* queries to change is a measurement question and belongs to "
+            "#46; this is the affordance only."
+        ),
+    )
 
 
 router = APIRouter(prefix="/v1/topics", tags=["topics"])
@@ -599,6 +616,12 @@ async def update_monitoring(
         if body.max_age_hours is not None:
             sub.max_age_hours = body.max_age_hours
 
+        if body.short_term_queries is not None:
+            try:
+                sub.short_term_queries = validate_short_term_queries(body.short_term_queries)
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+
         if body.schedule_enabled is not None:
             interval = (
                 body.schedule_interval_hours
@@ -621,14 +644,16 @@ async def update_monitoring(
             )
 
         payload = _monitor_payload(sub)
+        queries_count = len(sub.short_term_queries or [])
 
     await emit(topic_id, "monitor.updated", {
         "subscription_id": payload["subscription_id"],
         "schedule_enabled": payload["schedule_enabled"],
         "schedule_interval_hours": payload["schedule_interval_hours"],
         "max_age_hours": payload["max_age_hours"],
+        "queries_count": queries_count,
     })
-    return payload
+    return {**payload, "queries_count": queries_count}
 
 
 @router.delete("/{topic_id}/monitor", status_code=status.HTTP_200_OK)
@@ -820,6 +845,20 @@ async def get_report(topic_id: uuid.UUID, principal: CurrentPrincipal,
     return artifact_response(settings, row.topic_id_hash, row.deliver_run_id, "report.json")
 
 
+@router.get("/{topic_id}/source-mix")
+async def get_source_mix(topic_id: uuid.UUID, principal: CurrentPrincipal,
+                         settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
+    """How authoritative this report's sources are, as the backend counted them (#51).
+
+    404 on a run written before the run started recording it; the UI falls back
+    to its own narrower count there and nowhere else.
+    """
+    row = await _load_topic(topic_id, principal)
+    return artifact_response(
+        settings, row.topic_id_hash, row.deliver_run_id, SOURCE_MIX_FILENAME
+    )
+
+
 @router.get("/{topic_id}/report.md")
 async def get_report_md(topic_id: uuid.UUID, principal: CurrentPrincipal,
                         settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]):
@@ -846,6 +885,29 @@ async def get_delta_news(
         if delta is None:
             raise HTTPException(status_code=404, detail="delta not found")
     return artifact_response(settings, topic_row.topic_id_hash, delta.run_id, "news.json")
+
+
+@router.get("/{topic_id}/deltas/{seq}/source-mix")
+async def get_delta_source_mix(
+    topic_id: uuid.UUID,
+    seq: int,
+    principal: CurrentPrincipal,
+    settings: Annotated[ClaudeAgentSettings, Depends(get_settings)],
+):
+    """The same count for one refresh cycle (#51)."""
+    async with session_scope() as s:
+        topic_row = await _owned(s, topic_id, principal)
+        delta = (await s.execute(
+            select(TopicRefreshDelta).where(
+                TopicRefreshDelta.topic_id == topic_id,
+                TopicRefreshDelta.seq == seq,
+            )
+        )).scalar_one_or_none()
+        if delta is None:
+            raise HTTPException(status_code=404, detail="delta not found")
+    return artifact_response(
+        settings, topic_row.topic_id_hash, delta.run_id, SOURCE_MIX_FILENAME
+    )
 
 
 @router.get("/{topic_id}/deltas/{seq}/report")

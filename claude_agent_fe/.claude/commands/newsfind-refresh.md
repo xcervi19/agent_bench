@@ -36,10 +36,16 @@ have. `evidence_unreadable_count` is how many documents we could **not** read
 silence from the source.
 
 **`feeds_dir` is official statistics we already hold (#45).** One `.txt` per feed —
-YAML front matter (`title`, `publisher`, `url`) then the publisher's own table,
-converted from the spreadsheet they publish it in — plus `index.json`. These are
-statistical-agency series (PPAC's Indian gas balance, sector by sector and month
-by month), fetched directly from the publisher on their cadence.
+YAML front matter (`title`, `publisher`, `url`, `collected_at`, `age_days`, `stale`)
+then the publisher's own table, converted from the spreadsheet they publish it in —
+plus `index.json`. These are statistical-agency series (PPAC's Indian gas balance,
+sector by sector and month by month), fetched directly from the publisher on their
+cadence.
+
+**A feed marked `stale: true` is still the best number we have — say how old it is.**
+The front matter carries `collected_at` and `age_days`. Quote the figure with its
+period and note the age; do not present it as the current state, and do not discard
+it in favour of a search result that merely looks fresher.
 
 **Prefer a feed over a search for the same number.** Search engines index these
 agencies' *old* PDFs — for PPAC the newest monthly report a domain-filtered
@@ -187,7 +193,18 @@ For the survivors:
 
 * `summary_md` — ≤200 words. What is genuinely new? Cite `[s01]`. Note any `monitoring_plan.trigger_terms` that were hit.
 * `report.md` — single section `## Refresh delta (<today_iso>)` with 2–6 bullets, each citing 1–2 sources. End with one-line "Trigger terms hit: …" or "No trigger terms hit." If one source clearly drives the cycle, add a `news-card` widget for it (see `.claude/widgets.md`); otherwise plain markdown.
-* `thesis_status` — `unchanged` is fine if nothing material moved. Use `supported|weakened|invalidated` only if the new sources directly speak to the working thesis. This is a verdict on **this cycle's evidence**, not a re-verdict on the full report; say so when the two diverge.
+* `thesis_status` — `unchanged` is fine if nothing material moved. Use `supported|weakened|invalidated` only if the new sources directly speak to the working thesis.
+
+**`thesis_status` is a verdict on this cycle's evidence, not a re-verdict on the full
+report.** The two can legitimately disagree: a cycle can read `supported` while the
+standing report reads `weakened`, because the cycle sees only what is new. When they
+differ, that divergence is itself the finding — **the first line of `summary_md` must
+name both values and say which is which**, in the form: `This cycle: supported. Standing
+report: weakened.` A cycle that reports a verdict silently contradicting the report it
+updates is worse than one that reports `unchanged`. Read `thesis_status` from the
+previous deliver run's `report.json` (`previous_deliver_run_dir`) to know the standing
+value; if that file is unreadable, say the standing value is unknown rather than
+assuming it agrees.
 
 **Confidence is capped by sourcing.** A `key_changes` entry supported only by `aggregator`, `blog_or_newsletter`, `social` or a single `specialist_outlet` is **`medium` at most**. `high` requires either a `primary_official`/`data_feed` source, or two independent `specialist_outlet` sources that are not republishing the same wire copy. State-affiliated outlets never count toward independence on a story about their own state.
 

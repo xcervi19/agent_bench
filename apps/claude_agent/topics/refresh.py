@@ -31,13 +31,18 @@ from ..runner import CommandNotAllowedError, stream_claude
 from ..schemas import RunRequest
 from .db import session_scope
 from .evidence_export import export_evidence
-from .facets import facets_cache_path, load_cached_facets
+from .facets import facets_cache_path, feed_selection_blind, load_cached_facets
 from .feeds import FEEDS_DIRNAME, export_feeds
 from .models import Topic, TopicRefreshDelta, TopicSubscription, is_frozen
 from .pipeline import emit, run_dir
 from .search_evidence import SearchEvidenceRecorder
 from .serving import advance_public_view
-from .source_quality import SourceMix, load_whitelisted_domains, summarize_run
+from .source_quality import (
+    SourceMix,
+    load_whitelisted_domains,
+    summarize_run,
+    write_source_mix,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -176,6 +181,80 @@ def build_short_term_queries(
     return out
 
 
+MAX_QUERY_CHARS = 400
+MAX_PRIORITY = 5
+
+
+def validate_short_term_queries(raw: object) -> list[dict[str, Any]]:
+    """Coerce a caller-supplied monitoring plan into the shape this module builds.
+
+    `PATCH /monitor` is how a query improvement reaches a topic that is already
+    monitored (#51): the plan is written once at `POST /monitor` and, without
+    this, nothing could ever change it. What arrives goes straight into
+    `input.json` for the refresh agent, so it is validated on the same contract
+    `build_short_term_queries` produces rather than stored as whatever JSON was
+    posted.
+
+    `allowed_domains` is the field this exists for. It is the structured form of
+    a `site:` filter and the reason official sources are reachable at all, so it
+    is normalised the way `_domains` normalises it — an entry that loses its
+    filter here silently becomes an open web search. An empty list is rejected
+    rather than stored: absent means "search the whole web", empty means "allow
+    nothing", and a caller who sent `[]` meant the former.
+
+    Raises ValueError, which the route turns into a 422.
+    """
+    if not isinstance(raw, list):
+        raise ValueError("short_term_queries must be a list")
+    out: list[dict[str, Any]] = []
+    for position, item in enumerate(raw):
+        where = f"short_term_queries[{position}]"
+        if not isinstance(item, dict):
+            raise ValueError(f"{where} must be an object")
+        text = " ".join(str(item.get("query") or "").split())
+        if not text:
+            raise ValueError(f"{where}.query is required")
+        if len(text) > MAX_QUERY_CHARS:
+            raise ValueError(f"{where}.query is longer than {MAX_QUERY_CHARS} characters")
+
+        language = str(item.get("language") or "en").strip().lower()
+        if len(language) != 2 or not language.isalpha():
+            raise ValueError(f"{where}.language must be a two-letter code")
+
+        try:
+            priority = int(item.get("priority", 2))
+        except (TypeError, ValueError):
+            raise ValueError(f"{where}.priority must be an integer") from None
+        if not 1 <= priority <= MAX_PRIORITY:
+            raise ValueError(f"{where}.priority must be between 1 and {MAX_PRIORITY}")
+
+        entry: dict[str, Any] = {
+            "query": text,
+            "language": language,
+            "priority": priority,
+            "source": str(item.get("source") or "operator"),
+            "rationale": item.get("rationale"),
+        }
+
+        if "allowed_domains" in item and item["allowed_domains"] is not None:
+            if not isinstance(item["allowed_domains"], list):
+                raise ValueError(f"{where}.allowed_domains must be a list")
+            domains = _domains(item)
+            if not domains:
+                raise ValueError(
+                    f"{where}.allowed_domains is empty — omit the field to search the whole web"
+                )
+            entry["allowed_domains"] = domains
+
+        out.append(entry)
+
+    # Renumbered rather than trusted: the refresh artifact keys `executed_queries`
+    # on these ids, and a duplicate or a gap makes the delta unreadable.
+    for index, entry in enumerate(out, start=1):
+        entry["id"] = f"st{index:02d}"
+    return out
+
+
 # ---------------------------------------------------------------------------
 # concurrency lock (advisory; DB-enforced)
 # ---------------------------------------------------------------------------
@@ -286,29 +365,38 @@ async def run_refresh(
         # search snippets; this gives it the article text we already read.
         evidence_dir = refresh_dir / "evidence"
         evidence_index: dict[str, Any] = {"document_count": 0, "unreadable_count": 0}
-        if settings.refresh_evidence_max_documents:
+        if settings.evidence_max_documents:
             try:
                 evidence_index = await export_evidence(
                     topic_id,
                     evidence_dir,
-                    max_documents=settings.refresh_evidence_max_documents,
+                    max_documents=settings.evidence_max_documents,
                 )
             except Exception:  # a corpus problem must not cancel the refresh
                 logger.exception("refresh.evidence_export_failed topic=%s", topic_id)
 
+        # Cached per topic by the plan leg (#38); the same facets decide which
+        # feeds apply. When they degraded, `commodity` and `geo` are empty and
+        # `feeds.matches` refuses every feed — the official-data channel goes to
+        # zero with no error. Said out loud rather than inferred from a count of
+        # nothing (#51).
+        facets = load_cached_facets(facets_cache_path(settings.state_dir, topic_hash), topic_text)
+        blind_reason = feed_selection_blind(facets)
+        facets_degraded = blind_reason is not None
+        if facets_degraded:
+            logger.warning("refresh.facets_degraded topic=%s reason=%s", topic_id, blind_reason)
+
         # Official data feeds for this topic (#45) — the same statistics the
         # deliver leg gets, refreshed on the publisher's cadence rather than
-        # searched for. `topic_facets` is cached per topic by the plan leg.
+        # searched for.
         feeds_dir = refresh_dir / FEEDS_DIRNAME
         feeds_index = {"feed_count": 0}
         try:
             feeds_index = export_feeds(
                 settings.state_dir,
                 feeds_dir,
-                load_cached_facets(
-                    facets_cache_path(settings.state_dir, topic_hash), topic_text
-                )
-                or {},
+                facets or {},
+                max_age_days=settings.feeds_max_age_days,
             )
         except Exception:  # a feed problem must not cancel the refresh
             logger.exception("refresh.feeds_export_failed topic=%s", topic_id)
@@ -367,6 +455,9 @@ async def run_refresh(
             queries_executed = int(summary.get("queries_executed") or 0)
             summary_md = summary.get("summary_md")
             source_mix = summarize_run(refresh_dir, load_whitelisted_domains())
+            # The one definition, on disk where both the owner and the public
+            # view read it — an event is a moment, and a reader arrives later.
+            write_source_mix(refresh_dir, source_mix)
 
         async with session_scope() as s:
             await s.execute(
@@ -416,6 +507,12 @@ async def run_refresh(
                 "total_cost_usd": cost,
                 "trigger": trigger,
                 "source_mix": source_mix.as_payload(),
+                # What the analyst was given, so a later cycle can be compared
+                # with this one without opening the state directory (#51).
+                "evidence_count": evidence_index["document_count"],
+                "evidence_unreadable_count": evidence_index["unreadable_count"],
+                "feeds_count": feeds_index["feed_count"],
+                "facets_degraded": facets_degraded,
             })
     finally:
         await _release_lock(subscription_id)

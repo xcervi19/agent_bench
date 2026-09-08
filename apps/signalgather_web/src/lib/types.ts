@@ -224,6 +224,24 @@ export interface NewsArtifact {
   }
 }
 
+/**
+ * `source_mix.json` — how authoritative a run's sources are, as the **backend**
+ * counted them (#51).
+ *
+ * The definition lives in `apps/claude_agent/topics/source_quality.py` and only
+ * there: a source is authoritative when its class is `primary_official` /
+ * `data_feed` **or** its host is on the register. The register is not shipped to
+ * the browser, so this figure cannot be recomputed here — which is exactly why
+ * the UI reads it instead of deriving its own.
+ */
+export interface SourceMixPayload {
+  total: number
+  authoritative: number
+  whitelisted: number
+  authoritative_ratio: number
+  entirely_secondary: boolean
+}
+
 export type ThesisStatus =
   | 'supported'
   | 'weakened'

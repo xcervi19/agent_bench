@@ -1,4 +1,4 @@
-import type { NewsArtifact, ReportArtifact } from '../../lib/types'
+import type { NewsArtifact, ReportArtifact, SourceMixPayload } from '../../lib/types'
 import { ArtifactMarkdown } from '../ArtifactMarkdown'
 import { WidgetRenderer } from '../widgets/registry'
 import { WidgetContext } from '../widgets/WidgetContext'
@@ -21,11 +21,14 @@ export function ReportView({
   report,
   reportMarkdown,
   news,
+  sourceMix,
   loading,
 }: {
   report: ReportArtifact | null
   reportMarkdown: string | null
   news: NewsArtifact | null
+  /** The backend's source mix (#51). Absent for a run written before it existed. */
+  sourceMix?: SourceMixPayload | null
   loading: boolean
 }) {
   const sources = useMemo(() => indexSources(news?.sources), [news])
@@ -62,7 +65,7 @@ export function ReportView({
         </SectionHeading>
 
         <div className="border-b border-line bg-surface-sunken px-4 py-4">
-          <SourceMixNote sources={news?.sources} className="mb-3" />
+          <SourceMixNote mix={sourceMix} sources={news?.sources} className="mb-3" />
           {report?.summary_md && (
             <>
               <p className="mb-2 text-xs font-medium tracking-wide text-ink-faint uppercase">

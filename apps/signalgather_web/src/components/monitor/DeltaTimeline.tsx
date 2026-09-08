@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ApiError, getDelta, getDeltaNews, getDeltaReportMarkdown } from '../../lib/api'
+import {
+  ApiError,
+  getDelta,
+  getDeltaNews,
+  getDeltaReportMarkdown,
+  getDeltaSourceMix,
+} from '../../lib/api'
 import { absoluteTime, formatDuration, formatUsd, relativeTime } from '../../lib/format'
-import type { DeltaArtifact, DeltaSummary, NewsArtifact } from '../../lib/types'
+import type {
+  DeltaArtifact,
+  DeltaSummary,
+  NewsArtifact,
+  SourceMixPayload,
+} from '../../lib/types'
 import { ArtifactMarkdown } from '../ArtifactMarkdown'
 import { SourceCard } from '../widgets/SourceCard'
 import { SourceMixNote } from '../report/SourceMixNote'
@@ -17,9 +28,15 @@ export interface DeltaLoaders {
   getDelta: (topicId: string, seq: number) => Promise<DeltaArtifact | null>
   getDeltaNews: (topicId: string, seq: number) => Promise<NewsArtifact | null>
   getDeltaReportMarkdown: (topicId: string, seq: number) => Promise<string | null>
+  getDeltaSourceMix: (topicId: string, seq: number) => Promise<SourceMixPayload | null>
 }
 
-const OWNER_LOADERS: DeltaLoaders = { getDelta, getDeltaNews, getDeltaReportMarkdown }
+const OWNER_LOADERS: DeltaLoaders = {
+  getDelta,
+  getDeltaNews,
+  getDeltaReportMarkdown,
+  getDeltaSourceMix,
+}
 
 /**
  * "What's new since I last looked" (16c).
@@ -171,6 +188,7 @@ function DeltaDetail({
   const [delta, setDelta] = useState<DeltaArtifact | null>(null)
   const [news, setNews] = useState<NewsArtifact | null>(null)
   const [markdown, setMarkdown] = useState<string | null>(null)
+  const [sourceMix, setSourceMix] = useState<SourceMixPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -183,12 +201,14 @@ function DeltaDetail({
       loaders.getDelta(topicId, seq),
       loaders.getDeltaNews(topicId, seq),
       loaders.getDeltaReportMarkdown(topicId, seq),
+      loaders.getDeltaSourceMix(topicId, seq),
     ])
-      .then(([d, n, md]) => {
+      .then(([d, n, md, mix]) => {
         if (cancelled) return
         setDelta(d)
         setNews(n)
         setMarkdown(md)
+        setSourceMix(mix)
         setError(null)
       })
       .catch((err: unknown) => {
@@ -240,7 +260,7 @@ function DeltaDetail({
         </div>
       )}
 
-      <SourceMixNote sources={news?.sources} />
+      <SourceMixNote mix={sourceMix} sources={news?.sources} />
 
       {(delta?.summary_md || markdown) && (
         <ArtifactMarkdown source={markdown ?? delta?.summary_md ?? ''} sources={news?.sources} />

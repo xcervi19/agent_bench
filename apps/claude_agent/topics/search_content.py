@@ -15,6 +15,9 @@ pretending to be someone else:
   * JSON-LD article bodies, which sites emit for search engines even when the
     rendered HTML is a teaser (see `html_article_text`).
   * PDFs, which used to be discarded as an unsupported media type.
+  * Spreadsheets, which is the form a statistical agency publishes a series
+    in — and which used to be recorded `unsupported` beside a converter we
+    already ship.
   * A single retry on 429/503, which say "later" rather than "no".
 
 `coverage()` reports what is left over, per status and per domain — that is the
@@ -36,7 +39,11 @@ from urllib.robotparser import RobotFileParser
 import httpx
 from sqlalchemy import func, select
 
-from source_ingest.text_extract import html_article_text, pdf_bytes_to_text
+from source_ingest.text_extract import (
+    html_article_text,
+    pdf_bytes_to_text,
+    xlsx_bytes_to_text,
+)
 
 from ..config import ClaudeAgentSettings
 from .db import session_scope
@@ -76,11 +83,28 @@ RETRY_AFTER_CAP_SEC = 60.0
 
 TEXT_TYPES = {"text/html", "application/xhtml+xml", "text/plain", ""}
 PDF_TYPES = {"application/pdf", "application/x-pdf"}
+# Statistical agencies publish their series as workbooks, so a spreadsheet
+# recorded `unsupported` is a primary source thrown away at the last step (#45).
+# `openpyxl` and the converter are already in the image; this is the connection.
+SPREADSHEET_TYPES = {
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel.sheet.macroenabled.12",
+}
+# The pre-2007 OLE format needs a second library. It stays unsupported, but with
+# its reason recorded rather than folded into "some media type we skipped" —
+# `source_crawler.extract` names the same gap the same way.
+UNCONVERTIBLE_TYPES = {
+    "application/vnd.ms-excel": "xls: pre-2007 OLE workbook, no converter",
+    "application/msexcel": "xls: pre-2007 OLE workbook, no converter",
+}
 
 USER_AGENT = "SignalGatherBot/1.0 (+evidence corpus; contact: team@techartsociety.com)"
 HEADERS = {
     "User-Agent": USER_AGENT,
-    "Accept": "text/html,application/xhtml+xml,application/pdf",
+    "Accept": (
+        "text/html,application/xhtml+xml,application/pdf,"
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ),
     "Accept-Language": "en;q=0.9,*;q=0.5",
 }
 
@@ -111,11 +135,18 @@ def classify(response: httpx.Response) -> FetchOutcome:
     if response.status_code >= 400:
         return FetchOutcome(STATUS_ERROR, error=f"HTTP {response.status_code}")
     media_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+    if media_type in UNCONVERTIBLE_TYPES:
+        return FetchOutcome(STATUS_UNSUPPORTED, error=UNCONVERTIBLE_TYPES[media_type])
     if media_type in PDF_TYPES:
         try:
             text = pdf_bytes_to_text(response.content, str(response.url))
         except Exception as exc:  # pypdf raises a wide family on damaged files
             return FetchOutcome(STATUS_ERROR, error=f"pdf: {type(exc).__name__}: {exc}")
+    elif media_type in SPREADSHEET_TYPES:
+        try:
+            text = xlsx_bytes_to_text(response.content, str(response.url))
+        except Exception as exc:  # openpyxl raises a wide family on damaged files
+            return FetchOutcome(STATUS_ERROR, error=f"xlsx: {type(exc).__name__}: {exc}")
     elif media_type in TEXT_TYPES:
         text = html_article_text(response.text)
     else:

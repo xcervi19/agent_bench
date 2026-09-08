@@ -31,6 +31,7 @@ vi.mock('./publicApi', () => ({
   getPublicReport: async () => null,
   getPublicReportMarkdown: () => getPublicReportMarkdown(),
   getPublicNews: async () => null,
+  getPublicSourceMix: async () => null,
   listPublicDeltas: () => listPublicDeltas(),
 }))
 

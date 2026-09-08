@@ -23,13 +23,12 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 
 ## Active (executable)
 
-_18 open tickets. A row here means work remains; the spec file lives in `docs/specs/active/`
+_17 open tickets. A row here means work remains; the spec file lives in `docs/specs/active/`
 and its `Status:` line says `planned` or `in progress`. Reconciled 2026-09-08 — the previous
-list carried seven shipped or retired tickets and omitted #42._
+list carried seven shipped or retired tickets and omitted #42. #51 shipped 2026-09-09._
 
 | # | File | Status | Blocks / unblocks |
 |---|------|--------|---------------------|
-| 51 | `docs/specs/active/report_grounding_completion_51.md` | planned | **Connects four shipped acquisition mechanisms to the leg that writes the report.** The deliver leg reads neither the captured corpus (#42) nor the plan's RAG context, spreadsheets are recorded `unsupported`, and the feed channel goes silently to zero when facets degrade. Changes what the analyst can read, not what search finds. Needs #42, #45; blocks a credible second India run |
 | 45 | `docs/specs/active/india_gas_country_pilot_45.md` | in progress | **First customer topic.** First run delivered on test1 2026-09-03; PPAC feed connected 2026-09-05. Next: second run, then monitoring at weekly cadence. Template for country #2 |
 | 47 | `docs/specs/active/register_labels_47.md` | planned | **Demo-critical, promoted 2026-09-08.** `entities_named_in` matches entity names and never reads the domain, so adding "Ministry of Petroleum and Natural Gas" to a discovery query takes an India topic from 32 to 54 targets — 9 Iranian domains, 2 Bangladeshi ministries, and `iran_oil_geopolitics.md` displacing an India playbook. Blocks `allowed_domains` being safe by construction |
 | 16 | `docs/specs/active/signalgather_frontend_v1_16.md` | in progress | 16a–d built and verified through the API; **no one has driven the UI in a browser**. §5 reconnect and §11 responsive close nothing automated can |
@@ -54,6 +53,7 @@ list carried seven shipped or retired tickets and omitted #42._
 
 | # | File | Shipped |
 |---|------|---------|
+| 51 | `docs/specs/done/report_grounding_completion_51.md` | 2026-09-09 |
 | 40 | `docs/specs/done/public_topic_sharing_40.md` | 2026-08-01 |
 | 42 | `docs/specs/done/search_evidence_capture_42.md` | 2026-08-02 |
 | 39 | `docs/specs/done/source_authority_enforcement_39.md` | 2026-07-31 |

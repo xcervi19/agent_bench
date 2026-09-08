@@ -129,6 +129,35 @@ After a topic is `reported`, monitoring can refresh two ways:
   `refresh.*` SSE events, distinguished by `payload.trigger` (`manual|scheduled`).
   Setup walkthrough: `testing/app_testing_scenario.md` §7.2a.
 
+## What a run was given (#51)
+
+A deliver or refresh cycle now reports its own inputs, so "the report is thin" can be
+separated from "the analyst was handed nothing" without opening the state directory:
+
+| Counter | On | Means |
+|---|---|---|
+| `evidence_count` | `stage.finished` (deliver), `refresh.completed` | Full-text documents exported into the run dir from the #42 store |
+| `evidence_unreadable_count` | both | Documents we could not read (blocked, deleted, robots-disallowed). A coverage fact, not silence from the source |
+| `feeds_count` | both | Official series (#45) that matched the topic's facets |
+| `facets_degraded` | both | The topic cannot reach *any* feed — facets missing, degraded, or naming neither a commodity nor a region. A `feeds_count` of 0 with this false is "no feed applies"; with it true it is a fault |
+
+```bash
+curl -sN "$API/v1/topics/$TOPIC_ID/events?from_seq=0" -H "Authorization: Bearer $JWT" \
+  | grep '^data: ' | sed 's/^data: //' \
+  | jq -r 'select(.payload.evidence_count != null)
+           | "\(.event_type)\tevidence=\(.payload.evidence_count)/\(.payload.evidence_unreadable_count) feeds=\(.payload.feeds_count) blind=\(.payload.facets_degraded)"'
+```
+
+The source mix is one number now, defined in `topics/source_quality.py` and served as a file
+rather than recomputed in the browser: `GET /v1/topics/{id}/source-mix` and
+`GET /v1/public/topics/{id}/source-mix` (plus `…/deltas/{seq}/source-mix` for one cycle). A
+run written before 2026-09-09 404s there and the UI falls back to a class-only count.
+
+Feeds carry their age: `feeds/index.json` in the run dir gives `collected_at`, `age_days`
+and `stale` per feed, and the same three appear in each feed file's front matter. Past
+`CLAUDE_AGENT_FEEDS_MAX_AGE_DAYS` (default 45) a feed is still exported, marked stale — the
+analyst qualifies the figure rather than losing it.
+
 ## Cross-Instance Comparison
 
 ```bash

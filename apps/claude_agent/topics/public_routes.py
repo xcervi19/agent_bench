@@ -46,6 +46,7 @@ from .db import session_scope
 from .models import SHARE_LIVE, Topic, TopicRefreshDelta
 from .refresh import list_deltas
 from .serving import artifact_response
+from .source_quality import SOURCE_MIX_FILENAME
 
 router = APIRouter(prefix="/v1/public/topics", tags=["public"])
 
@@ -226,6 +227,22 @@ async def get_public_report(
     return artifact_response(settings, row.topic_id_hash, row.public_deliver_run_id, "report.json")
 
 
+@router.get("/{topic_id}/source-mix")
+async def get_public_source_mix(
+    topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]
+):
+    """The backend's own count of how authoritative this report's sources are (#51).
+
+    A reader gets no event stream (see the module docstring), so the figure has to
+    be a file. 404 for a run written before the run started recording it.
+    """
+    async with session_scope() as s:
+        row = await _published(s, topic_id)
+    return artifact_response(
+        settings, row.topic_id_hash, row.public_deliver_run_id, SOURCE_MIX_FILENAME
+    )
+
+
 @router.get("/{topic_id}/report.md")
 async def get_public_report_md(
     topic_id: uuid.UUID, settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]
@@ -288,6 +305,14 @@ async def get_public_delta_news(
 ):
     topic_hash, run_id = await _public_delta_run_id(topic_id, seq)
     return artifact_response(settings, topic_hash, run_id, "news.json")
+
+
+@router.get("/{topic_id}/deltas/{seq}/source-mix")
+async def get_public_delta_source_mix(
+    topic_id: uuid.UUID, seq: int, settings: Annotated[ClaudeAgentSettings, Depends(get_settings)]
+):
+    topic_hash, run_id = await _public_delta_run_id(topic_id, seq)
+    return artifact_response(settings, topic_hash, run_id, SOURCE_MIX_FILENAME)
 
 
 @router.get("/{topic_id}/deltas/{seq}/report")

@@ -19,14 +19,16 @@ from .facets import (
     discovery_query,
     facets_cache_path,
     fallback_facets,
+    feed_selection_blind,
     load_cached_facets,
     normalize_facets,
 )
+from .evidence_export import export_evidence
 from .models import Topic, TopicEvent
 from .search_evidence import SearchEvidenceRecorder
 from .feeds import FEEDS_DIRNAME, export_feeds
 from .serving import advance_public_view
-from .source_quality import load_whitelisted_domains, summarize_run
+from .source_quality import load_whitelisted_domains, summarize_run, write_source_mix
 from .webhooks import deliver_event
 
 logger = logging.getLogger(__name__)
@@ -230,11 +232,38 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
 
     # Cached by the plan leg (#38); the same facets decide which feeds apply.
     facets = load_cached_facets(facets_cache_path(settings.state_dir, hash_), topic_text)
+    # A parse-leg failure empties `commodity` and `geo`, and `feeds.matches`
+    # refuses every feed to a topic with neither — so the official-data channel
+    # goes to zero with no error. #38 designed that degradation to be quiet while
+    # it only cost source discovery; it now gates data the report rests on, so it
+    # is said out loud (#51). The selection rule itself is unchanged: handing
+    # every feed to a facet-less topic is the leak `test_feeds.py` exists to
+    # prevent.
+    blind_reason = feed_selection_blind(facets)
+    facets_degraded = blind_reason is not None
+    if facets_degraded:
+        logger.warning("deliver.facets_degraded topic=%s reason=%s", topic_id, blind_reason)
 
     deliver_run_id = str(uuid.uuid4())
     plan_dir = run_dir(settings.state_dir, hash_, plan_run_id)
     out_dir = run_dir(settings.state_dir, hash_, deliver_run_id)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Hand the captured corpus over as files, exactly as `run_refresh` does. The
+    # deliver leg needs it more, not less: refresh reports a delta against a
+    # report that already exists, while deliver writes the baseline every later
+    # cycle is judged against, and a thin baseline propagates (#51).
+    evidence_dir = out_dir / "evidence"
+    evidence_index: dict[str, Any] = {"document_count": 0, "unreadable_count": 0}
+    if settings.evidence_max_documents:
+        try:
+            evidence_index = await export_evidence(
+                topic_id,
+                evidence_dir,
+                max_documents=settings.evidence_max_documents,
+            )
+        except Exception:  # a corpus problem must not cost us the report
+            logger.exception("deliver.evidence_export_failed topic=%s", topic_id)
 
     # Official data feeds for this topic's commodity and geography (#45). The
     # first India report cited five Indian regulators but not PPAC, whose
@@ -244,7 +273,12 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
     feeds_dir = out_dir / FEEDS_DIRNAME
     feeds_index = {"feed_count": 0}
     try:
-        feeds_index = export_feeds(settings.state_dir, feeds_dir, facets or {})
+        feeds_index = export_feeds(
+            settings.state_dir,
+            feeds_dir,
+            facets or {},
+            max_age_days=settings.feeds_max_age_days,
+        )
     except Exception:  # a feed problem must not cost us the report
         logger.exception("deliver.feeds_export_failed topic=%s", topic_id)
 
@@ -253,6 +287,11 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
             "plan_run_dir": str(plan_dir),
             "deliver_run_dir": str(out_dir),
             "run_id": deliver_run_id,
+            # Full text of documents already fetched for this topic. Read these
+            # before reaching for WebFetch — the text is here.
+            "evidence_dir": str(evidence_dir) if evidence_index["document_count"] else None,
+            "evidence_count": evidence_index["document_count"],
+            "evidence_unreadable_count": evidence_index["unreadable_count"],
             # Official statistics, already fetched. Prefer these over a search
             # for the same numbers: they are the publisher's current file.
             "feeds_dir": str(feeds_dir) if feeds_index["feed_count"] else None,
@@ -273,10 +312,22 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
         args=str(out_dir),
         run_id=deliver_run_id,
         settings=settings,
+        # What the analyst was actually given, on the run's own event log — so a
+        # later run can be compared with this one without opening the state dir.
+        finished_extra={
+            "evidence_count": evidence_index["document_count"],
+            "evidence_unreadable_count": evidence_index["unreadable_count"],
+            "feeds_count": feeds_index["feed_count"],
+            "facets_degraded": facets_degraded,
+        },
     )
     if summary is None:
         return
     source_mix = summarize_run(out_dir, load_whitelisted_domains())
+    # One definition of the mix, written where both the owner and the public view
+    # read it (#51). The frontend used to compute a narrower one of its own, so
+    # the figure a customer read was not the figure the system measured.
+    write_source_mix(out_dir, source_mix)
     # The run has written its files; only now may a shared link point at it (#50).
     # `deliver_run_id` was set before the run started, so it is not safe to serve
     # publicly — see serving.advance_public_view.
@@ -293,6 +344,7 @@ async def _run_slash(
     args: str,
     run_id: str,
     settings: ClaudeAgentSettings,
+    finished_extra: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     await emit(topic_id, "stage.started", {"stage": leg})
     evidence = SearchEvidenceRecorder(topic_id, run_id)
@@ -365,6 +417,7 @@ async def _run_slash(
         "stage": leg,
         "duration_ms": duration_ms,
         "total_cost_usd": cost,
+        **(finished_extra or {}),
     })
     return summary
 

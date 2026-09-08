@@ -6,8 +6,10 @@ contract rules 1–4 held on the first live run. Two-tier freshness held again o
 (2026-09-03), which is the case it was built for — monthly-cadence material survived a window
 that would previously have deleted it.  
 **Carried forward, with owners:**
-- the `thesis_status` divergence rule that did not take → batch with the next
-  deliver/refresh prompt change (**#45**);
+- ~~the `thesis_status` divergence rule that did not take~~ → **reworded in #51's prompt
+  change (2026-09-09)**: it now stands as its own rule in `newsfind-refresh.md` Phase R4,
+  with the required form of the divergence line spelled out and the standing verdict read
+  from `previous_deliver_run_dir`. Still needs one live cycle to confirm it takes;
 - whitelist stance on state-affiliated media → **#47** (register labels);
 - maritime / insurance primary coverage and `site:nioc.ir` returning 0 → **#44**.  
 **Lane:** Product / quality — *what the report is allowed to stand on*
@@ -146,6 +148,11 @@ that the two diverge. Likely cause: the instruction was appended as a
 subordinate clause to a bullet about something else, rather than standing on its
 own. Fix is a prompt rewording, but verifying it costs another live cycle, so it
 should be batched with the next contract change rather than deployed alone.
+
+**Reworded in #51 (2026-09-09), unverified.** It is now its own rule rather than a
+trailing clause, it names the exact form of the line (`This cycle: supported. Standing
+report: weakened.`), and it says where to read the standing verdict from. Whether it
+takes is a question for the next live refresh cycle, not for the offline suite.
 
 ## Out of scope — open follow-ups
 

@@ -134,6 +134,7 @@ export function TopicWorkspacePage() {
               report={stream.report}
               reportMarkdown={stream.reportMarkdown}
               news={stream.news}
+              sourceMix={stream.sourceMix}
               loading={stream.loading.report}
             />
           )}

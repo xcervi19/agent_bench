@@ -25,6 +25,7 @@ import type {
   PublishResponse,
   ShareMode,
   ReportArtifact,
+  SourceMixPayload,
   TopicDetail,
   TopicListResponse,
 } from './types'
@@ -343,6 +344,11 @@ export function getNews(topicId: string): Promise<NewsArtifact | null> {
   return getOptionalJson<NewsArtifact>(`/v1/topics/${topicId}/news`)
 }
 
+/** `null` for a run written before the backend started recording the mix (#51). */
+export function getSourceMix(topicId: string): Promise<SourceMixPayload | null> {
+  return getOptionalJson<SourceMixPayload>(`/v1/topics/${topicId}/source-mix`)
+}
+
 // ---- monitoring (16c) ------------------------------------------------------
 
 export interface StartMonitorInput {
@@ -429,4 +435,11 @@ export function getDeltaNews(topicId: string, seq: number): Promise<NewsArtifact
 
 export function getDeltaReportMarkdown(topicId: string, seq: number): Promise<string | null> {
   return getOptionalText(`/v1/topics/${topicId}/deltas/${seq}/report`)
+}
+
+export function getDeltaSourceMix(
+  topicId: string,
+  seq: number,
+): Promise<SourceMixPayload | null> {
+  return getOptionalJson<SourceMixPayload>(`/v1/topics/${topicId}/deltas/${seq}/source-mix`)
 }

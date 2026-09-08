@@ -5,6 +5,7 @@ import {
   getPublicDelta,
   getPublicDeltaNews,
   getPublicDeltaReportMarkdown,
+  getPublicDeltaSourceMix,
 } from '../lib/publicApi'
 import { usePublicTopic } from '../lib/usePublicTopic'
 import { useAuth } from '../lib/useAuth'
@@ -25,6 +26,7 @@ const PUBLIC_LOADERS: DeltaLoaders = {
   getDelta: getPublicDelta,
   getDeltaNews: getPublicDeltaNews,
   getDeltaReportMarkdown: getPublicDeltaReportMarkdown,
+  getDeltaSourceMix: getPublicDeltaSourceMix,
 }
 
 /**
@@ -163,6 +165,7 @@ export function PublicTopicPage() {
               report={shared.report}
               reportMarkdown={shared.reportMarkdown}
               news={shared.news}
+              sourceMix={shared.sourceMix}
               loading={false}
             />
           )}

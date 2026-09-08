@@ -315,6 +315,24 @@ curl -fsS -X PATCH "$API/v1/topics/$TOPIC_ID/monitor" \
   -d '{"schedule_enabled": false}' | jq .
 ```
 
+Replace the query plan of a topic already under monitoring (#51). Without this, the plan is
+whatever `POST /monitor` built once and no query improvement can ever reach the topic:
+
+```bash
+curl -fsS -X PATCH "$API/v1/topics/$TOPIC_ID/monitor" \
+  -H "Content-Type: application/json" \
+  -d '{"short_term_queries": [
+        {"query": "PPAC monthly natural gas balance",
+         "priority": 1, "allowed_domains": ["ppac.gov.in"]},
+        {"query": "PNGRB CGD authorisation round", "priority": 2}
+      ]}' | jq '{queries_count, status}'
+```
+
+Entries are validated on the shape `build_short_term_queries` produces and renumbered
+`st01`, `st02`, …; a malformed entry is a 422 and leaves the stored plan untouched. Omit
+`allowed_domains` to search the whole web — an empty list is refused, because absent and
+empty mean opposite things to `WebSearch`.
+
 `GET /monitor` reports `schedule_enabled`, `schedule_interval_hours`, `next_refresh_at`, and `last_scheduled_refresh_at`. Scheduled cycles emit the same `refresh.started` / `refresh.completed` SSE events as manual ones, distinguished only by `payload.trigger == "scheduled"`. So a topic set up at 08:00 with a 1h interval, left running, will have ~12 delta cycles by 20:00 — visible via `GET /deltas` when you reconnect.
 
 Watch the SSE stream for new event types:

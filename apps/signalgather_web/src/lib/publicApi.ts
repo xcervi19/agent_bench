@@ -26,6 +26,7 @@ import type {
   PublicTopic,
   PublicTopicListResponse,
   ReportArtifact,
+  SourceMixPayload,
 } from './types'
 
 const BASE = '/v1/public/topics'
@@ -101,6 +102,17 @@ export function getPublicNews(topicId: string): Promise<NewsArtifact | null> {
   return getOptionalJson<NewsArtifact>(`${BASE}/${topicId}/news`)
 }
 
+/**
+ * The backend's own count of how authoritative this report's sources are (#51).
+ *
+ * A reader gets no event stream, so the figure the owner sees on `report.ready`
+ * has to reach a shared page as a file. `null` for a run written before the
+ * backend recorded it.
+ */
+export function getPublicSourceMix(topicId: string): Promise<SourceMixPayload | null> {
+  return getOptionalJson<SourceMixPayload>(`${BASE}/${topicId}/source-mix`)
+}
+
 // ---- refresh history -------------------------------------------------------
 
 export async function listPublicDeltas(topicId: string, limit = 50): Promise<DeltaSummary[]> {
@@ -121,6 +133,13 @@ export function getPublicDeltaReportMarkdown(
   seq: number,
 ): Promise<string | null> {
   return getOptionalText(`${BASE}/${topicId}/deltas/${seq}/report`)
+}
+
+export function getPublicDeltaSourceMix(
+  topicId: string,
+  seq: number,
+): Promise<SourceMixPayload | null> {
+  return getOptionalJson<SourceMixPayload>(`${BASE}/${topicId}/deltas/${seq}/source-mix`)
 }
 
 /**

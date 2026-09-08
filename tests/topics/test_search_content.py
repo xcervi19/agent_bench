@@ -142,6 +142,87 @@ def test_classify_records_a_damaged_pdf_as_error_not_unsupported():
     assert "pdf:" in outcome.error
 
 
+# ---- spreadsheets (#51) ----------------------------------------------------
+#
+# A statistical agency publishes its series as a workbook. Recording that
+# `unsupported` threw away a primary source at the last step, beside a converter
+# and an `openpyxl` dependency the image already carried.
+
+XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+def _workbook(rows: list[list[object]], sheet_title: str = "Consumption") -> bytes:
+    from io import BytesIO
+
+    from openpyxl import Workbook
+
+    book = Workbook()
+    sheet = book.active
+    sheet.title = sheet_title
+    for row in rows:
+        sheet.append(row)
+    buffer = BytesIO()
+    book.save(buffer)
+    return buffer.getvalue()
+
+
+def _balance_rows() -> list[list[object]]:
+    """Wide enough to clear MIN_TEXT_CHARS, shaped like a real monthly balance."""
+    rows: list[list[object]] = [["Sector", "Apr", "May", "Jun", "Jul", "Aug"]]
+    for sector in ("Power", "Fertilizer", "City Gas Distribution", "Refinery", "Petrochemicals"):
+        rows.append([sector, 624, 1481, 1502, 1490, 1533])
+    return rows
+
+
+def test_classify_reads_a_spreadsheet_rather_than_recording_it_unsupported():
+    outcome = classify(_binary_response(_workbook(_balance_rows()), XLSX_TYPE))
+    assert outcome.status == STATUS_FETCHED
+    assert "City Gas Distribution | 624 | 1481 | 1502 | 1490 | 1533" in outcome.text
+    assert "## Consumption" in outcome.text, "the sheet name carries meaning; keep it"
+
+
+def test_a_spreadsheet_arriving_with_a_charset_parameter_is_still_read():
+    """Servers append `; charset=utf-8` to anything. The media type is the part
+    before the semicolon, and the branch must key on that."""
+    response = httpx.Response(
+        status_code=200,
+        content=_workbook(_balance_rows()),
+        headers={"content-type": f"{XLSX_TYPE}; charset=utf-8"},
+        request=httpx.Request("GET", "https://ppac.gov.in/x.xlsx"),
+    )
+    assert classify(response).status == STATUS_FETCHED
+
+
+def test_a_damaged_workbook_is_an_error_not_unsupported():
+    """`unsupported` means "we have no converter"; this one we have, and it
+    failed. Conflating the two hides a converter that stopped working."""
+    outcome = classify(_binary_response(b"PK\x03\x04 truncated", XLSX_TYPE))
+    assert outcome.status == STATUS_ERROR
+    assert "xlsx:" in outcome.error
+
+
+def test_an_empty_workbook_does_not_pass_as_a_read_document():
+    outcome = classify(_binary_response(_workbook([]), XLSX_TYPE))
+    assert outcome.status == STATUS_ERROR
+
+
+def test_xls_stays_unsupported_with_its_reason_recorded():
+    """The pre-2007 OLE format needs a second library. It is a named gap, the
+    way `source_crawler.extract` names it — not an anonymous skipped media type."""
+    outcome = classify(_binary_response(b"\xd0\xcf\x11\xe0 ole", "application/vnd.ms-excel"))
+    assert outcome.status == STATUS_UNSUPPORTED
+    assert "xls" in outcome.error and "no converter" in outcome.error
+    assert outcome.text is None
+
+
+def test_the_request_asks_for_spreadsheets():
+    """A branch that can read a workbook is worth nothing if the request never
+    says it will accept one."""
+    from apps.claude_agent.topics.search_content import HEADERS
+
+    assert XLSX_TYPE in HEADERS["Accept"]
+
+
 def test_classify_recovers_the_jsonld_body_behind_a_teaser():
     body = "Tanker traffic through the strait fell sharply this week. " * 8
     page = (

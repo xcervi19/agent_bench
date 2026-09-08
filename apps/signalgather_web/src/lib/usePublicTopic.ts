@@ -31,6 +31,7 @@ import {
   getPublicParsed,
   getPublicReport,
   getPublicReportMarkdown,
+  getPublicSourceMix,
   getPublicTopic,
   listPublicDeltas,
 } from './publicApi'
@@ -41,6 +42,7 @@ import type {
   ParsedArtifact,
   PublicTopic,
   ReportArtifact,
+  SourceMixPayload,
 } from './types'
 
 export const POLL_INTERVAL_MS = 60_000
@@ -54,6 +56,7 @@ export interface PublicTopicState {
   report: ReportArtifact | null
   reportMarkdown: string | null
   news: NewsArtifact | null
+  sourceMix: SourceMixPayload | null
   deltas: DeltaSummary[]
   loading: boolean
   /** Set when the topic itself could not be read — usually "not shared". */
@@ -73,6 +76,7 @@ const EMPTY: Omit<PublicTopicState, 'loading' | 'error' | 'updatesSinceOpened'> 
   report: null,
   reportMarkdown: null,
   news: null,
+  sourceMix: null,
   deltas: [],
 }
 
@@ -110,16 +114,28 @@ export function usePublicTopic(topicId: string): PublicTopicState {
   const loadArtifacts = useCallback(async (topic: PublicTopic) => {
     // Artifacts are optional by design: a topic can be published with a plan
     // and no report, and each loader already resolves 404 to null.
-    const [intro, introMarkdown, parsed, report, reportMarkdown, news, deltas] = await Promise.all([
-      getPublicIntro(topicId).catch(() => null),
-      getPublicIntroMarkdown(topicId).catch(() => null),
-      getPublicParsed(topicId).catch(() => null),
-      getPublicReport(topicId).catch(() => null),
-      getPublicReportMarkdown(topicId).catch(() => null),
-      getPublicNews(topicId).catch(() => null),
-      listPublicDeltas(topicId).catch(() => [] as DeltaSummary[]),
-    ])
-    return { topic, intro, introMarkdown, parsed, report, reportMarkdown, news, deltas }
+    const [intro, introMarkdown, parsed, report, reportMarkdown, news, sourceMix, deltas] =
+      await Promise.all([
+        getPublicIntro(topicId).catch(() => null),
+        getPublicIntroMarkdown(topicId).catch(() => null),
+        getPublicParsed(topicId).catch(() => null),
+        getPublicReport(topicId).catch(() => null),
+        getPublicReportMarkdown(topicId).catch(() => null),
+        getPublicNews(topicId).catch(() => null),
+        getPublicSourceMix(topicId).catch(() => null),
+        listPublicDeltas(topicId).catch(() => [] as DeltaSummary[]),
+      ])
+    return {
+      topic,
+      intro,
+      introMarkdown,
+      parsed,
+      report,
+      reportMarkdown,
+      news,
+      sourceMix,
+      deltas,
+    }
   }, [topicId])
 
   useEffect(() => {

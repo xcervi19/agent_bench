@@ -4,7 +4,7 @@ import json
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -14,6 +14,10 @@ class ClaudeAgentSettings(BaseSettings):
         env_prefix="CLAUDE_AGENT_",
         extra="ignore",
         case_sensitive=False,
+        # A field with a validation_alias is otherwise settable only by that
+        # alias, so `ClaudeAgentSettings(evidence_max_documents=0)` would be
+        # silently dropped by `extra="ignore"` rather than rejected.
+        populate_by_name=True,
     )
 
     claude_bin: str = Field(
@@ -212,12 +216,30 @@ class ClaudeAgentSettings(BaseSettings):
         le=200,
         description="Upper bound on the persistent short-term query plan per refresh.",
     )
-    refresh_evidence_max_documents: int = Field(
+    evidence_max_documents: int = Field(
         default=200,
         ge=0,
+        # A validation_alias bypasses env_prefix, so both names are spelled in
+        # full. `CLAUDE_AGENT_REFRESH_EVIDENCE_MAX_DOCUMENTS` is the pre-#51 name,
+        # kept working because it is set in deployed .env files; the setting now
+        # governs the deliver leg as well, which is why it lost the prefix.
+        validation_alias=AliasChoices(
+            "CLAUDE_AGENT_EVIDENCE_MAX_DOCUMENTS",
+            "CLAUDE_AGENT_REFRESH_EVIDENCE_MAX_DOCUMENTS",
+        ),
         description=(
-            "How many readable documents to export into the run directory for the "
-            "analyst to read. 0 disables the export."
+            "How many readable documents to export into a deliver or refresh run "
+            "directory for the analyst to read. 0 disables the export."
+        ),
+    )
+    feeds_max_age_days: int = Field(
+        default=45,
+        ge=1,
+        description=(
+            "Above this age a feed is still exported, but marked stale in the "
+            "index and in the file's front matter so the analyst qualifies the "
+            "figure rather than quoting it as current. The default clears a "
+            "monthly series (PPAC) with room for a late publication."
         ),
     )
     content_fetch_max_hosts_in_parallel: int = Field(

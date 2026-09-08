@@ -118,6 +118,35 @@ def fallback_facets(topic: str, *, reason: str) -> dict[str, Any]:
     return facets
 
 
+def feed_selection_blind(facets: dict[str, Any] | None) -> str | None:
+    """Why this topic can reach no official feed, or None when it can (#51).
+
+    `feeds.matches` refuses every feed to a topic with neither `commodity` nor
+    `geo`, which is deliberate — handing every feed to a facet-less topic is how
+    a run ends up reading Indian gas tables for a Hormuz question. The cost is
+    that the official-data channel goes to zero with no error, and a count of
+    zero cannot distinguish "no feed applies to this topic" from "this topic has
+    no facets at all". Only the second is a fault, so it is named here.
+
+    Three ways to be blind, and the caller treats them alike:
+
+      * no cached facets — the parse leg degraded (a degraded result is never
+        written to the cache, so absence is how that failure reaches this far),
+        or the topic predates #38;
+      * facets carrying the degraded flag, for a cache written by something that
+        does keep it;
+      * facets that parsed cleanly but name neither a commodity nor a region,
+        which is the exact condition `feeds.matches` refuses on.
+    """
+    if facets is None:
+        return "no cached facets"
+    if facets.get("degraded"):
+        return str(facets.get("degraded_reason") or "facets degraded")
+    if not (facets.get("commodity") or facets.get("geo")):
+        return "facets name neither a commodity nor a region"
+    return None
+
+
 def discovery_query(facets: dict[str, Any]) -> str:
     """The text handed to `source_discover`.
 
@@ -150,6 +179,14 @@ def load_cached_facets(path: Path, topic: str) -> dict[str, Any] | None:
     if not isinstance(raw, dict) or raw.get("schema_version") != FACETS_SCHEMA_VERSION:
         return None
     try:
-        return normalize_facets(raw, topic)
+        facets = normalize_facets(raw, topic)
     except ValueError:
         return None
+    # `normalize_facets` validates the parse leg's *output*, where a `degraded`
+    # key would be the agent's claim about itself and is rightly ignored. The
+    # cache is our own file, so its flag is ours and survives the round trip —
+    # otherwise a caller reading it back can never see a degradation we recorded.
+    if raw.get("degraded"):
+        facets["degraded"] = True
+        facets["degraded_reason"] = raw.get("degraded_reason")
+    return facets

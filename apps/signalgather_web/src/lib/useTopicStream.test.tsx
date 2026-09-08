@@ -34,6 +34,7 @@ vi.mock('./api', () => ({
   getReport: () => getReport(),
   getReportMarkdown: () => getReportMarkdown(),
   getNews: () => getNews(),
+  getSourceMix: async () => null,
   getMonitor: () => getMonitor(),
   listDeltas: () => listDeltas(),
 }))

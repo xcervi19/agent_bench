@@ -19,7 +19,10 @@ from apps.claude_agent.topics import pipeline
 from apps.claude_agent.topics.facets import (
     FACETS_FILENAME,
     discovery_query,
+    facets_cache_path,
     fallback_facets,
+    feed_selection_blind,
+    load_cached_facets,
     normalize_facets,
 )
 
@@ -235,3 +238,58 @@ def test_source_discover_degrades_when_grounding_data_is_missing(
     finished = emitted[-1][1]
     assert finished["entities"] == 0
     assert "whitelist not found" in finished["warning"]
+
+
+# ---- what the facets mean for the feed channel (#51) ------------------------
+#
+# `feeds.matches` refuses every feed to a topic with neither commodity nor geo.
+# That rule is right and stays; what #51 adds is that the run has to *say* when
+# it applies, because a feed count of zero cannot tell "no feed applies to this
+# topic" from "this topic never got facets".
+
+
+def test_a_parsed_topic_can_reach_a_feed():
+    assert feed_selection_blind(normalize_facets(AGENT_FACETS, CZECH_TOPIC)) is None
+
+
+def test_a_topic_with_only_one_axis_can_still_reach_a_feed():
+    """A global series (JODI) declares no region, so a commodity alone is enough."""
+    facets = normalize_facets(
+        {"canonical_topic_en": "LNG shipping", "commodity": ["LNG"]}, CZECH_TOPIC
+    )
+    assert feed_selection_blind(facets) is None
+
+
+def test_a_missing_cache_is_blind():
+    """This is how a degraded parse leg actually reaches the deliver leg: the
+    fallback is never written to the cache, so the caller sees None."""
+    assert feed_selection_blind(None) == "no cached facets"
+
+
+def test_the_fallback_is_blind_and_says_why():
+    reason = feed_selection_blind(fallback_facets(CZECH_TOPIC, reason="TimeoutError: x"))
+    assert reason == "TimeoutError: x"
+
+
+def test_a_clean_parse_that_named_no_facets_is_blind_too():
+    """The parse leg succeeded, so nothing is flagged degraded — and the feed
+    channel is just as empty. Keying only on the flag would miss this."""
+    facets = normalize_facets({"canonical_topic_en": "Something vague"}, CZECH_TOPIC)
+    assert facets["degraded"] is False
+    assert feed_selection_blind(facets) == "facets name neither a commodity nor a region"
+
+
+def test_a_cached_degradation_survives_the_round_trip(tmp_path):
+    """`normalize_facets` ignores a `degraded` key on the agent's own output, and
+    should — it is the agent's claim about itself. The cache is our file, so the
+    flag we wrote has to come back, or nothing can ever read a degradation."""
+    path = facets_cache_path(str(tmp_path), "abc")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(fallback_facets(CZECH_TOPIC, reason="ValueError: empty")), encoding="utf-8"
+    )
+
+    loaded = load_cached_facets(path, CZECH_TOPIC)
+
+    assert loaded["degraded"] is True
+    assert loaded["degraded_reason"] == "ValueError: empty"

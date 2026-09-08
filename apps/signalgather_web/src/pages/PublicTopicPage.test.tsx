@@ -47,6 +47,7 @@ function baseState(over: Partial<PublicTopicState> = {}): PublicTopicState {
     report: null,
     reportMarkdown: '## Findings\n\nTanker rates moved.',
     news: null,
+    sourceMix: null,
     deltas: [],
     loading: false,
     error: null,

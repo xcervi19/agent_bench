@@ -121,13 +121,14 @@ honest accounting beats an unmaintainable arms race.
 
 - **The judging pass over the captured corpus was explicitly out of scope here** and is still
   not designed. Owned by **#46** build item 4.
-- **The deliver leg never receives the corpus.** `export_evidence` is called only from
-  `run_refresh`; `run_deliver` passes `feeds_dir` and no `evidence_dir`, and
-  `newsfind-deliver.md` has no section for one. So the foundational report — the artefact a
-  customer reads first — is written from search snippets. Tracked against **#45**.
-- **Spreadsheets are still recorded `unsupported`.** `xlsx_bytes_to_text` exists in
-  `source_ingest/text_extract.py` and `openpyxl` is a declared dependency, but
-  `search_content.py` imports only the HTML and PDF converters and its `Accept` header asks
-  for neither. One `elif` beside the PDF branch closes it. Tracked against **#45**.
+- ~~**The deliver leg never receives the corpus.**~~ **Closed by #51 (2026-09-09).**
+  `run_deliver` now exports the corpus exactly as `run_refresh` does and passes
+  `evidence_dir` / `evidence_count` / `evidence_unreadable_count` in `input.json`;
+  `newsfind-deliver.md` reads the index before Phase 2 and prefers a corpus file over
+  `WebFetch`. See `docs/specs/done/report_grounding_completion_51.md`.
+- ~~**Spreadsheets are still recorded `unsupported`.**~~ **Closed by #51 (2026-09-09).**
+  `search_content.classify` has a spreadsheet branch beside the PDF one and the `Accept`
+  header asks for `.xlsx`. `.xls` (pre-2007 OLE) stays `unsupported` with its reason
+  recorded, as `source_crawler.extract` already does.
 - **`refresh_max_queries` cannot bind.** It defaults to 40, but the plan emits 10–15 queries
   and the deliver contract 3–6 `next_queries`, so the real ceiling is ~21.

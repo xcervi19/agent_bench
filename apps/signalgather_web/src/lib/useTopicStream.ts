@@ -21,6 +21,7 @@ import {
   getParsed,
   getReport,
   getReportMarkdown,
+  getSourceMix,
   getTopic,
   listDeltas,
 } from './api'
@@ -33,6 +34,7 @@ import type {
   NewsArtifact,
   ParsedArtifact,
   ReportArtifact,
+  SourceMixPayload,
   TopicDetail,
   TopicEvent,
 } from './types'
@@ -49,6 +51,7 @@ export interface Artifacts {
   report: ReportArtifact | null
   reportMarkdown: string | null
   news: NewsArtifact | null
+  sourceMix: SourceMixPayload | null
   monitor: MonitorState | null
   deltas: DeltaSummary[]
 }
@@ -60,6 +63,7 @@ const EMPTY: Artifacts = {
   report: null,
   reportMarkdown: null,
   news: null,
+  sourceMix: null,
   monitor: null,
   deltas: [],
 }
@@ -147,12 +151,13 @@ export function useTopicStream(topicId: string): TopicStreamState {
         return { intro, introMarkdown, parsed }
       },
       report: async () => {
-        const [report, reportMarkdown, news] = await Promise.all([
+        const [report, reportMarkdown, news, sourceMix] = await Promise.all([
           getReport(topicId),
           getReportMarkdown(topicId),
           getNews(topicId),
+          getSourceMix(topicId),
         ])
-        return { report, reportMarkdown, news }
+        return { report, reportMarkdown, news, sourceMix }
       },
       monitor: async () => ({ monitor: await getMonitor(topicId) }),
       deltas: async () => ({ deltas: await listDeltas(topicId) }),

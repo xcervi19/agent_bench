@@ -8,7 +8,11 @@
 1. User defines a **macro topic** (e.g. Hormuz strait / LNG supply).
 2. System **plans** — RAG context, entities, search queries, intro for human review.
 3. User **approves** the plan.
-4. System **delivers** — web search, sources, strategic `report.md`.
+4. System **delivers** — web search, sources, strategic `report.md`. Since #51 the
+   analyst writing it is handed what we already hold before it searches: the full
+   text of every document the fetcher read for this topic, the official series
+   that apply to it (with their age marked), and the corpus context the plan leg
+   retrieved — the last as background that can never stand in for a citation.
 5. User **monitors** — periodic refresh for new news only (deltas, deduped).
 6. User **shares** (#40, extended by #50, optional) — publishing a finished topic
    makes it world-readable at `/app/shared/<id>`, no account needed. Two modes:
@@ -18,8 +22,12 @@
    owner until it is unpinned. Readers only ever read, in both: the public router
    has no write route, so nothing anonymous can spend money.
 
-**API:** `POST /v1/topics`, SSE `/events`, `/proceed`, `/monitor`, `/refresh`, artifact routes,
-`POST|PATCH|DELETE /publish`, plus the unauthenticated read-only `GET /v1/public/topics/*`.  
+**API:** `POST /v1/topics`, SSE `/events`, `/proceed`, `/monitor`, `/refresh`, artifact routes
+(including `/source-mix`, the backend's own count of how authoritative a run's sources are —
+the UI renders it rather than deriving a narrower one), `POST|PATCH|DELETE /publish`, plus the
+unauthenticated read-only `GET /v1/public/topics/*`. `PATCH /monitor` also replaces a
+monitored topic's query plan (#51), which is how a query improvement reaches a topic that is
+already being watched.  
 **Public URL (prod):** `https://agent.particletico.com`  
 **Web UI (#16a):** `/app` on the same host — sign-in, topic list, NL topic
 creation, live activity, plan review + Proceed/Cancel. Report reading (16b) and

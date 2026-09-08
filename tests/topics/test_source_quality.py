@@ -12,6 +12,7 @@ from apps.claude_agent.topics.source_quality import (
     read_sources,
     summarize,
     summarize_run,
+    write_source_mix,
 )
 
 DOMAINS = frozenset({"ukmto.org", "aramco.com", "shana.ir"})
@@ -138,3 +139,41 @@ def test_matches_the_observed_prod_refresh():
     mix = summarize(observed, DOMAINS)
     assert mix.is_entirely_secondary
     assert mix.authoritative == 0
+
+
+# ---- one definition, written where both views read it (#51) -----------------
+
+
+def test_the_mix_is_written_beside_the_run_and_matches_the_emitted_payload(tmp_path):
+    """The frontend used to compute a narrower mix of its own — class only, no
+    register — so the figure a customer read was not the figure the system
+    measured. Writing it here is what lets the UI render *this* number, including
+    on a shared page, which gets no event stream to read it from."""
+    mix = SourceMix(total=9, authoritative=4, whitelisted=3)
+
+    path = write_source_mix(tmp_path, mix)
+
+    assert json.loads(path.read_text(encoding="utf-8")) == mix.as_payload()
+
+
+def test_the_written_mix_counts_a_register_host_the_frontend_could_not_see(tmp_path):
+    """`ukmto.org` is on the register but the analyst classed it `unknown`. The
+    browser has no register, so this source is exactly the difference between the
+    two definitions — and it has to survive into the file."""
+    (tmp_path / "news.json").write_text(
+        json.dumps({"sources": [source(url="https://ukmto.org/a", source_class="unknown")]}),
+        encoding="utf-8",
+    )
+
+    write_source_mix(tmp_path, summarize_run(tmp_path, DOMAINS))
+
+    payload = json.loads((tmp_path / "source_mix.json").read_text(encoding="utf-8"))
+    assert payload["authoritative"] == 1
+    assert payload["whitelisted"] == 1
+    assert payload["entirely_secondary"] is False
+
+
+def test_an_unwritable_run_directory_does_not_raise(tmp_path):
+    """A report that exists must not be withheld because a derived summary of it
+    could not be written."""
+    assert write_source_mix(tmp_path / "does" / "not" / "exist", SourceMix(1, 1, 1)) is None
