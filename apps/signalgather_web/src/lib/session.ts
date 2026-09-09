@@ -81,8 +81,33 @@ export function clearSession(): void {
 }
 
 /** Absolute URL for an API path, honouring the selected slot. */
+/**
+ * Where a *shared* page reads from: the host in the link, always.
+ *
+ * The slot picker is an operator convenience stored in `localStorage`, and it
+ * has no business deciding what a shared link resolves against. A colleague who
+ * once pointed this browser at another slot would otherwise open an
+ * `agent-test1` link and watch it query `agent-test2` — the topic is not there,
+ * so the page sits on its skeleton and the link looks broken. Observed exactly
+ * that way on 2026-09-09, on the first shared India link.
+ *
+ * Same origin is not a fallback here, it is the rule: the public API is mounted
+ * on the same server that served the page, in every deployment and behind the
+ * dev proxy alike.
+ */
+export function publicUrl(path: string, params?: Record<string, string | number | undefined>): string {
+  return buildUrl('', path, params)
+}
+
 export function apiUrl(path: string, params?: Record<string, string | number | undefined>): string {
-  const base = getApiBase()
+  return buildUrl(getApiBase(), path, params)
+}
+
+function buildUrl(
+  base: string,
+  path: string,
+  params?: Record<string, string | number | undefined>,
+): string {
   const query = new URLSearchParams()
   for (const [key, value] of Object.entries(params ?? {})) {
     if (value !== undefined) query.set(key, String(value))

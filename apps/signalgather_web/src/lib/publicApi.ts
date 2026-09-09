@@ -16,7 +16,7 @@
  */
 
 import { ApiError, errorFrom } from './api'
-import { apiUrl } from './session'
+import { publicUrl } from './session'
 import type {
   DeltaArtifact,
   DeltaSummary,
@@ -32,7 +32,7 @@ import type {
 const BASE = '/v1/public/topics'
 
 async function get(path: string): Promise<Response> {
-  const res = await fetch(apiUrl(path), { method: 'GET' })
+  const res = await fetch(publicUrl(path), { method: 'GET' })
   if (res.ok) return res
   throw await errorFrom(res)
 }

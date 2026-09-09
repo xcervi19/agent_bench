@@ -9,7 +9,7 @@ import {
   listPublicTopics,
   shareUrl,
 } from './publicApi'
-import { setToken } from './session'
+import { setApiBase, setToken } from './session'
 
 interface Call {
   url: string
@@ -112,5 +112,21 @@ describe('missing artifacts', () => {
 describe('share links', () => {
   it('points at the SPA route, absolute so it survives a paste', () => {
     expect(shareUrl('abc')).toBe(`${window.location.origin}/shared/abc`)
+  })
+})
+
+
+describe('a shared link reads from the host that served it', () => {
+  it('ignores the slot the operator picked in this browser', async () => {
+    // A colleague who once pointed this browser at another slot would otherwise
+    // open an agent-test1 link and watch it query agent-test2, where the topic
+    // does not exist — the page sits on its skeleton and the link looks broken.
+    setApiBase('https://agent-test2.particletico.com')
+    mockFetch(() => new Response(JSON.stringify({ topic_id: 'abc' }), { status: 200 }))
+
+    await getPublicTopic('abc')
+
+    expect(firstCall().url).toBe('/v1/public/topics/abc')
+    expect(firstCall().url).not.toContain('test2')
   })
 })
