@@ -94,10 +94,25 @@ If `FEEDS_DIR` is set, `Read` its `index.json` and then each feed listed there,
 **before** Phase 2. Official series answer the quantitative questions directly,
 and knowing what you already have keeps a search from being spent on it.
 
-If `EVIDENCE_DIR` is set, `Read` its `index.json` **before** Phase 2. That index is
-the list of URLs whose full text you already hold; knowing it before you search is
-what lets Phase 2 skip a `WebFetch` for an article that is sitting on disk. Read the
-individual documents as the synthesis needs them, not all at once.
+If `EVIDENCE_DIR` is set, `Read` its `index.json` **before** Phase 2. Each entry is
+`{file, url, url_hash, title, chars, fetch_status}`; **`url` is how you match a search
+hit against it** — `url_hash` is our internal id and you cannot derive it from a URL,
+so compare on `url` and read `file` from `$EVIDENCE_DIR`. Knowing this index before you
+search is what lets Phase 2 skip a `WebFetch` for an article that is sitting on disk.
+
+**Corpus read budget: at most 25 documents in the whole session, and never the whole
+index at once.** The index can hold 200 documents of up to 40 000 characters each;
+reading them indiscriminately spends the session on material the report will not cite
+and risks the run timing out with no report at all. Triage from the index — `title`,
+the publisher in `url`, and `chars` — and spend the budget in this order:
+
+1. documents from official / primary publishers (a ministry, a regulator, a statistical
+   agency, an exchange, a company IR page);
+2. documents behind a search hit that survives Phase 3;
+3. anything else, only if the budget is left over.
+
+A document you did not read is not a gap you must confess; the corpus is a convenience,
+and the citation rules are unchanged either way.
 
 Read `parsed.json` from `$PLAN_DIR`. Use only `topic`, `topic_restated`, `entities`, `working_thesis`, `scenarios` (if present), `queries[]`, `monitoring_plan.trigger_terms`, `current_state`, `rag_context_refs`. Drop everything else.
 
@@ -118,12 +133,15 @@ Echo `{"phase":"P1","status":"done"}`.
 For each query in `queries[]` (cap 15), call `WebSearch` with the `query` text — and with `allowed_domains` set to the query's `allowed_domains` when it has one. Run in batches of **up to 4 in parallel** to keep latency down. Take up to 5 candidate hits per query.
 
 **Before searching for an official number, check `feeds_dir`. Before any `WebFetch`,
-check the corpus.** When a candidate's `url_hash` appears in `evidence_dir/index.json`,
-`Read` that file — you get the whole article rather than a snippet, at no network cost
-and with no summarisation between you and the source. Reach for `WebFetch` only for a
-hit that is *not* in the corpus and whose snippet is too thin to judge (cap 3 fetches
-per query). Prefer corpus text over a `WebFetch` result whenever both exist:
-`WebFetch` returns a model's answer to a prompt, the corpus file is the article.
+check the corpus.** When a candidate hit's **`url` matches an entry's `url`** in
+`evidence_dir/index.json`, `Read` that entry's `file` instead of fetching — you get the
+whole article rather than a snippet, at no network cost and with no summarisation
+between you and the source. Match on the URL, ignoring a trailing slash and any
+`utm_*` query parameters; `url_hash` is our internal id and is not derivable here.
+Reach for `WebFetch` only for a hit that is *not* in the corpus and whose snippet is
+too thin to judge (cap 3 fetches per query). Prefer corpus text over a `WebFetch`
+result whenever both exist: `WebFetch` returns a model's answer to a prompt, the corpus
+file is the article. Corpus reads count against the 25-document budget in Phase 0.
 
 **Pass `allowed_domains` when the entry carries one.** It is the structured form of a
 `site:` filter and the reason official sources are reachable at all — a batched filter
@@ -179,9 +197,12 @@ Write `news.json`:
 
 ## Phase 4 — synthesize
 
-Read `news.json` (the file you just wrote). For any survivor present in `evidence_dir`,
-`Read` its file first — synthesis quality is bounded by whether you saw the article or
-only its snippet. Quote and cite from the full text where you have it. For each cluster
+Read `news.json` (the file you just wrote). For any survivor whose `url` appears in
+`evidence_dir/index.json` and that you have not already read, `Read` its file — synthesis
+quality is bounded by whether you saw the article or only its snippet. This is what the
+remainder of the 25-document corpus budget is for: a survivor you are about to build a
+finding on is worth more of it than a document that lost in Phase 3. Quote and cite from
+the full text where you have it. For each cluster
 of sources covering a theme: state what the evidence says, with citations `[s01]` or
 `[s03, s09]`.
 
