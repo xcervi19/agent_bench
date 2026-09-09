@@ -1,7 +1,7 @@
 # Report grounding — everything we already hold reaches the analyst (#51)
 
-**Status:** done (2026-09-09) — implemented and green offline; **not yet run on a slot**,
-see *Verified on a slot* below
+**Status:** done — implemented 2026-09-09, **verified on test1 2026-09-10**. Four defects
+surfaced on the first live run; all four fixed and redeployed, see *What the slot found*
 **Lane:** Product / quality — *what the report is written from*
 **Depends on:** #42 (evidence store + content fetcher), #45 (feeds channel), #38 (facets), #39 (source authority)
 **Blocks:** a credible second India run (#45); any claim that the corpus improves output
@@ -270,14 +270,13 @@ Env, both optional:
 
 ## Known gaps
 
-- **Not run on a slot.** Everything below *Verified on a slot* is still open; the offline
-  suite proves the wiring, not that a live analyst uses it.
+- ~~**Not run on a slot.**~~ Run on test1 2026-09-10; see *What the slot found*.
 - **The `thesis_status` divergence rule is reworded, not verified.** #39 could not verify it
   without a live cycle and neither can this.
-- **`search_content` reads `.xlsx` from the response's declared media type only.** A server
-  that returns a workbook as `application/octet-stream` is still `unsupported`. Sniffing the
-  ZIP magic would misread every other zip, so the extension is the missing signal and it is
-  not in `SearchDocument` today.
+- ~~**`search_content` reads `.xlsx` from the response's declared media type only.**~~
+  Closed 2026-09-10 (`41f266a`): `sniff_media_type` reads the body when the declared type is
+  ambiguous, and `named_extension` supplies the URL-side signal this gap was waiting for —
+  the query string first, because `download.php?file=…xlsx` names the file there.
 - **Deliver's corpus is the whole topic's corpus, newest first, capped.** It is not scoped to
   this run's queries, which is the same behaviour `run_refresh` has always had. Whether a
   relevance-scoped export is better is a judging question and belongs to #46 build item 4.
@@ -323,14 +322,46 @@ Tests — offline, deterministic, no network:
 
 Verified on a slot, not only offline:
 
-- [ ] One deliver run on test1 whose `stage.finished` reports a non-zero `evidence_count`
-      and the expected `feeds_count`.
-- [ ] In that run's `report.json`, at least one quantitative claim cites a feed rather than a
-      search result, and at least one finding cites a document present in `evidence_dir`.
-- [ ] The second India run (#45) is compared with the 2026-09-03 baseline on the counters
-      above and on `primary_official` share. **Attribution caveat:** per #41 a single-run
-      delta cannot separate this change from news-cycle variance; the counters are
-      descriptive evidence that the inputs arrived, not proof of a quality gain.
+- [x] A run on test1 reporting a non-zero `evidence_count` and the expected `feeds_count` —
+      the refresh cycle of topic `4a6a4504`: `evidence_count: 114`,
+      `evidence_unreadable_count: 61`, `feeds_count: 1`. The deliver leg of the same topic
+      reported `evidence_count: 5` / `feeds_count: 0`, which is how both defects below were
+      found.
+- [x] A quantitative claim cites a feed rather than a search result. From that cycle's
+      `report.md`: *"PPAC's own sectoral-consumption feed (updated 27 Aug 2026) shows
+      fertiliser gas use rising from 1399.7 to 1773.7 MMSCM and CGD from 1481.6 to 1780.1
+      MMSCM between April and August 2026"* — the monthly balance the whole operator brief
+      rests on, in the report for the first time.
+- [x] Compared with the 2026-09-03 baseline. `primary_official` share of cited sources
+      **16/25 (64 %)** against **18/34 (53 %)**, and Hormuz's 21 % before that.
+      **Attribution caveat unchanged:** per #41 a single-run delta cannot separate this
+      change from news-cycle variance, and this run also changed the deliver prompt. The
+      counters are descriptive evidence that the inputs arrived, not proof of a quality gain.
+
+## What the slot found (2026-09-10)
+
+Everything above was green offline, and the first live run still found four defects. Each
+one was invisible to the test suite for a different reason, and three of the four were made
+findable by instrumentation this ticket added.
+
+| # | Defect | Why the tests missed it | Fix |
+|---|---|---|---|
+| 1 | **The feed channel had never matched anything.** PPAC's sidecar files the series `region: IN`; the parse leg writes `geo: ["India"]`; `matches` compared them as strings | `INDIA_GAS` in `test_feeds.py` spells the country **twice** (`["IN", "India"]`), and the 2026-09-05 container check used a facet bag written the same way. Production spells it once | `c0cc930` — `REGION_SYNONYMS`, country codes only, no macro-region widening. Regression test uses the facets the parse leg actually wrote |
+| 2 | **The deliver leg's corpus was 5 documents of 149.** The fetcher is a background poll; deliver starts seconds after the plan finishes | Refresh never had the problem — a monitored topic's corpus was fetched during earlier cycles — so the export was only ever exercised where it was already full | `50d2a12` — `_await_corpus` waits for this topic's queue to drain, `deliver_corpus_wait_sec` (default 300), every failure path still delivers a report |
+| 3 | **A PDF behind a download script was discarded.** PPAC serves its monthly consumption report as `application/octet-stream` | The known gap above described the `.xlsx` half and nobody had met the `.pdf` half; no fixture served a PDF under a generic type | `41f266a` — sniff the body when the declared type is ambiguous |
+| 4 | **The deliver prompt matched the corpus on `url_hash`**, which no search result carries and the agent cannot compute | A prompt contract is not covered by any test we have | `ce4c31b` — match on `url`, plus a 25-document read budget so the corpus cannot spend the leg's timeout |
+
+Defect 1 was named by this ticket's own `feeds.none_matched` warning, which printed
+`geo=['india']` beside a feed region of `IN` on the first run. Defect 2 was visible only
+because `evidence_count` is now on the stage event. Defect 3 came out of the fetch log the
+content fetcher writes. That is three of four found by scope items 4 and 6 rather than by
+reading code — which is the argument for instrumenting a channel before trusting it.
+
+Two frontend defects on the shared-link path were found in the same pass, by opening the
+link in a browser rather than through the API — the check #16 has been missing:
+`89b5311` (a shared link resolved against the operator's stored slot picker instead of the
+host in the link) and `c772df6` (a shared link opened in a background tab fetched nothing
+and showed a permanent skeleton).
 
 ## Notes for implementation
 

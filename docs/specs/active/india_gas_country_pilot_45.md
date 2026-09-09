@@ -1,10 +1,10 @@
 # India gas — country fundamentals pilot topic (#45)
 
-**Status:** in progress — first run delivered on test1 2026-09-03  
+**Status:** in progress — second run + live monitoring on test1 2026-09-10  
 **Lane:** Product / business value — *first paying-prospect topic*  
 **Depends on:** #30 (playbooks), #32 (source discover), #36 (hybrid pipeline), #39 (source authority), #22 (refresh scheduler)  
 **Blocks:** country-fundamentals expansion beyond India
-**Blocked by (for the second run):** **#51** — the deliver leg reads neither the captured corpus nor the plan's RAG context, and spreadsheets are unreadable; re-running before #51 lands measures the same blind analyst  
+**Blocked by (for the second run):** ~~#51~~ — landed and verified on this ticket's second run, 2026-09-10  
 **Related:** #44 (insurance/vessel sources — same inventory+routing failure mode), #20 (monitoring evaluation)
 
 ---
@@ -131,12 +131,13 @@ this ticket freezes — see Open questions.
 - [x] `india_gas_demand.md` exists, follows the playbook template, cross-links `india_discounted_crude.md`
 - [x] India gas primary sources present in `source_whitelist.json`, all domains verified reachable + identity-checked
 - [x] `discover_sources_for_topic(discovery_query(facets))` returns `india_gas_demand.md` and its primary sources (19 of them)
-- [ ] Cross-country contamination removed from the routed set — `mop.ir` (Iran) and two Bangladeshi power ministries currently match this topic; blocked on **#47**
+- [~] Cross-country contamination — the register-level fix is still **#47**, but it does not reach this topic: see the measurement two lines down
 - [ ] Playbook preprocessed + ingested with `document_type=playbook`
 - [x] Image rebuilt and deployed — **test1** 2026-09-03 (`c07038d`); prod still on `de67d92`
 - [x] Topic run end to end — `d19908b3` on test1, `reported`
-- [~] Report cites **PNGRB, CEA, MoPNG, GAIL, IndianOil** — but **not PPAC**; see First run below
-- [ ] Monitoring enabled with a weekly-review cadence; two cycles produce a non-empty, non-duplicative pile
+- [x] Report cites **PPAC** — second run, 2026-09-10, with the monthly sectoral balance quoted sector by sector. It arrived through the feed channel, not through search
+- [x] Cross-country contamination measured rather than assumed: `entities: []` and zero `.ir`/`.bd` in both runs' `source_targets.json`
+- [~] Monitoring enabled at 24 h collection / 168 h freshness window; **one** cycle so far, so the two-cycle criterion is open
 - [ ] Operator review of one weekly pile → tuning list
 
 
@@ -236,6 +237,49 @@ of scope, and the adapter says so by name when `discover` finds nothing.
   report carries June-2026 monthly figures and IEA Q3-2026 projections, which a
   uniform recency window would have deleted. This was the ticket's main worry.
 - A PIB release on the 11-A CGD round returned **403** and could not be read.
+
+## Second run — test1, 2026-09-10
+
+Topic `4a6a4504-a7bd-4e0f-ab88-cdff6119d1a6`, same measured topic string, on `50d2a12`.
+
+| | 2026-09-03 | 2026-09-10 |
+|---|---|---|
+| `primary_official` share of cited sources | 18 / 34 (53 %) | **16 / 25 (64 %)** |
+| PPAC in the report | no | **yes, the monthly balance, sector by sector** |
+| corpus reaching the analyst | not exported at all | **114 documents** (refresh cycle) |
+| official feeds in the run | 0 | **1** (PPAC, 0 days old) |
+
+### The PPAC gap had a second cause, and it was not query design
+
+The first run's diagnosis — the only PPAC-filtered query asked about licensing, which is
+DGH/MoPNG territory — was right, and it was not the whole story. `feeds.matches` compared
+the seed's `region: IN` against the parse leg's `geo: ["India"]` as plain strings, so the
+feed channel **had never selected anything on any run**. Both the unit fixture and the
+2026-09-05 in-container verification spelled the country twice, `["IN", "India"]`, which is
+an input production does not produce. Fixed in `c0cc930`.
+
+So the crawler, the adapter, the seed and the export were all correct and had never once
+delivered a file to an analyst. What made it visible was #51's `feeds.none_matched` warning
+naming the facets beside the count of zero — the first run after that warning shipped.
+
+### The pile is running
+
+19 short-term queries, `schedule_enabled` at 24 h, `max_age_hours` 168 — weekly review,
+daily collection, which is the conservative-start answer to the Open question below. One
+cycle banked at **$2.94 / 605 s**, 6 new sources (3 primary/official). Published
+`share_mode=live` at
+`https://agent-test1.particletico.com/app/shared/4a6a4504-a7bd-4e0f-ab88-cdff6119d1a6`.
+
+**Cost is the input to the cadence decision:** daily is ~$20/week. One `PATCH /monitor`
+moves it to weekly.
+
+### Still open
+
+- The **fertilizer** primary-source gap (~25 % of demand) stands; the second run reaches it
+  only through PPAC's sector split, which is now at least present.
+- `ppac_gas_lng_import` is a `.xls` — it downloads and does not extract, so the
+  import-dependence half of the operator's brief has no series of its own. Needs `xlrd`.
+- One more cycle, then the operator review.
 
 ## Deploy note
 
