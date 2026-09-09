@@ -153,7 +153,21 @@ export function usePublicTopic(topicId: string): PublicTopicState {
       if (cancelled) return
       // A backgrounded tab polls nothing; `visibilitychange` below brings it
       // back the moment someone looks at it.
-      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+      //
+      // The *first* load is exempt. A shared link is opened in a background tab
+      // more often than any other page in this product — a cmd-click, a chat
+      // client's preview, a restored session — and gating it too left the reader
+      // with a skeleton and no content at all until they happened to focus the
+      // tab. Polling an unread tab is waste; fetching what it was opened for is
+      // the point of opening it.
+      const firstLoad = lastStamp.current === null
+      if (
+        !firstLoad &&
+        typeof document !== 'undefined' &&
+        document.visibilityState === 'hidden'
+      ) {
+        return
+      }
 
       let topic: PublicTopic
       try {

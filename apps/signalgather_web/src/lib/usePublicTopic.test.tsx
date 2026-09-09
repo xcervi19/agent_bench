@@ -139,18 +139,35 @@ describe('a frozen share', () => {
 })
 
 describe('a hidden tab', () => {
-  it('checks nothing until someone looks at it again', async () => {
+  it('still loads once, because that is what it was opened for', async () => {
+    // A shared link lands in a background tab more than any other page here: a
+    // cmd-click, a chat client's preview, a restored session. Gating the first
+    // load too left the reader with a skeleton and nothing else.
     const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
     renderHook(() => usePublicTopic('t1'))
     await settle()
-    expect(getPublicTopic).not.toHaveBeenCalled()
+    expect(getPublicTopic).toHaveBeenCalledTimes(1)
+    visibility.mockRestore()
+  })
+
+  it('checks nothing more until someone looks at it again', async () => {
+    const visibility = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+    renderHook(() => usePublicTopic('t1'))
+    await settle()
+    expect(getPublicTopic).toHaveBeenCalledTimes(1)
+
+    // A poll interval passes with the tab still hidden: no second request.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 2)
+    })
+    expect(getPublicTopic).toHaveBeenCalledTimes(1)
 
     visibility.mockReturnValue('visible')
     await act(async () => {
       document.dispatchEvent(new Event('visibilitychange'))
       await vi.advanceTimersByTimeAsync(0)
     })
-    expect(getPublicTopic).toHaveBeenCalledTimes(1)
+    expect(getPublicTopic).toHaveBeenCalledTimes(2)
     visibility.mockRestore()
   })
 })
