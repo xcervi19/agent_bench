@@ -139,6 +139,15 @@ def deliver(monkeypatch, tmp_path):
 
     monkeypatch.setattr(pipeline_mod, "stream_claude", _stream)
 
+    # The corpus wait talks to the database through its own session scope, not
+    # the one patched above. A drained queue is the uninteresting case, so it is
+    # the default here and the waiting tests below override it.
+    async def _drained(topic_id):
+        return 0
+
+    monkeypatch.setattr(pipeline_mod, "pending_count", _drained)
+    monkeypatch.setattr(pipeline_mod, "CORPUS_POLL_SEC", 0.01)
+
     async def _run(settings: ClaudeAgentSettings) -> Path:
         await pipeline_mod.run_deliver(TOPIC_ID, settings)
         runs = Path(settings.state_dir) / "news" / TOPIC_HASH / "runs"
@@ -380,3 +389,102 @@ async def test_refresh_says_when_its_facets_degraded(tmp_path, do_refresh, event
 
     assert _payload(events, "refresh.completed")["facets_degraded"] is True
     assert "refresh.facets_degraded" in "\n".join(r.getMessage() for r in caplog.records)
+
+
+# ---- waiting for the corpus to be fetched ----------------------------------
+#
+# The plan leg records a hit the moment it sees one; the fetcher reads the page
+# behind it on a background poll. Deliver starts when the operator proceeds,
+# which on a fresh topic is a minute later — so without a wait the foundational
+# report is written from whatever happened to be fetched by then. On the India
+# run of 2026-09-09 that was 5 documents out of 149 captured.
+
+
+async def test_deliver_waits_for_its_own_documents_to_be_fetched(
+    monkeypatch, tmp_path, deliver, events
+):
+    counts = iter([7, 3, 0])
+    seen: list[int] = []
+
+    async def _pending(topic_id):
+        value = next(counts)
+        seen.append(value)
+        return value
+
+    monkeypatch.setattr(pipeline_mod, "pending_count", _pending)
+
+    exported: dict = {}
+
+    async def _export(topic_id, destination, *, max_documents, **kwargs):
+        destination.mkdir(parents=True, exist_ok=True)
+        exported["called"] = True
+        return {"document_count": 61, "unreadable_count": 4}
+
+    monkeypatch.setattr(pipeline_mod, "export_evidence", _export)
+
+    run_dir = await deliver(_settings(tmp_path, deliver_corpus_wait_sec=30))
+
+    assert seen == [7, 3, 0], "polled until the queue drained"
+    assert exported["called"], "exported only after waiting"
+    payload = json.loads((run_dir / "input.json").read_text(encoding="utf-8"))
+    assert payload["evidence_count"] == 61
+
+
+async def test_a_queue_that_will_not_drain_still_delivers(
+    monkeypatch, tmp_path, deliver, events, caplog
+):
+    """A slow host must cost the wait once, not the report."""
+
+    async def _stuck(topic_id):
+        return 12
+
+    monkeypatch.setattr(pipeline_mod, "pending_count", _stuck)
+
+    async def _export(topic_id, destination, *, max_documents, **kwargs):
+        destination.mkdir(parents=True, exist_ok=True)
+        return {"document_count": 5, "unreadable_count": 0}
+
+    monkeypatch.setattr(pipeline_mod, "export_evidence", _export)
+
+    with caplog.at_level(logging.WARNING):
+        run_dir = await deliver(_settings(tmp_path, deliver_corpus_wait_sec=1))
+
+    assert (run_dir / "news.json").is_file(), "the report is written anyway"
+    assert "corpus_wait_expired" in caplog.text
+    assert "pending=12" in caplog.text
+
+
+async def test_a_corpus_wait_failure_does_not_cost_the_report(
+    monkeypatch, tmp_path, deliver, events
+):
+    async def _boom(topic_id):
+        raise RuntimeError("database is down")
+
+    monkeypatch.setattr(pipeline_mod, "pending_count", _boom)
+
+    async def _export(topic_id, destination, *, max_documents, **kwargs):
+        destination.mkdir(parents=True, exist_ok=True)
+        return {"document_count": 2, "unreadable_count": 0}
+
+    monkeypatch.setattr(pipeline_mod, "export_evidence", _export)
+
+    run_dir = await deliver(_settings(tmp_path, deliver_corpus_wait_sec=30))
+    assert (run_dir / "news.json").is_file()
+
+
+async def test_a_zero_wait_does_not_query_the_queue_at_all(
+    monkeypatch, tmp_path, deliver, events
+):
+    async def _never(topic_id):
+        raise AssertionError("the queue must not be counted when the wait is off")
+
+    monkeypatch.setattr(pipeline_mod, "pending_count", _never)
+
+    async def _export(topic_id, destination, *, max_documents, **kwargs):
+        destination.mkdir(parents=True, exist_ok=True)
+        return {"document_count": 1, "unreadable_count": 0}
+
+    monkeypatch.setattr(pipeline_mod, "export_evidence", _export)
+
+    run_dir = await deliver(_settings(tmp_path, deliver_corpus_wait_sec=0))
+    assert (run_dir / "news.json").is_file()

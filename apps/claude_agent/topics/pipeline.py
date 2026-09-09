@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import time
 import uuid
 from json import JSONDecodeError
 from pathlib import Path
@@ -25,6 +26,7 @@ from .facets import (
 )
 from .evidence_export import export_evidence
 from .models import Topic, TopicEvent
+from .search_content import pending_count
 from .search_evidence import SearchEvidenceRecorder
 from .feeds import FEEDS_DIRNAME, export_feeds
 from .serving import advance_public_view
@@ -43,6 +45,10 @@ STATE_CANCELLED = "cancelled"
 TOPIC_PARSE_COMMAND = "/newsfind-topic-parse"
 PLAN_COMMAND = "/newsfind-plan"
 DELIVER_COMMAND = "/newsfind-deliver"
+
+# How often the deliver leg re-counts its unfetched documents while waiting.
+# Matched to the fetcher's own poll: checking faster only costs queries.
+CORPUS_POLL_SEC = 10.0
 
 PIPELINE_COMMANDS = (TOPIC_PARSE_COMMAND, PLAN_COMMAND, DELIVER_COMMAND)
 """Slash commands the topic lifecycle drives.
@@ -256,6 +262,7 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
     evidence_dir = out_dir / "evidence"
     evidence_index: dict[str, Any] = {"document_count": 0, "unreadable_count": 0}
     if settings.evidence_max_documents:
+        await _await_corpus(topic_id, settings)
         try:
             evidence_index = await export_evidence(
                 topic_id,
@@ -334,6 +341,48 @@ async def run_deliver(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> Non
     await advance_public_view(topic_id, deliver_run_id=deliver_run_id)
     await emit(topic_id, "report.ready", {**summary, "source_mix": source_mix.as_payload()})
     await set_state(topic_id, STATE_REPORTED)
+
+
+async def _await_corpus(topic_id: uuid.UUID, settings: ClaudeAgentSettings) -> None:
+    """Give the background fetcher time to finish reading this topic's documents.
+
+    The plan leg records a search hit the moment it sees one; the fetcher reads
+    the page behind it on a 30-second poll. Deliver starts when the operator
+    proceeds, which on a fresh topic is a minute later — so the corpus #51 hands
+    over is whatever happened to be fetched by then. On the India run of
+    2026-09-09 that was 5 documents out of 149 captured, and the foundational
+    report is the artefact a customer reads first.
+
+    Bounded and best effort. The wait sits before the agent starts, so it costs
+    wall-clock rather than any of the leg's own timeout, and a queue that will
+    not drain (a slow host, a stopped fetcher) costs `deliver_corpus_wait_sec`
+    once and then proceeds with what there is. Waiting for a corpus is never
+    worth failing to deliver a report over.
+    """
+    deadline = settings.deliver_corpus_wait_sec
+    if deadline <= 0:
+        return
+    started = time.monotonic()
+    pending = 0
+    try:
+        while True:
+            pending = await pending_count(topic_id)
+            elapsed = time.monotonic() - started
+            if pending == 0:
+                logger.info("deliver.corpus_ready topic=%s waited_sec=%.0f", topic_id, elapsed)
+                return
+            if elapsed >= deadline:
+                break
+            await asyncio.sleep(min(CORPUS_POLL_SEC, deadline - elapsed))
+    except Exception:  # a corpus problem must not cost us the report
+        logger.exception("deliver.corpus_wait_failed topic=%s", topic_id)
+        return
+    logger.warning(
+        "deliver.corpus_wait_expired topic=%s pending=%s waited_sec=%s",
+        topic_id,
+        pending,
+        deadline,
+    )
 
 
 async def _run_slash(

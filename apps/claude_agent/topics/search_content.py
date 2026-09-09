@@ -309,6 +309,29 @@ async def _pending(limit: int) -> list[tuple[int, str]]:
         return list(rows.all())
 
 
+async def pending_count(topic_id) -> int:
+    """How many of this topic's captured documents have not been attempted yet.
+
+    The fetcher is a background poller, so on a freshly planned topic the queue
+    is still draining while the deliver leg is being started. Counting per topic
+    is what lets that leg wait for its own corpus without waiting on every other
+    topic on the slot.
+    """
+    async with session_scope() as s:
+        return int(
+            (
+                await s.execute(
+                    select(func.count())
+                    .select_from(SearchDocument)
+                    .where(
+                        SearchDocument.topic_id == topic_id,
+                        SearchDocument.fetch_status.is_(None),
+                    )
+                )
+            ).scalar_one()
+        )
+
+
 def rank_of(status: str | None, chars: int) -> tuple[int, int]:
     """Orders outcomes so a later failure cannot erase text we already hold.
 

@@ -232,6 +232,18 @@ class ClaudeAgentSettings(BaseSettings):
             "directory for the analyst to read. 0 disables the export."
         ),
     )
+    deliver_corpus_wait_sec: int = Field(
+        default=300,
+        ge=0,
+        description=(
+            "How long the deliver leg waits for the background fetcher to finish "
+            "reading this topic's captured documents before it exports the corpus. "
+            "A freshly planned topic reaches deliver seconds after its searches "
+            "were recorded, so without this the foundational report — the most-read "
+            "artefact — is written from the handful of documents that happened to "
+            "be fetched in time. 0 disables the wait."
+        ),
+    )
     feeds_max_age_days: int = Field(
         default=45,
         ge=1,
