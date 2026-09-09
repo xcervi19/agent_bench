@@ -66,6 +66,45 @@ def _norm(value: object) -> set[str]:
     return out
 
 
+# A seed declares a region as an ISO 3166-1 alpha-2 code (`IN`); the parse leg
+# names the country in English (`India`). Neither is wrong and a set comparison
+# cannot bridge them, so the pairs are spelled out — this is what silently cost
+# the first India run its PPAC feed, with the commodity axis matching perfectly.
+#
+# Country codes only. A country is deliberately *not* expanded into a macro
+# region (`asia_pacific`): whether a JODI Asia-Pacific series answers an India
+# question is a judgement, and this function only resolves two spellings of the
+# same place. Extend when a seed or a playbook names a country not listed here.
+REGION_SYNONYMS: tuple[frozenset[str], ...] = (
+    frozenset({"in", "india"}),
+    frozenset({"cn", "china"}),
+    frozenset({"jp", "japan"}),
+    frozenset({"kr", "korea", "south_korea", "republic_of_korea"}),
+    frozenset({"bd", "bangladesh"}),
+    frozenset({"pk", "pakistan"}),
+    frozenset({"us", "usa", "united_states", "united_states_of_america"}),
+    frozenset({"ru", "russia", "russian_federation"}),
+    frozenset({"qa", "qatar"}),
+    frozenset({"au", "australia"}),
+    frozenset({"ir", "iran"}),
+    frozenset({"sa", "saudi_arabia"}),
+    frozenset({"ae", "uae", "united_arab_emirates"}),
+    frozenset({"no", "norway"}),
+    frozenset({"nl", "netherlands"}),
+    frozenset({"de", "germany"}),
+    frozenset({"gb", "uk", "united_kingdom"}),
+)
+
+
+def _expand_regions(tokens: set[str]) -> set[str]:
+    """Add the other spellings of every country named in `tokens`."""
+    out = set(tokens)
+    for group in REGION_SYNONYMS:
+        if out & group:
+            out |= group
+    return out
+
+
 def matches(meta: dict[str, Any], facets: dict[str, Any]) -> bool:
     """Does this feed belong to this topic?
 
@@ -74,9 +113,12 @@ def matches(meta: dict[str, Any], facets: dict[str, Any]) -> bool:
     both cases the missing axis cannot disqualify it. A topic with no facets at
     all gets nothing, which is deliberate: handing every feed to every topic is
     how a run ends up reading Indian gas tables for a Hormuz shipping question.
+
+    The region axis compares through `REGION_SYNONYMS`, so a feed filed under
+    `IN` reaches a topic whose facets say `India`.
     """
     topic_commodity = _norm(facets.get("commodity"))
-    topic_geo = _norm(facets.get("geo"))
+    topic_geo = _expand_regions(_norm(facets.get("geo")))
     if not topic_commodity and not topic_geo:
         return False
 
@@ -84,7 +126,7 @@ def matches(meta: dict[str, Any], facets: dict[str, Any]) -> bool:
     if feed_commodity and topic_commodity and not (feed_commodity & topic_commodity):
         return False
 
-    feed_region = _norm(meta.get("region"))
+    feed_region = _expand_regions(_norm(meta.get("region")))
     if feed_region and topic_geo and not (feed_region & topic_geo):
         return False
 

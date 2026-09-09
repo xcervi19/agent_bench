@@ -48,6 +48,28 @@ def test_a_feed_does_not_leak_into_an_unrelated_topic():
     assert matches(PPAC_META, HORMUZ_CRUDE) is False
 
 
+def test_a_feed_filed_by_iso_code_reaches_a_topic_that_names_the_country():
+    """The facets the parse leg actually writes, from the India run of 2026-09-09.
+
+    `INDIA_GAS` above carries both `IN` and `India`, which is what hid this: the
+    seed files PPAC under `IN` and the parse leg emits `India` and nothing else,
+    so the region axis never intersected and the feed was refused on a run whose
+    commodity axis matched perfectly. `feeds.none_matched` (#51) is what made it
+    visible — `geo=['india']` beside a feed region of `IN`.
+    """
+    live_facets = {
+        "commodity": ["natural gas", "LNG", "domestic natural gas production", "fertilizers"],
+        "geo": ["India"],
+    }
+    assert matches(PPAC_META, live_facets) is True
+
+
+def test_resolving_the_country_spelling_does_not_widen_the_leak():
+    """A synonym is two names for one place, not a licence to match a neighbour."""
+    assert matches(PPAC_META, {"commodity": ["natural gas"], "geo": ["Pakistan"]}) is False
+    assert matches(PPAC_META, {"commodity": ["natural gas"], "geo": ["asia pacific"]}) is False
+
+
 def test_the_wrong_commodity_in_the_right_country_is_still_wrong():
     """India crude and India gas are different balances. Region agreement alone
     would hand a crude topic the gas table and invite a confident wrong number."""
