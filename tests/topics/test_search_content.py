@@ -18,6 +18,7 @@ from apps.claude_agent.topics.search_content import (
     domain_coverage_stmt,
     fetch_one,
     group_by_host,
+    named_extension,
     method_timing_stmt,
     origin,
     rank_of,
@@ -536,3 +537,69 @@ async def test_every_document_of_a_host_is_recorded_with_its_timing():
     assert {r[1] for r in recorded} == {STATUS_FETCHED}
     assert {r[2] for r in recorded} == {METHOD_HTTP}
     assert all(isinstance(r[3], int) for r in recorded), "duration must be recorded"
+
+
+# ---- ambiguous media types -------------------------------------------------
+#
+# PPAC hands its monthly consumption report to
+# `download.php?file=menu/…_ICR_OCT_25.pdf` and labels the response
+# `application/octet-stream`. Taking the label at its word recorded the
+# publisher's own report `unsupported` while we held a PDF reader — on the one
+# domain the India brief rests on.
+
+
+def _download_script_response(data: bytes, url: str, content_type: str) -> httpx.Response:
+    return httpx.Response(
+        status_code=200,
+        content=data,
+        headers={"content-type": content_type},
+        request=httpx.Request("GET", url),
+    )
+
+
+def test_a_pdf_behind_a_download_script_is_read_not_discarded():
+    body = "Sectoral consumption of natural gas rose across city gas networks. " * 5
+    outcome = classify(
+        _download_script_response(
+            _minimal_pdf(body),
+            "https://ppac.gov.in/download.php?file=menu/1763373356_ICR_OCT_25.pdf",
+            "application/octet-stream",
+        )
+    )
+    assert outcome.status == STATUS_FETCHED
+    assert "Sectoral consumption of natural gas" in outcome.text
+
+
+def test_a_workbook_is_claimed_only_when_the_url_names_one():
+    """A ZIP header alone is not a spreadsheet — `.docx` and `.odt` open the same."""
+    workbook = _workbook(_balance_rows())
+    named = classify(
+        _download_script_response(
+            workbook, "https://ppac.gov.in/get.php?f=balance.xlsx", "application/octet-stream"
+        )
+    )
+    assert named.status == STATUS_FETCHED
+    assert "City Gas Distribution" in named.text
+
+    unnamed = classify(
+        _download_script_response(
+            workbook, "https://example.com/get.php?f=notes", "application/octet-stream"
+        )
+    )
+    assert unnamed.status == STATUS_UNSUPPORTED
+
+
+def test_an_html_page_served_as_octet_stream_still_reads_as_html():
+    outcome = classify(
+        _download_script_response(
+            ARTICLE.encode("utf-8"), "https://example.com/view.php?id=7", ""
+        )
+    )
+    assert outcome.status == STATUS_FETCHED
+    assert "Tanker traffic through the strait" in outcome.text
+
+
+def test_named_extension_prefers_the_file_the_query_names():
+    assert named_extension("https://ppac.gov.in/download.php?file=a/b_ICR.pdf") == ".pdf"
+    assert named_extension("https://ppac.gov.in/uploads/x.xlsx") == ".xlsx"
+    assert named_extension("https://example.com/articles/story") == ""

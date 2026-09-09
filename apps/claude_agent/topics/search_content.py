@@ -33,7 +33,8 @@ import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
-from urllib.parse import urlsplit
+from pathlib import PurePosixPath
+from urllib.parse import parse_qsl, unquote, urlsplit
 from urllib.robotparser import RobotFileParser
 
 import httpx
@@ -90,12 +91,29 @@ SPREADSHEET_TYPES = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "application/vnd.ms-excel.sheet.macroenabled.12",
 }
+# What a URL must name before a ZIP body is read as a workbook — see
+# `sniff_media_type`.
+SPREADSHEET_EXTENSIONS = {".xlsx", ".xlsm"}
 # The pre-2007 OLE format needs a second library. It stays unsupported, but with
 # its reason recorded rather than folded into "some media type we skipped" —
 # `source_crawler.extract` names the same gap the same way.
 UNCONVERTIBLE_TYPES = {
     "application/vnd.ms-excel": "xls: pre-2007 OLE workbook, no converter",
     "application/msexcel": "xls: pre-2007 OLE workbook, no converter",
+}
+# A media type that says "some bytes" and nothing more. A download script is the
+# usual source: PPAC serves its monthly consumption report from
+# `download.php?file=…ICR_OCT_25.pdf` as `application/octet-stream`, and we
+# recorded the publisher's own report `unsupported` while holding a PDF reader.
+# The empty string is here too, so a response with no content-type is sniffed
+# before falling back to the HTML reading `TEXT_TYPES` gives it.
+AMBIGUOUS_TYPES = {
+    "",
+    "application/octet-stream",
+    "binary/octet-stream",
+    "application/download",
+    "application/force-download",
+    "application/x-download",
 }
 
 USER_AGENT = "SignalGatherBot/1.0 (+evidence corpus; contact: team@techartsociety.com)"
@@ -127,6 +145,46 @@ def strip_nul(text: str) -> str:
     return text.replace("\x00", "") if "\x00" in text else text
 
 
+def named_extension(url: str) -> str:
+    """The file extension this URL names, in its query string or its path.
+
+    `download.php?file=menu/1763373356_ICR_OCT_25.pdf` names a PDF in the query
+    and a PHP script in the path, so the query is read first — a router path is
+    about the server, the parameter is about the file.
+    """
+    parts = urlsplit(url)
+    candidates = [value for _, value in parse_qsl(parts.query)]
+    candidates.append(parts.path)
+    for candidate in candidates:
+        suffix = PurePosixPath(unquote(candidate)).suffix.lower()
+        if suffix:
+            return suffix
+    return ""
+
+
+def sniff_media_type(content: bytes, url: str) -> str | None:
+    """What a body served under an ambiguous media type actually is.
+
+    Only two answers, and each needs a signal that cannot mean anything else:
+
+      * `%PDF-` in the opening bytes is the format's own header, and nothing
+        else begins that way. A little slack at the front, because some servers
+        prepend a byte-order mark or a stray newline.
+      * a ZIP header is *not* evidence of a workbook on its own — every `.docx`,
+        `.odt` and plain archive starts the same way — so a spreadsheet is
+        claimed only when the URL also names one. That is the missing signal
+        `#51` recorded as a known gap.
+
+    None means "no better idea than the server had", and the caller keeps the
+    declared type.
+    """
+    if b"%PDF-" in content[:1024]:
+        return "application/pdf"
+    if content.startswith(b"PK\x03\x04") and named_extension(url) in SPREADSHEET_EXTENSIONS:
+        return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return None
+
+
 def classify(response: httpx.Response) -> FetchOutcome:
     if response.status_code in BLOCKED_CODES:
         return FetchOutcome(STATUS_BLOCKED, error=f"HTTP {response.status_code}")
@@ -135,6 +193,10 @@ def classify(response: httpx.Response) -> FetchOutcome:
     if response.status_code >= 400:
         return FetchOutcome(STATUS_ERROR, error=f"HTTP {response.status_code}")
     media_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
+    # A download script tells us nothing about the file it is handing over, so
+    # read the bytes instead of taking its word for it.
+    if media_type in AMBIGUOUS_TYPES:
+        media_type = sniff_media_type(response.content, str(response.url)) or media_type
     if media_type in UNCONVERTIBLE_TYPES:
         return FetchOutcome(STATUS_UNSUPPORTED, error=UNCONVERTIBLE_TYPES[media_type])
     if media_type in PDF_TYPES:
