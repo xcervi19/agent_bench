@@ -31,8 +31,16 @@ the India topic's own monitoring cycle, which is the product working rather than
 it runs every 24 h at roughly $2.94 a cycle, ~$20/week, and one `PATCH /monitor` makes it
 weekly if that is not worth it.
 
-**Verify before assuming.** `git rev-parse --short test1-stable-2026-09-10` against
-`ssh … 'cd ~/agent_bench_test1 && git rev-parse --short HEAD'`. They agreed on 2026-09-10.
+**Verify before assuming** — and note the `^{commit}`, which is not optional:
+
+```bash
+git rev-parse --short 'test1-stable-2026-09-10^{commit}'          # c772df6
+ssh … 'cd ~/agent_bench_test1 && git rev-parse --short HEAD'      # c772df6
+```
+
+Without `^{commit}` the first command prints the **annotated tag object's** SHA (`2f48fe8`),
+which matches nothing on the box and reads exactly like a drifted slot. Checked 2026-09-10:
+the two agree.
 The application still does not report its own build (`GET /v1/agent/info` returns no commit
 SHA), so this comparison is the only check there is — the same half-an-anchor problem the
 previous rollback section recorded twice, now against a slot that must not move.

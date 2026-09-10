@@ -14,7 +14,7 @@ the product commitment; nothing else on this list outranks it.
 
 | | |
 |---|---|
-| Frozen state | tag `test1-stable-2026-09-10` (`c772df6`) — what the box actually runs |
+| Frozen state | tag `test1-stable-2026-09-10` → commit `c772df6` — what the box actually runs. Check with `git rev-parse --short 'test1-stable-2026-09-10^{commit}'`; without `^{commit}` you get the tag object's SHA and a false mismatch |
 | Where work happens instead | **test2** (`~/agent_bench_test2`, `agent-test2.particletico.com`) |
 | What still runs on test1 | the India topic's monitoring cycle — the product working, not a change |
 
