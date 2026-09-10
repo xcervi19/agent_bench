@@ -432,3 +432,25 @@ tuning loop until #43 lands, or the loop is tuned against the wrong judge.
   facet? By last-yield? The register is bigger than one cycle's queries, so the rotation
   policy is a real design choice, and per-domain yield from `search_observations` is the
   obvious input once Build item 0's prerequisite 1 is recording it.
+
+---
+
+## Customer signal, 2026-09-10 — what "yield" and "quality" have to mean
+
+First feedback on the India demo (#45), and it lands directly on this ticket:
+
+- the **primary sources were the most interesting part**, *including one the system ranked
+  low on relevance*;
+- a **Bloomberg article was less interesting precisely because it is not official**.
+
+So the customer's ordering is publisher class first, relevance second — the reverse of what
+`news.json` ordering and `next_queries` tuning currently optimise. For build item 2
+(per-query yield) this changes the unit of measurement: **yield is primary documents per
+query, not documents per query.** A query returning ten well-matched secondary hits and one
+returning a single regulator PDF score the same today, and the customer would not trade the
+second for the first.
+
+One desk, one topic, said once — a hypothesis about what to optimise rather than a measured
+law, and #52 is where it gets tested against three builds. Worth acting on before it is
+proven, because the alternative is tuning toward an ordering we have positive evidence the
+buyer does not share.

@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#52` (assign to the next new ticket; then bump this line)
+**Next available number:** `#53` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -23,14 +23,15 @@ _Canonical list of spec ticket numbers. Update this file whenever you **create**
 
 ## Active (executable)
 
-_17 open tickets. A row here means work remains; the spec file lives in `docs/specs/active/`
+_18 open tickets. A row here means work remains; the spec file lives in `docs/specs/active/`
 and its `Status:` line says `planned` or `in progress`. Reconciled 2026-09-08 — the previous
 list carried seven shipped or retired tickets and omitted #42. #51 shipped 2026-09-09._
 
 | # | File | Status | Blocks / unblocks |
 |---|------|--------|---------------------|
-| 45 | `docs/specs/active/india_gas_country_pilot_45.md` | in progress | **First customer topic.** First run delivered on test1 2026-09-03; PPAC feed connected 2026-09-05. Next: second run, then monitoring at weekly cadence. Template for country #2 |
-| 47 | `docs/specs/active/register_labels_47.md` | planned | **Demo-critical, promoted 2026-09-08.** `entities_named_in` matches entity names and never reads the domain, so adding "Ministry of Petroleum and Natural Gas" to a discovery query takes an India topic from 32 to 54 targets — 9 Iranian domains, 2 Bangladeshi ministries, and `iran_oil_geopolitics.md` displacing an India playbook. Blocks `allowed_domains` being safe by construction |
+| 45 | `docs/specs/active/india_gas_country_pilot_45.md` | in progress | **First customer topic — demo approved 2026-09-10.** Second run delivered, PPAC cited from the feed, monitoring live, shared link out. Remaining: a second cycle and the operator review. Template for country #2 |
+| 52 | `docs/specs/active/three_slot_business_comparison_52.md` | planned | prod vs test1 vs test2 on business value. **test2 has no RAG at all** (0/0 against 141/9519) — until it does, any three-way comparison measures the corpus gap. Needs #23, #41, #43 |
+| 47 | `docs/specs/active/register_labels_47.md` | planned | **Demoted from demo-critical 2026-09-10** — both India runs carry `entities: []` and zero `.ir`/`.bd` targets, so the contamination needs a phrase this topic does not emit. Still the right fix.<br>Original finding: `entities_named_in` matches entity names and never reads the domain, so adding "Ministry of Petroleum and Natural Gas" to a discovery query takes an India topic from 32 to 54 targets — 9 Iranian domains, 2 Bangladeshi ministries, and `iran_oil_geopolitics.md` displacing an India playbook. Blocks `allowed_domains` being safe by construction |
 | 16 | `docs/specs/active/signalgather_frontend_v1_16.md` | in progress | 16a–d built and verified through the API; **no one has driven the UI in a browser**. §5 reconnect and §11 responsive close nothing automated can |
 | 50 | `docs/specs/active/live_public_sharing_50.md` | in progress | Implemented 2026-09-01, applied on test1. Awaiting prod migration + the logged-out browser pass (inherited from #40). Feeds #37 |
 | 22 | `docs/specs/active/topic_refresh_scheduler_22.md` | in progress | Code + tests done; the *scheduled* path has never fired on a slot. Blocks #16 monitoring, #20 |

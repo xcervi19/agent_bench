@@ -5,6 +5,31 @@ Monorepo for **Newsfind topic intelligence** — Claude Code pipeline, RAG, and 
 Legacy **Signal Gather** (CrewAI RSS/signals stack) lives on branch
 `archive/signal_gather-platform` — see `docs/archive/README.md`.
 
+## ⛔ test1 is frozen — do not deploy to it
+
+**As of 2026-09-10, no change reaches test1 without the product owner's explicit
+approval, per instance.** The India demo is running there, the first customer has
+seen it and approved it, and it will be presented again. Stability on that slot is
+the product commitment; nothing else on this list outranks it.
+
+| | |
+|---|---|
+| Frozen state | tag `test1-stable-2026-09-10` (`c772df6`) — what the box actually runs |
+| Where work happens instead | **test2** (`~/agent_bench_test2`, `agent-test2.particletico.com`) |
+| What still runs on test1 | the India topic's monitoring cycle — the product working, not a change |
+
+**Approval is per change, not standing.** "You approved a deploy last week" is not
+approval for this one; neither is a fix being obviously correct, urgent, or small. If
+a defect on test1 looks serious enough to warrant an exception, say so and ask — do
+not deploy and report afterwards.
+
+This covers anything that alters what test1 serves or how: `git pull` in
+`~/agent_bench_test1`, an image rebuild or restart, an edit to its `.env`, a
+migration against `agentic_test1`, a change to the bind-mounted `claude_agent_fe/`
+prompts, or publishing/unpublishing its shared topics. Reading test1 — logs,
+artifacts, database queries, the public share link — is always fine and is how you
+check the two slots against each other.
+
 ## Applications
 
 | App | Location | Purpose |

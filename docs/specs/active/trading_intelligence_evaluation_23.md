@@ -116,3 +116,24 @@ Bloomberg-/Reuters-style reports. New providers register via
 - `docs/specs/done/rag_full_stable_evaluation_11.md`
 - `docs/specs/done/newsfind_application_verification_15.md`
 - `testing/output_evaluation_rubric.md`, `testing/README.md`
+
+---
+
+## Customer signal, 2026-09-10 — check the weights against the buyer before tuning
+
+First feedback on the India demo (#45): the **primary sources were the most interesting
+part, including one ranked low on relevance**, and a **Bloomberg article was less
+interesting because it is not an official source**.
+
+`information_discovery` scores relevance and source authority as separate categories. This
+customer's ordering puts authority first for a country-fundamentals topic, and the rubric
+does not currently say that. A rubric that disagrees with the buyer is worse than no rubric,
+because it produces a number that looks like progress while pointing the tuning loop away
+from the thing being bought.
+
+**Decide the weights before scoring a comparison round, not after** (#52 item 3) — weights
+chosen once the scores are visible are not a measurement.
+
+Caveat: one desk, one topic, expressed once. Treat it as the strongest hypothesis available
+about what to weight, not as settled. It is also topic-shaped — a breaking-event topic may
+well value a fast wire story over a ministry page that will not exist for another week.

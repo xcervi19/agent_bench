@@ -97,3 +97,22 @@ confident, fluent SEO content. The defence is to keep the model away from the ve
 - How many cycles of independent surfacing before a domain is even a candidate? Too few and the register fills with noise; too many and discovery feels dead to the operator.
 - Should promotion be per-topic or global? A source that is authoritative for India gas may be noise for Hormuz.
 - Does Lane B's budget scale with topic age — more exploration early, more exploitation later?
+
+---
+
+## Customer signal, 2026-09-10 — the case for the unfiltered lane
+
+First feedback on the India demo (#45): the **primary sources were the most interesting
+part, including one the system ranked low on relevance**, and a Bloomberg article was less
+interesting for being unofficial.
+
+That is the strongest argument this ticket has. The value the customer named lives in
+official sources — and the register is a closed world, so a domain filter can only ever
+return the primaries **we already know about**. The unfiltered discovery budget is how a
+ministry, regulator or state utility nobody has registered yet gets in front of a desk at
+all.
+
+It also aims the promotion criteria: promote on **publisher class and independent
+resurfacing**, not on how often a document was cited. A source can be worth keeping while
+being cited rarely — the low-relevance primary the customer singled out is exactly that
+case, and a click- or citation-weighted rule would have demoted it.

@@ -7,81 +7,74 @@ _Update this file as work progresses. The agent reads it every session to unders
 
 ---
 
-## ⚠️ ROLLBACK ANCHOR — read before deploying anything from 2026-08-22 onward
+## ⛔ SLOT POLICY — test1 is frozen, work happens on test2
 
-**We are deliberately breaking a working, demoed system.** #45 and #46 change the search
-path itself; the first customer's decision rests on the build that was demoed. Write the
-way back down before taking it, not after.
+**Set by the product owner 2026-09-10, after the first customer's positive feedback on the
+India demo.** The rule is in `AGENT.md` too, because it governs every session:
 
-| | |
-|---|---|
-| **Last commit before we started changing things** | `de67d92` — *"#44 Plan the insurance and vessel-tracking source branch"* (2026-08-11). Docs only. |
-| **Last commit that touched application code** | `5b6d689` — *"Send a citation click to the source it cites"* (2026-08-11) |
-| **`origin/main`** | `de67d92` — local `main` and `origin/main` agree; nothing unpushed |
-| **The demoed UI is in here** | `5b99c26` Particle TICO rename, `27c6ad8` activity feed, `5b6d689` citation click — all 2026-08-10/11 |
+> No change reaches test1 without the product owner's explicit approval, per instance.
 
-**Roll back to `de67d92`.** It is the last state that was working and presented, and being
-docs-only it is code-identical to `5b6d689`.
+| Slot | Commit | Role now |
+|---|---|---|
+| **test1** — `agent-test1.particletico.com` | tag **`test1-stable-2026-09-10`** (`c772df6`) | **Frozen.** The approved India demo, presented again from here. Read it freely; change nothing |
+| **test2** — `agent-test2.particletico.com` | `main` @ `de67d92` | **Where development goes.** Currently far behind and with an empty RAG — see #52 |
+| **prod** — `agent.particletico.com` | `de67d92` | Untouched since 2026-08-11. Holds the 141/9519 RAG corpus |
 
-### What is NOT verified, and cannot be from here
+Approval is per change, not standing: an earlier "yes" does not cover the next deploy, and
+neither does a fix being small, urgent, or obviously right. If something on test1 looks bad
+enough to warrant an exception, ask — do not deploy and report afterwards.
 
-**ANSWERED 2026-09-01 — prod runs `de67d92`.** Checked on the box
-(`cd ~/agent_bench && git rev-parse --short HEAD`): production sits exactly on the rollback
-anchor. `~/agent_bench` is on `main`, clean apart from two `.env` backups and `claude_home/`.
-So the demoed build and the anchor are the same commit, and a rollback is a no-op rather
-than a revert. The line below is kept because the *mechanism* is still missing.
+Frozen covers anything that alters what test1 serves: `git pull` there, a rebuild or
+restart, an `.env` edit, a migration on `agentic_test1`, an edit to the bind-mounted
+`claude_agent_fe/` prompts, or publishing/unpublishing its shared topics. **Not** frozen:
+the India topic's own monitoring cycle, which is the product working rather than a change —
+it runs every 24 h at roughly $2.94 a cycle, ~$20/week, and one `PATCH /monitor` makes it
+weekly if that is not worth it.
 
-**The application does not report its own build.** `GET /v1/agent/info` returns Claude
-binary, workspace and limits — no commit, no build SHA. So the running system cannot be
-asked what it is. A rollback anchor you cannot compare against production is half an anchor.
+**Verify before assuming.** `git rev-parse --short test1-stable-2026-09-10` against
+`ssh … 'cd ~/agent_bench_test1 && git rev-parse --short HEAD'`. They agreed on 2026-09-10.
+The application still does not report its own build (`GET /v1/agent/info` returns no commit
+SHA), so this comparison is the only check there is — the same half-an-anchor problem the
+previous rollback section recorded twice, now against a slot that must not move.
 
-Confirm before deploying:
+### The old rollback anchor is retired
 
-```bash
-ssh -i ~/.ssh/contabo_ed25519 root@79.143.179.212
-cd ~/agent_bench && git rev-parse --short HEAD && git status --short
-docker compose ps
-```
+It read *"we are deliberately breaking a working, demoed system — roll back to `de67d92`"*.
+That worry is answered: the breaking change shipped, ran, and the customer preferred the
+result. `de67d92` is still what prod runs and is still reachable, but it is no longer the
+state to protect. **`test1-stable-2026-09-10` is.**
 
-Then record the answer here. **Consider adding the build SHA to `/v1/agent/info`** — this
-is the second time the deployed state has had to be reconstructed from memory.
+---
 
-### What lands next, and why it is not reversible by `git revert` alone
+## What the customer actually valued (2026-09-10)
 
-- **Migration `0012_search_queries`** — a schema change. Rolling back the code does not roll
-  back the database. `downgrade()` is written and tested offline, but has never run.
-- **`source_whitelist.json` + `playbooks/` are baked into the image**
-  (`docker/Dockerfile.claude_agent:49-50`, no volume mount) — a rebuild is required, and a
-  rollback is another rebuild, not a restart.
-- **Prompt contract changes** in `newsfind-plan.md` / `-deliver.md` / `-refresh.md` change
-  how every topic searches, including topics already monitored.
+First feedback on the India demo was positive, and the *shape* of it matters more than the
+verdict:
 
-**Do not deploy any of this to the slot the customer sees until India (#45) has run on a
-non-demo slot and been read.** #44 touches the same baked files — batch the rebuilds.
+- **The primary sources were the most interesting part — including one the system had
+  ranked low on relevance.**
+- **A Bloomberg article was less interesting, because it is not an official source.**
 
-**`allowed_domains` shipped before #47, and the guard was never in code.** This section used
-to read *"do not ship `allowed_domains` before #47"*. It shipped anyway on 2026-08-22, and
-the India run put a domain filter on 8 of 15 queries. The filter turns the register from a
-list into an instruction, and the instruction is only as good as the routing behind it.
+Read that against what we optimise. `primary_official` share is a counter we report;
+**relevance** is what orders `news.json` and what `next_queries` tunes toward. The customer
+ordered the same set differently: publisher class first, relevance second. A low-relevance
+ministry page beat a high-relevance wire story.
 
-Measured 2026-09-08, on the *facets-expanded* query the pipeline actually passes to
-`source_discover` (not the bare topic #45 was tuned against):
+Three consequences, none of them "raise the primary share" — that number is already moving:
 
-```
-"India gas demand: …"                                    → 32 targets, 0 foreign
-"India gas demand: …" + "Ministry of Petroleum and Natural Gas"
-                                                         → 54 targets
-  doe.ir mop.ir nioc.ir pmo.ir cbi.ir irica.gov.ir mfa.gov.ir irica.ir shana.ir
-  mpemr.gov.bd powerdivision.gov.bd
-  playbooks gain iran_oil_geopolitics.md + china_oil_gas_imports.md
-"India gas demand: …" + "PPAC PNGRB GAIL Petronet CEA"   → 32 targets, 0 foreign
-```
+1. **#46 (per-query yield)** — yield must be counted in *primary* documents, not documents.
+   A query that returns ten well-matched secondary hits is close to worthless to this
+   customer, and today it scores the same as one that surfaces a regulator's PDF.
+2. **#23 (rubric)** — `information_discovery` weights relevance and authority as separate
+   categories. The customer's ordering says authority dominates for a country-fundamentals
+   topic. Before tuning against the rubric, check the rubric agrees with the buyer.
+3. **#49 (discovery lane + promotion)** — the strongest argument yet for the unfiltered
+   discovery budget: the value is in official sources we do not yet know about, and a
+   closed register cannot find them. Promotion criteria should weight *class*, not clicks.
 
-One phrase does it — and `newsfind-topic-parse.md` gives *"Ministry of Petroleum"* as its own
-worked example of an entity to emit. **Before the next India run, read `facets.json` and
-`source_targets.json` from the test1 run (`d19908b3`) and count the `.ir` / `.bd` entries.**
-"No Iranian domain appeared in the cited sources" is not the same claim: a misrouted domain
-that returns nothing is indistinguishable from a dead source. #47 is the fix.
+**Caveat, stated because it is one customer and one topic:** this is a preference expressed
+once, about one country topic, by one desk. It is a hypothesis about what to optimise, not a
+measured law — and it is exactly what the three-slot comparison (#52) exists to test.
 
 ---
 
@@ -119,15 +112,16 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 |------|--------|---------|----------|
 | — | ~~**#51** Report grounding~~ | **Shipped and verified on test1 2026-09-10.** Four defects surfaced on the first live run — the feed channel had never matched anything, deliver's corpus was 5 documents of 149, a PDF behind a download script was discarded, and the prompt matched the corpus on a key the agent cannot compute. All four fixed and redeployed | A report written from what we actually hold |
 | 1 | **#45** India gas pilot | Second run delivered on test1 2026-09-10 with monitoring live and a shared link out. Remaining: two cycles of pile, then the operator review that turns it into a tuning list | Country-fundamentals expansion |
-| 2 | **#47** Register labels | **Demoted from demo-critical 2026-09-10.** Measured on both India runs' own `source_targets.json`: `entities: []` and **zero** `.ir`/`.bd` domains. The contamination needs an entity phrase this topic's parse leg does not emit — still the right fix, no longer in front of the demo | Safe `allowed_domains`, #46, #48, #49 |
-| 3 | **#16** SignalGather frontend V1 *(16a–d verified through the API — **browser smoke pending**)* | A demo is a browser, and nothing in the UI has been driven in one | Pilot flow without curl; #37 |
-| 4 | **#50** Live public sharing | A link that keeps updating is the cheapest demo we have. Implemented; needs prod migration + the logged-out browser pass | #37, public demos |
-| 5 | **#22** Topic refresh scheduler *(code done, scheduled path never fired)* | The weekly pile is the product for a country topic | #16 monitoring, #20 |
-| 6 | **#37** Pilot first-use experience | Make the journey self-explanatory before broad pilot acquisition | Self-serve onboarding |
-| 7 | **#43** Claude LLM judge | Until this lands, no `--evaluator llm` number is worth tuning against | #23, #41 |
-| 8 | **#23** Trading Intelligence Evaluation Framework | Lane A framework shipped; needs one live write-up. **Absorbs #18** | Pilot go/no-go narrative |
-| 9 | **#21** Timeliness & channel metrics | Measurable inputs for the eval lanes | #23, #20 |
-| 10 | **#20** Continuous monitoring evaluation | Lane A over time — needs #22 firing scheduled and #23's rubric | Longitudinal product proof |
+| 2 | **#52** Three-slot business comparison | The owner's next strategy. **test2 has no RAG (0/0 against 141/9519)**, so nothing can be compared until it does — that is item 1 of the ticket, and it is a prerequisite, not a step | A defensible "are we getting better?" answer |
+| 3 | **#47** Register labels | **Demoted from demo-critical 2026-09-10.** Measured on both India runs' own `source_targets.json`: `entities: []` and **zero** `.ir`/`.bd` domains. The contamination needs an entity phrase this topic's parse leg does not emit — still the right fix, no longer in front of the demo | Safe `allowed_domains`, #46, #48, #49 |
+| 4 | **#16** SignalGather frontend V1 *(16a–d verified through the API — **browser smoke pending**)* | A demo is a browser, and nothing in the UI has been driven in one | Pilot flow without curl; #37 |
+| 5 | **#50** Live public sharing | A link that keeps updating is the cheapest demo we have. Implemented; needs prod migration + the logged-out browser pass | #37, public demos |
+| 6 | **#22** Topic refresh scheduler *(code done, scheduled path never fired)* | The weekly pile is the product for a country topic | #16 monitoring, #20 |
+| 7 | **#37** Pilot first-use experience | Make the journey self-explanatory before broad pilot acquisition | Self-serve onboarding |
+| 8 | **#43** Claude LLM judge | Until this lands, no `--evaluator llm` number is worth tuning against | #23, #41 |
+| 9 | **#23** Trading Intelligence Evaluation Framework | Lane A framework shipped; needs one live write-up. **Absorbs #18** | Pilot go/no-go narrative |
+| 10 | **#21** Timeliness & channel metrics | Measurable inputs for the eval lanes | #23, #20 |
+| 11 | **#20** Continuous monitoring evaluation | Lane A over time — needs #22 firing scheduled and #23's rubric | Longitudinal product proof |
 
 **Suggested next pick:** **let the pile accumulate, then read it with the operator.** The India topic (`4a6a4504` on test1) is monitored at a 24 h cadence with a 7-day freshness window and one cycle already banked; #45's open acceptance criterion is *two* cycles that are non-empty and non-duplicative, and the criterion after that is the operator review — the one thing no counter substitutes for. **Cost check while it runs:** the first cycle was **$2.94**, so a daily cadence is ~$20/week; one `PATCH /monitor` moves it to weekly if that is not worth it. Then **#16**'s remaining browser pass — two of its gaps were closed on 2026-09-10 by opening the shared link (see below), but §5 (reconnect) and §11 (responsive) are still unexercised. **CI:** add GitHub secrets (`.github/README.md`) then run workflow "VPS E2E test1" for a live green artifact.
 
