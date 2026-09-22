@@ -20,6 +20,7 @@ from .qa_pack import qa_audit_path, sync_qa_after_extract
 from .runner import crawl_many
 from .seeds import (
     AGENCY_OIL_DATA_SOURCES,
+    BRAZIL_POWER_OFFICIAL_SOURCES,
     INDIA_GAS_OFFICIAL_SOURCES,
     LNG_REPORT_SOURCES,
     PRICING_METHODOLOGY_SOURCES,
@@ -30,6 +31,7 @@ _SEED_CATALOGS = {
     "lng_reports": LNG_REPORT_SOURCES,
     "agency_oil_data": AGENCY_OIL_DATA_SOURCES,
     "india_gas_official": INDIA_GAS_OFFICIAL_SOURCES,
+    "brazil_power_official": BRAZIL_POWER_OFFICIAL_SOURCES,
 }
 _SEED_CHOICES = tuple(_SEED_CATALOGS)
 

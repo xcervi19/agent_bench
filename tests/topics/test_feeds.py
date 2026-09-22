@@ -101,6 +101,49 @@ def test_underscores_spaces_and_case_are_the_same_word():
     assert matches({"commodity": "natural_gas", "region": "in"}, INDIA_GAS) is True
 
 
+# ---- Brazil power (#53): both axes spelled the production way ---------------
+
+# Filed exactly as `source_crawler/seeds/brazil_power_official.py` files it.
+ONS_META = {
+    "source_id": "ons_ear_reservoir_daily",
+    "commodity": "power",
+    "region": "BR",
+    "tags": ["ons", "brazil", "power", "data_feed"],
+}
+
+
+def test_the_ons_feed_reaches_a_brazilian_power_topic():
+    """Neither axis is spelled the seed's way, and that is the whole point.
+
+    The seed says `power` / `BR`; the parse leg is asked for English names of the
+    goods at stake and answers `electricity`, and it names the country `Brazil`.
+    The first India run lost its PPAC feed to exactly this, on the region axis
+    alone, because the fixture obligingly spelled the country twice. This one
+    does not: if either synonym table is missing, this test fails.
+    """
+    live_facets = {"commodity": ["electricity", "natural gas"], "geo": ["Brazil"]}
+    assert matches(ONS_META, live_facets) is True
+
+
+def test_brazilian_power_series_do_not_reach_a_brazilian_crude_topic():
+    """Same country, different balance — the leak `brazil_pre_salt.md` invites."""
+    assert matches(ONS_META, {"commodity": ["crude oil"], "geo": ["Brazil"]}) is False
+
+
+def test_power_and_gas_are_related_but_not_the_same_good():
+    """A gas-fired plant links them; that is a causal claim, not an identity.
+
+    Deciding whether Brazilian dispatch answers a Brazilian gas question is the
+    analyst's job. A set comparison that made it for them would be wrong in
+    exactly the cases nobody checks.
+    """
+    assert matches(ONS_META, {"commodity": ["natural gas"], "geo": ["Brazil"]}) is False
+
+
+def test_the_ons_feed_does_not_reach_another_country():
+    assert matches(ONS_META, {"commodity": ["electricity"], "geo": ["India"]}) is False
+
+
 # ---- export ----------------------------------------------------------------
 
 

@@ -4974,5 +4974,61 @@
     "category": "infrastructure",
     "notes": "Largest Indian city gas distributor; CNG stations and PNG household connections as the city gas growth proxy",
     "agreement_count": 1
+  },
+  {
+    "entity": "ONS — Operador Nacional do Sistema Elétrico",
+    "domain": "ons.org.br",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Brazilian system operator: dispatch, reservoir levels, load and generation for the Sistema Interligado Nacional; operation bulletins and weekly operating programme",
+    "agreement_count": 1
+  },
+  {
+    "entity": "ONS Open Data (Dados Abertos)",
+    "domain": "dados.ons.org.br",
+    "type": "data_feed",
+    "category": "infrastructure",
+    "notes": "85 published datasets — daily stored energy (EAR), natural inflow energy (ENA), half-hourly marginal cost (CMO) and hourly generation by source per subsystem; CKAN portal, /api/ disallowed by robots, files served from S3",
+    "agreement_count": 1
+  },
+  {
+    "entity": "CCEE — Câmara de Comercialização de Energia Elétrica",
+    "domain": "ccee.org.br",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Brazilian power market settlement: PLD spot price, InfoMercado market data, contracted and settled volumes",
+    "agreement_count": 1
+  },
+  {
+    "entity": "ANEEL — Agência Nacional de Energia Elétrica",
+    "domain": "gov.br/aneel",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Brazilian electricity regulator: capacity auctions, tariff flags (bandeiras tarifárias), generation register, sector indicators",
+    "agreement_count": 1
+  },
+  {
+    "entity": "ABRACEEL — Associação Brasileira dos Comercializadores de Energia",
+    "domain": "abraceel.com.br",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Brazilian free-market power traders' association; market structure and liberalisation commentary",
+    "agreement_count": 1
+  },
+  {
+    "entity": "IBGE — Instituto Brasileiro de Geografia e Estatística",
+    "domain": "ibge.gov.br",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Brazilian statistics institute; industrial production and macro series behind electricity load",
+    "agreement_count": 1
+  },
+  {
+    "entity": "World Bank Open Data",
+    "domain": "data.worldbank.org",
+    "type": "official",
+    "category": "international_agency",
+    "notes": "Long-run energy, power and macroeconomic series by country",
+    "agreement_count": 1
   }
 ]

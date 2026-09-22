@@ -93,16 +93,43 @@ REGION_SYNONYMS: tuple[frozenset[str], ...] = (
     frozenset({"nl", "netherlands"}),
     frozenset({"de", "germany"}),
     frozenset({"gb", "uk", "united_kingdom"}),
+    frozenset({"br", "brazil", "brasil"}),
 )
+
+# The same two-spellings problem on the other axis. A seed files a power series
+# as `power`; the parse leg is asked for "English names of the goods at stake"
+# and answers `electricity` just as readily. Neither is wrong, and the failure is
+# silent in exactly the way the region mismatch was: the feed is published, the
+# topic is right, and `feeds_count` is simply 0.
+#
+# Only genuine spellings of one good belong here. `power` and `natural gas` are
+# *not* synonyms even though a gas-fired plant links them — that is a causal
+# relationship, and deciding it is the analyst's job, not a set comparison's.
+COMMODITY_SYNONYMS: tuple[frozenset[str], ...] = (
+    frozenset({"power", "electricity", "electric_power"}),
+    frozenset({"lng", "liquefied_natural_gas"}),
+    frozenset({"gas", "natural_gas"}),
+    frozenset({"crude", "crude_oil"}),
+)
+
+
+def _expand(tokens: set[str], groups: tuple[frozenset[str], ...]) -> set[str]:
+    """Add the other spellings of every term in `tokens`."""
+    out = set(tokens)
+    for group in groups:
+        if out & group:
+            out |= group
+    return out
 
 
 def _expand_regions(tokens: set[str]) -> set[str]:
     """Add the other spellings of every country named in `tokens`."""
-    out = set(tokens)
-    for group in REGION_SYNONYMS:
-        if out & group:
-            out |= group
-    return out
+    return _expand(tokens, REGION_SYNONYMS)
+
+
+def _expand_commodities(tokens: set[str]) -> set[str]:
+    """Add the other spellings of every good named in `tokens`."""
+    return _expand(tokens, COMMODITY_SYNONYMS)
 
 
 def matches(meta: dict[str, Any], facets: dict[str, Any]) -> bool:
@@ -114,15 +141,16 @@ def matches(meta: dict[str, Any], facets: dict[str, Any]) -> bool:
     all gets nothing, which is deliberate: handing every feed to every topic is
     how a run ends up reading Indian gas tables for a Hormuz shipping question.
 
-    The region axis compares through `REGION_SYNONYMS`, so a feed filed under
-    `IN` reaches a topic whose facets say `India`.
+    Both axes compare through a synonym table: `REGION_SYNONYMS`, so a feed filed
+    under `IN` reaches a topic whose facets say `India`, and `COMMODITY_SYNONYMS`,
+    so a series filed as `power` reaches a topic whose facets say `electricity`.
     """
-    topic_commodity = _norm(facets.get("commodity"))
+    topic_commodity = _expand_commodities(_norm(facets.get("commodity")))
     topic_geo = _expand_regions(_norm(facets.get("geo")))
     if not topic_commodity and not topic_geo:
         return False
 
-    feed_commodity = _norm(meta.get("commodity"))
+    feed_commodity = _expand_commodities(_norm(meta.get("commodity")))
     if feed_commodity and topic_commodity and not (feed_commodity & topic_commodity):
         return False
 

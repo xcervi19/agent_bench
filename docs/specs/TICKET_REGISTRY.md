@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#53` (assign to the next new ticket; then bump this line)
+**Next available number:** `#54` (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -30,7 +30,8 @@ list carried seven shipped or retired tickets and omitted #42. #51 shipped 2026-
 | # | File | Status | Blocks / unblocks |
 |---|------|--------|---------------------|
 | 45 | `docs/specs/active/india_gas_country_pilot_45.md` | in progress | **First customer topic — demo approved 2026-09-10.** Second run delivered, PPAC cited from the feed, monitoring live, shared link out. Remaining: a second cycle and the operator review. Template for country #2 |
-| 52 | `docs/specs/active/three_slot_business_comparison_52.md` | planned | prod vs test1 vs test2 on business value. **test2 has no RAG at all** (0/0 against 141/9519) — until it does, any three-way comparison measures the corpus gap. Needs #23, #41, #43 |
+| 53 | `docs/specs/active/brazil_power_country_pilot_53.md` | onboarded, no run | **Second country topic, chosen by us not asked for.** Playbook 57, register 622 -> 629, four ONS daily series seeded, topic string measured (10/10 Brazil primaries, no China/SEA contamination). Found and fixed the feed-routing synonym gap on both axes. Blocked on test2 existing, and on a recent-tail window for chronological feeds |
+| 52 | `docs/specs/active/three_slot_business_comparison_52.md` | planned | prod vs test1 vs test2 on business value. **Item 1 done 2026-09-18** — test2 rebuilt at test1's commit with the same 141/9519 corpus, `md5`-verified on ids and summaries across all three slots. Needs #23, #41, #43 |
 | 47 | `docs/specs/active/register_labels_47.md` | planned | **Demoted from demo-critical 2026-09-10** — both India runs carry `entities: []` and zero `.ir`/`.bd` targets, so the contamination needs a phrase this topic does not emit. Still the right fix.<br>Original finding: `entities_named_in` matches entity names and never reads the domain, so adding "Ministry of Petroleum and Natural Gas" to a discovery query takes an India topic from 32 to 54 targets — 9 Iranian domains, 2 Bangladeshi ministries, and `iran_oil_geopolitics.md` displacing an India playbook. Blocks `allowed_domains` being safe by construction |
 | 16 | `docs/specs/active/signalgather_frontend_v1_16.md` | in progress | 16a–d built and verified through the API; **no one has driven the UI in a browser**. §5 reconnect and §11 responsive close nothing automated can |
 | 50 | `docs/specs/active/live_public_sharing_50.md` | in progress | Implemented 2026-09-01, applied on test1. Awaiting prod migration + the logged-out browser pass (inherited from #40). Feeds #37 |
