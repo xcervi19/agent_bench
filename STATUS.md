@@ -17,7 +17,7 @@ India demo.** The rule is in `AGENT.md` too, because it governs every session:
 | Slot | Commit | Role now |
 |---|---|---|
 | **test1** — `agent-test1.particletico.com` | tag **`test1-stable-2026-09-10`** (`c772df6`) | **Frozen.** The approved India demo, presented again from here. Read it freely; change nothing |
-| **test2** — `agent-test2.particletico.com` | `main` @ `de67d92` | **Where development goes.** Currently far behind and with an empty RAG — see #52 |
+| **test2** — `agent-test2.particletico.com` | detached at **`c772df6`** (= test1's tag) | **Where development goes.** Rebuilt 2026-09-18: schema `0013`, corpus 141/9519 verified equal to prod and test1, `ivfflat.probes=10`. Ready |
 | **prod** — `agent.particletico.com` | `de67d92` | Untouched since 2026-08-11. Holds the 141/9519 RAG corpus |
 
 Approval is per change, not standing: an earlier "yes" does not cover the next deploy, and
@@ -120,7 +120,7 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 |------|--------|---------|----------|
 | — | ~~**#51** Report grounding~~ | **Shipped and verified on test1 2026-09-10.** Four defects surfaced on the first live run — the feed channel had never matched anything, deliver's corpus was 5 documents of 149, a PDF behind a download script was discarded, and the prompt matched the corpus on a key the agent cannot compute. All four fixed and redeployed | A report written from what we actually hold |
 | 1 | **#45** India gas pilot | Second run delivered on test1 2026-09-10 with monitoring live and a shared link out. Remaining: two cycles of pile, then the operator review that turns it into a tuning list | Country-fundamentals expansion |
-| 2 | **#52** Three-slot business comparison | The owner's next strategy. **test2 has no RAG (0/0 against 141/9519)**, so nothing can be compared until it does — that is item 1 of the ticket, and it is a prerequisite, not a step | A defensible "are we getting better?" answer |
+| 2 | **#52** Three-slot business comparison | The owner's next strategy. **Item 1 is done (2026-09-18): test2 now holds the same 141/9519 corpus**, verified by `md5` over ids and summaries against both other slots. What remains is the rubric and the noise floor | A defensible "are we getting better?" answer |
 | 3 | **#47** Register labels | **Demoted from demo-critical 2026-09-10.** Measured on both India runs' own `source_targets.json`: `entities: []` and **zero** `.ir`/`.bd` domains. The contamination needs an entity phrase this topic's parse leg does not emit — still the right fix, no longer in front of the demo | Safe `allowed_domains`, #46, #48, #49 |
 | 4 | **#16** SignalGather frontend V1 *(16a–d verified through the API — **browser smoke pending**)* | A demo is a browser, and nothing in the UI has been driven in one | Pilot flow without curl; #37 |
 | 5 | **#50** Live public sharing | A link that keeps updating is the cheapest demo we have. Implemented; needs prod migration + the logged-out browser pass | #37, public demos |
@@ -149,6 +149,17 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 ---
 
 ## In Progress
+
+### test2 slot — rebuilt as a copy of test1, 2026-09-18
+- **Why:** test2 was the development slot in name only. Code sat on `main` @ `de67d92` with a **staged-delete index** (`git status` showed `auth.py`, `sources/`, `evidence_export.py` and more as deleted), the database stood at **`0004_newsfind_monitoring`** — nine migrations behind — and the corpus was **0 documents / 0 events**. `/v1/public/topics` returned **404**: the build predated the public router. Nothing could be developed on it and nothing could be compared with it.
+- **Code:** local changes preserved in `git stash@{0}` ("test2 pre-rebuild 2026-09-18") rather than discarded, then **detached at `c772df6`** — the exact commit test1 serves. **`main` was deliberately not moved** and still points at `de67d92`; test2 is a linked worktree, so resetting the branch would have moved it under prod's feet.
+- **Env, and the gap it was hiding:** the key sets were already identical; three values differed. `CLAUDE_AGENT_DATABASE_URL` correctly named `agentic_test2` (not the prod landmine test1 had). The other two were fixed: **`/newsfind-topic-parse` was missing from `CLAUDE_AGENT_ALLOWED_COMMANDS`** — the same #38 grounding gap found on test1 and prod, and on this slot it would have silently emptied the facets, which in turn gates the whole feed channel — and `CLAUDE_AGENT_SCHEDULER_ENABLED` was `false`. Backups at `.env.bak_before_rebuild_20260918`.
+- **Order that matters, again:** images built **before** `alembic upgrade`, because `docker/Dockerfile` bakes `database/` into the `rag_adhoc` image. `0004 → 0013`, all nine applied clean. `pg_dump -Fc` taken first at `~/backups/agentic_test2_20260918_pre_migrate.dump`.
+- **Corpus:** `documents` + `events` copied from `agentic_test1` with `pg_dump --data-only` piped between the two containers — 20 seconds. **Verified equal on all three slots** with the same expression: 141 docs / 9519 events, `docs_md5=1729f9b99ee0`, `events_md5=8c74ea925af3`, identical summary digest, tenant `0000…0001`. The first two match the values recorded on 2026-09-01.
+- **`ivfflat` needed rebuilding, and nearly did not get it.** The index existed but had been built on an **empty** table, so its centroids described nothing. `REINDEX` first failed — *"memory required is 65 MB, maintenance_work_mem is 64 MB"* — and succeeded at `512MB` in-session. `ALTER DATABASE agentic_test2 SET ivfflat.probes = 10` now matches the other two slots. A corpus that is byte-identical and an index that is not would have made test2 quietly worse at retrieval while every count agreed.
+- **Verified live:** `/readyz` 200; `/v1/public/topics` **200 with an empty list** (was 404); `/app` and `/app/shared` 200; anonymous `GET /v1/topics` **401**; `scheduler.started` in the boot log; `allowed_commands` includes `/newsfind-topic-parse`; RAG returns 10 rows for India, Brazil and crude queries through `$RAG_BASE_URL` with the tenant header — the same three queries return 10 on test1. The known **RAG-env-drop-on-recreate** bug did not fire; `RAG_*` are present in the container.
+- **test1 untouched throughout.** Read-only SQL only (`BEGIN TRANSACTION READ ONLY` … `ROLLBACK`); HEAD still `c772df6` = the tag, container up 8 days without a restart, India topic still scheduled with 9 cycles banked.
+- **Next step:** deploy a development branch (`feat/brazil-power-topic-53` is the first candidate) and run the Brazil topic — then `feeds_count` on the first run is the number to read.
 
 ### test1 slot — refreshed and verified 2026-09-01
 - **Why:** test1 is where the current code gets judged, and it was judging nothing: the slot ran `feature/report-from-evidence` (`3ea0fbe`), schema stood at `0010`, and every relevant change (#45 encoding, #46 build item 0, #50) existed only in a local working tree.

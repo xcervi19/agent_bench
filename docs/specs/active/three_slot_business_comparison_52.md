@@ -22,7 +22,7 @@ Measured 2026-09-10:
 |---|---|---|---|
 | prod (`agentic`) | 141 | 9519 | `de67d92` |
 | test1 (`agentic_test1`) | 141 | 9519 | `test1-stable-2026-09-10` |
-| test2 (`agentic_test2`) | **0** | **0** | `main` @ `de67d92` |
+| test2 (`agentic_test2`) | ~~0~~ **141** | ~~0~~ **9519** | ~~`main` @ `de67d92`~~ detached `c772df6` |
 
 The plan leg retrieves from that corpus, so a test2 run is not a worse version of a test1
 run — it is a differently-shaped one, missing an input the other two have. Any comparison
@@ -39,7 +39,7 @@ news-cycle variance, corpus differences, or our own rubric's preferences?*
 
 ## Scope
 
-### 1. test2 gets its own RAG, verifiably equal to the other two
+### 1. test2 gets its own RAG, verifiably equal to the other two — **DONE 2026-09-18**
 
 Not "a corpus" — the *same* corpus, or the comparison has a confound baked in from the
 first run.
@@ -52,6 +52,18 @@ first run.
   the same tenant (`0000…0001`), the same counts. Record the numbers in this ticket.
 - Re-verify before each comparison round. A corpus that drifts between rounds invalidates
   the round, and drift is silent.
+
+**Result, 2026-09-18.** `documents` + `events` copied from `agentic_test1`; all three slots
+now read **141 / 9519**, `docs_md5=1729f9b99ee0`, `events_md5=8c74ea925af3`, an identical
+summary digest, tenant `0000…0001`, `ivfflat.probes = 10`. The first two digests match the
+values recorded on 2026-09-01, so the corpus has not drifted since.
+
+**One thing this item did not say, and should have.** The `ix_events_embedding` index
+existed on test2 *before* the copy — built against an empty table, so its centroids
+described nothing. Counts, checksums and tenant would all have agreed while retrieval
+quietly returned worse neighbours: the exact failure this item exists to prevent, arriving
+by a route it did not name. `REINDEX` after loading is now part of the procedure, and it
+needs `maintenance_work_mem` above 64 MB — it failed at the default, asking for 65 MB.
 
 ### 2. The three builds are pinned and named
 
