@@ -102,19 +102,54 @@ so a missing table fails the test. The India fixture spelled the country twice
 and passed against an input production never produces; that is not repeated here.
 Suite: **448 passed**, ruff clean on the changed files.
 
+## The feed channel was broken in three places, all found by running it
+
+Measured 2026-09-23 by crawling the seed locally, not by reading the code. Each
+of the three would have produced a plausible-looking run with no Brazilian data
+in it, and the first one would have been blamed on the synonym tables.
+
+1. **Every `data_feed` source was skipped at extraction.** `extract_one` returned
+   `skipped — data_feed / skip_rag` before converting anything, so the crawl
+   succeeded, `collected_text` stayed empty, `publish` found no text file and
+   `feeds_count` would have come back **0**. The skip was one layer too early:
+   `collected_text` is not RAG — the corpus is loaded by `source_ingest` from its
+   own inputs, and `publish` already selects what reaches a slot **by tag**.
+   **PPAC hid this.** Its sidecar predates `pipeline` being written at all, so it
+   fell through the condition and got extracted. The India feed works by an
+   accident of timing, and **re-crawling PPAC would have broken it.**
+2. **`xlsx_bytes_to_text` kept the first 400 rows.** ONS's 2026 reservoir
+   workbook holds 67 reservoirs × ~265 days; 400 rows is **2026-01-01 to 01-06**.
+   Now takes the tail when the source is tagged `chronological`, keeping row one
+   so the column names survive.
+3. **`feeds.py` then cut the first 60 000 characters**, narrowing that to
+   **01-01 to 01-03**. `_fit` now cuts a chronological feed from the front and
+   keeps the header — **two** lines for a converted spreadsheet, because
+   `xlsx_bytes_to_text` writes a `## <sheet>` title above the column names.
+   Keeping one line left a wall of numbers with no units, which the first version
+   of this fix did.
+
+**Verified end to end, locally.** After the fixes the four published feeds carry:
+
+| Feed | Chars | Window |
+|---|---|---|
+| `ons_cmo_semi_hourly` | 16 431 | 2026-09-21 .. **09-23** |
+| `ons_subsystem_energy_balance` | 44 374 | 09-18 .. **09-21** |
+| `ons_ena_subsystem_daily` | 31 887 | 06-14 .. **09-21** |
+| `ons_ear_reservoir_daily` | 112 454 → 59 724 at export | 09-18 .. **09-20** |
+
+Suite 451 passed, ruff clean.
+
 ## Build items, in order
 
-1. **Recent-tail window for chronological feeds.** `feeds.py:250` truncates an
-   exported feed at `MAX_CHARS_PER_FEED` (60 000) taking the **head**. The ONS
-   files are chronological and run to ~4.5 MB for a year, so a straight export
-   hands the analyst **January** and silently drops September. Until this exists
-   the feeds must not be quoted as current. *Blocking for the first run.*
-2. **`.csv` converter.** `source_crawler/extract.py:55` still skips `.csv`
-   ("no converter"). The seed uses the XLSX twins to route around it, but CSV is
-   the smaller, faster form of the same data and the gap will recur.
+1. ~~Recent-tail window for chronological feeds~~ — **done 2026-09-23**, with the
+   two adjacent defects above.
+2. **`.csv` converter.** `source_crawler/extract.py` still skips `.csv`
+   ("no converter"). The seed uses the XLSX twins to route around it; CSV is the
+   smaller, faster form of the same data and the gap will recur. `.zip` and
+   `.xls` sit behind the same hole — JODI is skipped for `.zip` today.
 3. **Re-verify EPE and the ANEEL open-data portal**, then add them if they answer.
 4. **First run on test2**, then read `feeds_count` in `stage.finished` before
-   reading anything else. That number is the whole point of items 1–2.
+   reading anything else.
 5. **Operator review of the first pile**, as #46 Gate 5.
 
 ## What is explicitly not claimed

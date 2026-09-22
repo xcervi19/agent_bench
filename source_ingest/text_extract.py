@@ -166,7 +166,21 @@ def pdf_bytes_to_text(data: bytes, label: str = "<bytes>") -> str:
     return text
 
 
-def xlsx_bytes_to_text(data: bytes, label: str = "<bytes>", *, max_rows: int = 400) -> str:
+def _rows_to_lines(rows) -> list[str]:
+    """Pipe-join each row, dropping trailing empties and wholly blank rows."""
+    lines: list[str] = []
+    for row in rows:
+        cells = ["" if cell is None else str(cell).strip() for cell in row]
+        while cells and not cells[-1]:
+            cells.pop()
+        if any(cells):
+            lines.append(" | ".join(cells))
+    return lines
+
+
+def xlsx_bytes_to_text(
+    data: bytes, label: str = "<bytes>", *, max_rows: int = 400, from_end: bool = False
+) -> str:
     """Render a spreadsheet as pipe-separated text, one line per row.
 
     Statistical agencies publish their series as spreadsheets — PPAC's Indian gas
@@ -184,6 +198,13 @@ def xlsx_bytes_to_text(data: bytes, label: str = "<bytes>", *, max_rows: int = 4
     Formulas are read as their last cached value (`data_only`), which is what the
     publisher saw. A workbook saved without cached values yields empty cells
     rather than `=SUM(...)` noise.
+
+    `from_end` keeps the **last** `max_rows` rows instead of the first, plus row
+    one so the column names survive. A daily series is written oldest-first, so
+    the default keeps January and drops the reading the question was asked about:
+    ONS's 2026 reservoir workbook holds 265 days and the first 400 rows cover six
+    of them. Which end is the useful one is a property of the source, not of this
+    converter, so the caller says.
     """
     from io import BytesIO
 
@@ -193,16 +214,26 @@ def xlsx_bytes_to_text(data: bytes, label: str = "<bytes>", *, max_rows: int = 4
     try:
         blocks: list[str] = []
         for sheet in workbook.worksheets:
+            total = sheet.max_row or 0
+            # Row 1 is fetched separately in tail mode: it is almost always the
+            # column names, and a tail without them is a wall of unlabelled
+            # numbers. `min_row` is 1-based and inclusive.
+            tail = from_end and total > max_rows
+            first_row = max(2, total - max_rows + 2) if tail else 1
             lines: list[str] = []
-            for row in sheet.iter_rows(max_row=max_rows, values_only=True):
-                cells = ["" if cell is None else str(cell).strip() for cell in row]
-                while cells and not cells[-1]:
-                    cells.pop()
-                if any(cells):
-                    lines.append(" | ".join(cells))
+            if tail:
+                lines.extend(_rows_to_lines(sheet.iter_rows(min_row=1, max_row=1, values_only=True)))
+                lines.extend(_rows_to_lines(sheet.iter_rows(min_row=first_row, values_only=True)))
+            else:
+                lines.extend(_rows_to_lines(sheet.iter_rows(max_row=max_rows, values_only=True)))
             if lines:
-                truncated = sheet.max_row and sheet.max_row > max_rows
-                note = f"\n[... {sheet.max_row - max_rows} more rows]" if truncated else ""
+                skipped = total - max_rows if total > max_rows else 0
+                if not skipped:
+                    note = ""
+                elif tail:
+                    note = f"\n[... {skipped} earlier rows omitted; this is the tail]"
+                else:
+                    note = f"\n[... {skipped} more rows]"
                 blocks.append(f"## {sheet.title}\n" + "\n".join(lines) + note)
     finally:
         workbook.close()
@@ -281,7 +312,7 @@ def detect_kind(raw_bytes: bytes, suffix: str) -> str:
     raise ValueError(f"unknown content kind for {suffix}")
 
 
-def extract_text(path: Path) -> str:
+def extract_text(path: Path, *, from_end: bool = False) -> str:
     suffix = path.suffix.lower()
     raw_bytes = path.read_bytes()
     kind = detect_kind(raw_bytes, suffix)
@@ -296,5 +327,5 @@ def extract_text(path: Path) -> str:
     if kind == "txt":
         return raw_bytes.decode("utf-8", errors="replace")
     if kind == "spreadsheet":
-        return xlsx_bytes_to_text(raw_bytes, str(path))
+        return xlsx_bytes_to_text(raw_bytes, str(path), from_end=from_end)
     raise ValueError(f"unsupported file type: {path}")

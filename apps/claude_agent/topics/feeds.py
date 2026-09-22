@@ -40,6 +40,9 @@ DEFAULT_MAX_AGE_DAYS = 45
 # matter here run ~50k characters, most of it empty future columns.
 MAX_CHARS_PER_FEED = 60_000
 TRUNCATION_NOTE = "\n\n[... truncated]"
+# Prepended when a chronological feed is cut from the front, so the analyst can
+# see that the window is the recent tail rather than the whole series.
+TAIL_NOTE = "[... earlier rows omitted; this is the most recent window]\n"
 
 
 def feeds_root(state_dir: str) -> Path:
@@ -162,6 +165,46 @@ def matches(meta: dict[str, Any], facets: dict[str, Any]) -> bool:
     return bool((feed_commodity & topic_commodity) or (feed_region & topic_geo))
 
 
+def _split_header(text: str) -> tuple[str, str]:
+    """Separate the header block from the rows.
+
+    A converted spreadsheet opens with `## <sheet name>` and then the column
+    names, so the header is two lines there and one line everywhere else.
+    """
+    if text.startswith("## "):
+        parts = text.split("\n", 2)
+        if len(parts) == 3:
+            return parts[0] + "\n" + parts[1], parts[2]
+    head, _, rest = text.partition("\n")
+    return head, rest
+
+
+def _fit(text: str, *, chronological: bool) -> str:
+    """Cut an over-long feed to `MAX_CHARS_PER_FEED`, from the end that is noise.
+
+    For most feeds that is the tail. For a series written oldest-first it is the
+    *head*: keeping the first 60 000 characters of ONS's 2026 reservoir workbook
+    hands the analyst the first days of January and silently drops September,
+    which is worse than handing over nothing — the numbers look current because
+    nothing says they are not.
+
+    The header is kept either way, and in a converted spreadsheet that is **two**
+    lines, not one: `xlsx_bytes_to_text` writes a `## <sheet>` title above the
+    column names. Keeping only the first line leaves a wall of numbers with no
+    idea which column is the percentage — quotable, and wrong.
+    """
+    if not chronological:
+        return text[:MAX_CHARS_PER_FEED] + TRUNCATION_NOTE
+    header, rest = _split_header(text)
+    budget = MAX_CHARS_PER_FEED - len(header) - len(TAIL_NOTE) - 1
+    if budget <= 0:
+        return text[:MAX_CHARS_PER_FEED] + TRUNCATION_NOTE
+    window = rest[-budget:]
+    # Never start mid-row: drop the partial first line of the window.
+    _, sep, whole = window.partition("\n")
+    return header + "\n" + TAIL_NOTE + (whole if sep else window)
+
+
 def collected_at(meta: dict[str, Any], path: Path) -> datetime | None:
     """When this feed's content arrived in the slot.
 
@@ -248,7 +291,7 @@ def export_feeds(
         if not matches(meta, facets):
             continue
         if len(text) > MAX_CHARS_PER_FEED:
-            text = text[:MAX_CHARS_PER_FEED] + TRUNCATION_NOTE
+            text = _fit(text, chronological="chronological" in (meta.get("tags") or []))
 
         when = collected_at(meta, path)
         age = age_days(when, now=now)

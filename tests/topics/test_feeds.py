@@ -405,3 +405,49 @@ def test_new_content_gets_a_new_stamp(tmp_path):
         (feeds_root(state) / "ppac.txt.meta.json").read_text(encoding="utf-8")
     )
     assert meta["collected_at"] == NOW.isoformat()
+
+
+# ---- export-time truncation of a chronological series (#53) ----------------
+
+
+def _series(rows: int) -> str:
+    """A converted spreadsheet: sheet title, column names, then dated rows."""
+    body = "\n".join(f"RESERVOIR {i} | 2026-{1 + i // 300:02d}-01 | {i}" for i in range(rows))
+    return "## Sheet1\nname | date | value\n" + body
+
+
+def test_a_chronological_feed_is_cut_from_the_front():
+    """Oldest-first means the head is the part nobody asked about.
+
+    Keeping the first 60 000 characters of a daily series hands the analyst
+    January and drops September, which is worse than handing over nothing: the
+    numbers read as current because nothing says they are not.
+    """
+    from apps.claude_agent.topics.feeds import MAX_CHARS_PER_FEED, _fit
+
+    text = _series(6000)
+    assert len(text) > MAX_CHARS_PER_FEED
+    out = _fit(text, chronological=True)
+    assert len(out) <= MAX_CHARS_PER_FEED
+    assert "RESERVOIR 5999" in out
+    assert "RESERVOIR 0 |" not in out
+
+
+def test_the_column_names_survive_the_cut():
+    """Both header lines, not just the sheet title.
+
+    `xlsx_bytes_to_text` writes `## Sheet1` above the column names. Keeping one
+    line leaves numbers no one can say the units of.
+    """
+    from apps.claude_agent.topics.feeds import _fit
+
+    out = _fit(_series(6000), chronological=True)
+    assert out.startswith("## Sheet1\nname | date | value")
+
+
+def test_a_non_chronological_feed_still_keeps_its_beginning():
+    """A monthly balance is a table, not a stream; its top is the summary."""
+    from apps.claude_agent.topics.feeds import _fit
+
+    out = _fit(_series(6000), chronological=False)
+    assert "RESERVOIR 0 |" in out

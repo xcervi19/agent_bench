@@ -38,12 +38,22 @@ def text_paths(text_root: Path, source_id: str) -> tuple[Path, Path]:
 def extract_one(content_path: Path, text_root: Path) -> ExtractResult:
     meta = load_sidecar(content_path)
     source_id = str(meta.get("source_id") or content_path.stem)
-    if meta.get("skip_rag") or meta.get("pipeline") == "data_feed":
+    # `data_feed` used to be skipped here, and that was one layer too early.
+    # Extraction writes `collected_text`, which is not RAG: the corpus is loaded
+    # by `source_ingest` from its own inputs, and `topics/feeds.publish` selects
+    # what reaches a slot by **tag**. Skipping at extract meant a crawled feed
+    # produced no text at all, so `publish` found nothing and `feeds_count` came
+    # back 0 — while every earlier step reported success.
+    #
+    # PPAC hid this. Its sidecar predates `pipeline` being written at all, so it
+    # fell through the condition and got extracted; the India feed works by an
+    # accident of timing, and re-crawling it would have broken it.
+    if meta.get("skip_rag"):
         return ExtractResult(
             source_id=source_id,
             status="skipped",
             path=None,
-            reason="data_feed / skip_rag",
+            reason="skip_rag",
         )
     # `.xlsx` is no longer here: for a statistical agency the workbook is the
     # only form the numbers come in (#45), so skipping it threw away the source
@@ -75,7 +85,11 @@ def extract_one(content_path: Path, text_root: Path) -> ExtractResult:
                 path=str(dest),
             )
 
-    text = normalize_raw_text(extract_text(content_path))
+    # A chronological series is written oldest-first, so the default head-first
+    # row cap keeps January and drops the reading the topic is about. The source
+    # declares which end matters; the converter does not guess.
+    chronological = "chronological" in (meta.get("tags") or [])
+    text = normalize_raw_text(extract_text(content_path, from_end=chronological))
     if len(text) < MIN_CHARS:
         raise ValueError(
             f"extracted text too short ({len(text)} chars) for {content_path}"

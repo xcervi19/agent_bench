@@ -29,13 +29,13 @@ gap that left `ppac_gas_lng_import` unextracted as an `.xls`. The CSV URL is
 recorded beside each entry so the switch is a one-line change once a converter
 exists.
 
-Known blocker, recorded rather than worked around
--------------------------------------------------
-`topics/feeds.py` truncates an exported feed at `MAX_CHARS_PER_FEED` (60 000)
-taking the **head** of the text. These files are chronological and run to several
-megabytes for a full year, so a straight export would hand the analyst **January**
-and silently drop September. Until a recent-tail window exists, these feeds are
-seeded and crawled but must not be quoted as current. See #53 build item 1.
+Why every entry is tagged `chronological`
+-----------------------------------------
+These files are written oldest-first and run to a full calendar year, and two
+separate row caps used to take the **head**: the spreadsheet converter kept 400
+rows (six days of January) and the feed export then kept 60 000 characters (three
+days). The tag is what tells both to keep the recent tail instead. Dropping it
+does not fail loudly — it hands the analyst January and says nothing.
 
 Robots
 ------
@@ -77,7 +77,7 @@ BRAZIL_POWER_OFFICIAL_SOURCES: list[SourceConfig] = [
         region="BR",
         tier=1,
         domain="official_stats",
-        tags=("ons", "brazil", "power", "hydro", "reservoir", "ear", "data_feed"),
+        tags=("ons", "brazil", "power", "hydro", "reservoir", "ear", "data_feed", "chronological"),
         extras={
             "cadence": "daily",
             "extension": ".xlsx",
@@ -100,7 +100,7 @@ BRAZIL_POWER_OFFICIAL_SOURCES: list[SourceConfig] = [
         region="BR",
         tier=1,
         domain="official_stats",
-        tags=("ons", "brazil", "power", "hydro", "inflow", "ena", "data_feed"),
+        tags=("ons", "brazil", "power", "hydro", "inflow", "ena", "data_feed", "chronological"),
         extras={
             "cadence": "daily",
             "extension": ".xlsx",
@@ -124,7 +124,7 @@ BRAZIL_POWER_OFFICIAL_SOURCES: list[SourceConfig] = [
         region="BR",
         tier=1,
         domain="official_stats",
-        tags=("ons", "brazil", "power", "thermal", "wind", "dispatch", "data_feed"),
+        tags=("ons", "brazil", "power", "thermal", "wind", "dispatch", "data_feed", "chronological"),
         extras={
             "cadence": "hourly",
             "extension": ".xlsx",
@@ -149,7 +149,7 @@ BRAZIL_POWER_OFFICIAL_SOURCES: list[SourceConfig] = [
         region="BR",
         tier=1,
         domain="official_stats",
-        tags=("ons", "brazil", "power", "price", "cmo", "data_feed"),
+        tags=("ons", "brazil", "power", "price", "cmo", "data_feed", "chronological"),
         extras={
             "cadence": "half_hourly",
             "extension": ".xlsx",
