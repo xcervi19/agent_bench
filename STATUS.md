@@ -150,6 +150,18 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 ## In Progress
 
+### Brazil power (#53) — FIRST RUN on test2, 2026-09-23
+
+- **Topic `806d49f1`** on `2f06b61`, topic string as measured (variant A, approved by the product owner before the run).
+- **Plan 144 s / $0.82, deliver 513 s / $3.09 — $3.91 total**, against India's first run at $3.79. `facets_degraded: false`.
+- **`feeds_count: 4`.** All four ONS series reached the analyst carrying data **through 2026-09-23**, the day of the run. `ons_ear_reservoir_daily` was 112 454 characters and `_fit` cut it to 60 064 from the front, keeping 09-18..09-23.
+- **The synonym fix is what made that possible, and the run proves it in production shape.** The parse leg emitted `commodity: ['electricity', 'natural gas', 'hydropower']` and `geo: ['Brazil', …]` — **neither spelled the way the seed files them** (`power` / `BR`). Before this branch, `REGION_SYNONYMS` had no Brazil and there was no commodity table at all, so `feeds.matches` would have returned False four times and `feeds_count` would have been **0**.
+- **Source mix 11/18 authoritative (61.1 %)**, 5 whitelisted. By class: **4 `data_feed`**, 6 `primary_official`, 6 specialist outlet, 1 newsletter, 1 aggregator. India's first run cited **zero** from its feed; this one cites all four, including ONS, CCEE PLD and two ANEEL pages.
+- **Thesis came back `weakened`, which is the honest answer.** The report's own finding is that the gas-constraint scenario is weaker than assumed: Petrobras free-market contracting up 14 % q/q, regas capacity more than doubled since 2020, and the government's own 2026 agenda projecting gas-fired capacity **falling** 17.7 → 13.4 GW by 2030 while total capacity grows to 270.1 GW. It also relocated the story — stress is a **North** subsystem problem (67.2 % stored energy, inflows at 48.6 % of long-term average) while Southeast and South run at 178.6 % and 279.0 % of average inflow.
+- **`evidence_count: 5` with 4 unreadable** — the same shape as India's first run (5 of 149). Deliver starts seconds after plan and the fetch queue has barely moved; `deliver_corpus_wait_sec` exists but this topic's queue was still thin. Not new, and not fixed here.
+- **Two operational snags, both cost a run.** `state_test2/` was owned by **root** while test1's is `1001:1001`, so the first attempt died on `PermissionError: /state/news` before spending anything — the topic was cancelled and recreated. The likely cause is the `git stash push -u` during the rebuild sweeping the untracked state dir away, after which `mkdir -p` recreated it as root. **Chown the state dir after any stash or fresh slot setup.**
+- **Next step:** a second cycle and monitoring are **not** enabled. Enabling them is a spend decision (~$3/cycle) and belongs to the owner.
+
 ### test2 slot — rebuilt as a copy of test1, 2026-09-18
 - **Why:** test2 was the development slot in name only. Code sat on `main` @ `de67d92` with a **staged-delete index** (`git status` showed `auth.py`, `sources/`, `evidence_export.py` and more as deleted), the database stood at **`0004_newsfind_monitoring`** — nine migrations behind — and the corpus was **0 documents / 0 events**. `/v1/public/topics` returned **404**: the build predated the public router. Nothing could be developed on it and nothing could be compared with it.
 - **Code:** local changes preserved in `git stash@{0}` ("test2 pre-rebuild 2026-09-18") rather than discarded, then **detached at `c772df6`** — the exact commit test1 serves. **`main` was deliberately not moved** and still points at `de67d92`; test2 is a linked worktree, so resetting the branch would have moved it under prod's feet.

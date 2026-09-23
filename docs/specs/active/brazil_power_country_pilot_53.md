@@ -1,6 +1,6 @@
 # Brazil power — second country pilot (#53)
 
-**Status:** onboarded offline 2026-09-18, **no run yet**
+**Status:** first run delivered on test2, 2026-09-23
 **Lane:** Product / business value — *the second country topic, chosen by us rather than asked for*
 **Depends on:** test2 existing as a copy of test1 (see `STATUS.md` slot policy)
 **Related:** #45 (the method this repeats), #46 (the five gates), #48 (what this proves is worth automating), #49 (third channel), #52 (the comparison this feeds)
@@ -148,14 +148,16 @@ Suite 451 passed, ruff clean.
    smaller, faster form of the same data and the gap will recur. `.zip` and
    `.xls` sit behind the same hole — JODI is skipped for `.zip` today.
 3. **Re-verify EPE and the ANEEL open-data portal**, then add them if they answer.
-4. **First run on test2**, then read `feeds_count` in `stage.finished` before
-   reading anything else.
+4. ~~First run on test2~~ — **done 2026-09-23.** `feeds_count: 4`, source mix
+   11/18 authoritative, $3.91, thesis `weakened`. See `STATUS.md`.
 5. **Operator review of the first pile**, as #46 Gate 5.
 
 ## What is explicitly not claimed
 
-No topic has been run. Nothing here is a quality result — it is an onboarding,
-verified at every step that could be verified offline. The comparison against
+One run, on one topic, on one day. 61.1 % authoritative sits between India's
+first run (53 %) and its second (64 %), but a single run is not a quality result
+and the noise floor is still unmeasured — that is #41, and the comparison across
+slots is #52. The comparison against
 India's numbers belongs to #52 and needs test2 to exist with a corpus first.
 
 The RAG leg is empty for this topic exactly as it was for India: the corpus holds
