@@ -112,7 +112,7 @@ Echo `{"phase":"R1","status":"done"}`.
 
 ## Phase R2 — search
 
-For each entry in `short_term_queries[]`, call `WebSearch` with the `query` text — and with `allowed_domains` set to the entry's `allowed_domains` when it has one. Run in batches of **up to 4 in parallel**. Take up to **3 candidate hits per query** (refresh is cheaper than a full deliver).
+For each entry in `short_term_queries[]`, call `WebSearch` with the `query` text — and with `allowed_domains` set to the entry's `allowed_domains` when it has one. Run in batches of **up to 4 in parallel**. Take up to **3 candidate hits per query** (refresh is cheaper than a full deliver) — and when a query returns more than three, **keep the hits published by an official body or a data publisher first**, then fill the remainder in the order search returned them. Search orders by relevance, which favours news, so taking the first three discards official hits before Phase R3 can classify them. This is the same defect as filtering before classifying, one phase earlier, and the cap is unchanged either way.
 
 **Pass `allowed_domains` when the entry carries one.** It is the structured form of a
 `site:` filter and the reason official sources are reachable at all — a batched filter
@@ -138,22 +138,30 @@ Echo `{"phase":"R2","status":"done"}`.
 
 ---
 
-## Phase R3 — dedup + freshness filter
+## Phase R3 — dedup, classify, then filter
+
+Order matters here, and it is why this phase is one list rather than two: **steps 5
+and 6 both branch on `source_class`, so nothing may be dropped before step 4 has
+assigned it.** Scoring the class after the age filter is the same as having no
+exemption at all — the filter runs blind and deletes exactly the sources that carry
+the most weight. That is not hypothetical: on the India topic, search returned 44
+distinct `ppac.gov.in` URLs and the reports used almost none of them.
 
 For each candidate hit:
 
 1. Compute `url_hash = sha1(url)[0:16]`.
-2. **Drop if `url_hash ∈ input.seen_url_hashes`** (already seen in prior runs).
-3. Apply freshness **by source tier**, not uniformly:
-   * `primary_official` and `data_feed` — **exempt from `max_age_hours`.** These publish on an event cadence, not a news cadence: an advisory or a throughput release that has not changed is the *current standing state*, not stale news. Keep it and set `standing: true`. Applying a news-speed window here silently deletes exactly the sources that carry the most weight.
-   * everything else — **drop if `published_at` is older than `max_age_hours` from `today_iso`**.
+2. **Drop if `url_hash ∈ input.seen_url_hashes`** (already seen in prior runs). Bump `drops.already_seen`.
+3. Drop intra-batch duplicates by `url_hash`. Bump `drops.intra_batch_dup`.
+4. **Score every survivor now, before any further drop:**
+   * `source_class` ∈ `primary_official|specialist_outlet|aggregator|data_feed|blog_or_newsletter|social|unknown`.
+   * `relevance_score ∈ [0,1]` against `parsed.working_thesis + parsed.entities`.
+5. Apply freshness **by source tier**, not uniformly:
+   * `primary_official` and `data_feed` — **never dropped for age.** These publish on an event cadence, not a news cadence: an advisory or a throughput release that has not changed is the *current standing state*, not stale news. Keep it and set `freshness: "standing"`.
+   * everything else — **drop if `published_at` is older than `max_age_hours` from `today_iso`**. Bump `drops.too_old`.
 
    If `published_at` is missing, keep the hit and record `freshness: "unknown"`.
-4. Drop intra-batch duplicates by `url_hash`.
-5. Score `relevance_score ∈ [0,1]` against `parsed.working_thesis + parsed.entities`. Drop anything `<0.40` (bump `drops.low_relevance`).
-6. Score `source_class` ∈ `primary_official|specialist_outlet|aggregator|data_feed|blog_or_newsletter|social|unknown`.
-
-Number survivors `s01`, `s02`, … in descending `relevance_score`.
+6. Relevance floor: **drop anything `<0.35`** (bump `drops.low_relevance`) — **except `primary_official` and `data_feed`, which are kept at any relevance.** A ministry page that scores low against the working thesis is still the publisher of record, and the source the customer valued most in the first India report was one this pipeline had ranked low. Relevance decides *order*, not whether an official source survives.
+7. Number survivors `s01`, `s02`, … in descending `relevance_score`, **except that a `primary_official` or `data_feed` source outranks a secondary source of equal relevance.** Authority is not a tiebreaker applied at the end; it is part of the ordering.
 
 Echo `{"phase":"R3","status":"done"}`.
 

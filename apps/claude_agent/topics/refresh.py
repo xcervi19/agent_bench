@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import uuid
 from datetime import datetime, timezone
 from json import JSONDecodeError
@@ -57,6 +58,41 @@ REFRESH_COMMAND = "/newsfind-refresh"
 
 def _recency_hint(today_iso: str) -> str:
     return f"latest {today_iso[:7]}"  # e.g. "latest 2026-05"
+
+
+# The hint as `build_short_term_queries` writes it, so it can be found again later.
+_RECENCY_HINT_RE = re.compile(r"\blatest \d{4}-\d{2}\b")
+
+
+def restamp_recency_hints(
+    queries: list[dict[str, Any]], *, today_iso: str
+) -> list[dict[str, Any]]:
+    """Re-stamp each query's `latest YYYY-MM` hint to the current month.
+
+    `build_short_term_queries` bakes the hint into the query text when the plan is
+    written, and nothing rewrites the plan afterwards — so a topic monitored across a
+    month boundary goes on asking for the month it was onboarded in. The India plan was
+    written 2026-09-09 and all nineteen of its queries still said `latest 2026-09` in
+    October, which is a plan quietly asking for last month's news every single cycle.
+
+    Rewritten in the copy handed to the agent, **not** in the stored plan: the plan is
+    the owner's, `PATCH /monitor` is how it changes, and a refresh has no business
+    editing it as a side effect of running. An entry carrying no hint is left exactly as
+    it is — absence is a choice there (a `PATCH`ed query, say), not an omission to fix.
+
+    `today_iso` is required rather than defaulted: the caller already has the value it
+    put in the artifact, and a function whose job is to correct a date has no business
+    inventing a second opinion about what day it is.
+    """
+    hint = _recency_hint(today_iso)
+    out: list[dict[str, Any]] = []
+    for entry in queries:
+        text = entry.get("query")
+        if not isinstance(text, str) or not _RECENCY_HINT_RE.search(text):
+            out.append(entry)
+            continue
+        out.append({**entry, "query": _RECENCY_HINT_RE.sub(hint, text)})
+    return out
 
 
 def _entry(
@@ -401,6 +437,12 @@ async def run_refresh(
         except Exception:  # a feed problem must not cancel the refresh
             logger.exception("refresh.feeds_export_failed topic=%s", topic_id)
 
+        # One `today_iso` for the whole artifact: the agent is told today's date and
+        # the queries are stamped with today's month, and those two disagreeing is a
+        # plan asking for a month the run does not think it is in.
+        today_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        short_term_queries = restamp_recency_hints(short_term_queries, today_iso=today_iso)
+
         (refresh_dir / "input.json").write_text(
             json.dumps({
                 "topic_id": str(topic_id),
@@ -412,7 +454,7 @@ async def run_refresh(
                 "since_iso": since_iso,
                 "max_age_hours": max_age_hours,
                 "seen_url_hashes": sorted(seen_url_hashes),
-                "today_iso": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                "today_iso": today_iso,
                 # Full text of documents already fetched for this topic. Read these
                 # before reaching for WebFetch — the text is here.
                 "evidence_dir": str(evidence_dir) if evidence_index["document_count"] else None,
