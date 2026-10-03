@@ -17,7 +17,7 @@ India demo.** The rule is in `AGENT.md` too, because it governs every session:
 | Slot | Commit | Role now |
 |---|---|---|
 | **test1** — `agent-test1.particletico.com` | tag **`test1-stable-2026-09-10`** (`c772df6`) | **Frozen.** The approved India demo, presented again from here. Read it freely; change nothing |
-| **test2** — `agent-test2.particletico.com` | detached at **`c772df6`** (= test1's tag) | **Where development goes.** Rebuilt 2026-09-18: schema `0013`, corpus 141/9519 verified equal to prod and test1, `ivfflat.probes=10`. Ready |
+| **test2** — `agent-test2.particletico.com` | branch **`feat/japan-nuclear-topic-55`** (`7b7a0e1` = #53 + #54 + #55 on top of test1's tag) | **Where development goes.** Rebuilt 2026-09-18 (schema `0013`, corpus 141/9519, `ivfflat.probes=10`); redeployed 2026-10-03 for #55. Hosts the Brazil topic and the **monitored Japan nuclear topic** |
 | **prod** — `agent.particletico.com` | `de67d92` | Untouched since 2026-08-11. Holds the 141/9519 RAG corpus |
 
 Approval is per change, not standing: an earlier "yes" does not cover the next deploy, and
@@ -149,6 +149,15 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 ---
 
 ## In Progress
+
+### Japan nuclear fleet (#55) — FIRST RUN on test2, 2026-10-03, monitored daily
+
+- **Customer ask.** Topic **`0a354872`** on `7b7a0e1`, service-key owned like Brazil (no user account sees it yet). String as measured in the spec.
+- **Plan $1.17 / 345 s, deliver $3.41 / 464 s — $4.58 total.** 15 queries in English and Japanese, **12 domain-filtered** (NRA, Kansai, Kyushu, HJKS, six other operators, three prefectures, OCCTO/JEPX/JAIF/FEPC). `facets_degraded: false`.
+- **Routing held on the real facets:** `playbook_refs` = `japan_nuclear_reactor_fleet.md` + `japan_korea_lng_demand.md`, 34 targets, **no Brazil** — the residual risk recorded in the spec did not fire, because the parse leg left `commodity` empty.
+- **`feeds_count: 1`** — the HJKS register reached the analyst (matched on region alone, since `commodity` is empty). **Source mix 11/15 authoritative (73.3 %)**, above India's 64 % and Brazil's 61 %. `evidence_count: 8`, 1 unreadable.
+- **What it found:** Ohi 3 (unplanned since 08-08) and Mihama 3 (since 09-18) with no return date, cited to HJKS; Kashiwazaki-Kariwa 6 in commercial operation since April; Chubu withdrawing Hamaoka 3/4 applications after a seismic-data manipulation finding; Genkai 3 / Takahama 3 returns on 10-29 / 11-10.
+- **Monitoring:** `schedule_enabled`, every **24 h**, `max_age_hours: 168`, first refresh **2026-10-04 16:19 UTC**. The HJKS feed is re-crawled every 6 h by cron (`slot_refresh_feeds.sh`), last at 16:17 UTC before each refresh. **Cost: ~$3 per cycle, ~$20/week** — one `PATCH /monitor` moves it to weekly.
 
 ### Brazil power (#53) — FIRST RUN on test2, 2026-09-23
 

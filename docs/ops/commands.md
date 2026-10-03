@@ -187,6 +187,11 @@ $C run --rm --no-deps -v "$PWD/artifacts:/app/artifacts" --entrypoint python cla
    print(publish(Path('/app/artifacts/collected_text'), '/state'))"
 ```
 
+**Scripted (#55):** `scripts/devops/slot_refresh_feeds.sh <slot> <seed>` runs the same three
+steps from the slot directory on the VPS. test2 refreshes the JEPX HJKS nuclear outage feed
+from root's crontab every six hours (`17 */6 * * *`, log `~/logs/test2_feeds.log`) — the
+register changes the hour a reactor trips, and the crawl spends no LLM tokens.
+
 Deliver and refresh then pass `feeds_dir` to the analyst for any topic whose
 facets match the feed's `commodity` + `region`. Check what a slot holds:
 

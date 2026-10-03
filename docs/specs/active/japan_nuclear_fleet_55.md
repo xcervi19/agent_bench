@@ -96,7 +96,10 @@ so it is #47's to decide. Check `playbook_refs` on the first plan.
 
 1. ~~Playbook, register, feed, synonym, refresh script~~ — done 2026-10-03.
 2. ~~Deploy to test2, publish the feed, daily feed cron~~ — see `STATUS.md`.
-3. ~~Create the topic, deliver, enable daily monitoring~~ — see `STATUS.md`.
-4. **Read the first report's source mix** against India (64 %) and Brazil (61 %).
+3. ~~Create the topic, deliver, enable daily monitoring~~ — topic `0a354872`, $4.58,
+   `feeds_count: 1`, monitored every 24 h from 2026-10-04 16:19 UTC. See `STATUS.md`.
+4. ~~Read the first report's source mix~~ — **11/15 authoritative (73.3 %)**, against
+   India 64 % and Brazil 61 %. The residual routing risk did not fire: the parse leg
+   left `commodity` empty, so no `power` token and no Brazil playbook.
 5. **Re-check `tepco.co.jp`** from a Japanese vantage point, or find the path that answers.
 6. **Two cycles of pile, then the operator review** (#46 Gate 5).
