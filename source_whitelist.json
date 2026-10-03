@@ -5030,5 +5030,181 @@
     "category": "international_agency",
     "notes": "Long-run energy, power and macroeconomic series by country",
     "agreement_count": 1
+  },
+  {
+    "entity": "NRA",
+    "domain": "nra.go.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Nuclear Regulation Authority (原子力規制委員会): conformity reviews, restart approvals, inspection findings, incident and trip reports",
+    "agreement_count": 1
+  },
+  {
+    "entity": "JEPX HJKS",
+    "domain": "hjks.jepx.or.jp",
+    "type": "data_feed",
+    "category": "exchange",
+    "notes": "Mandatory register of every generator stop and derating >=100 MW (発電情報公開システム); nuclear rows crawled daily as a feed (#55)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "JEPX",
+    "domain": "jepx.jp",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Japan Electric Power Exchange: area spot prices where a generation outage becomes a price",
+    "agreement_count": 1
+  },
+  {
+    "entity": "OCCTO",
+    "domain": "occto.or.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Organization for Cross-regional Coordination of Transmission Operators: supply-demand outlook, reserve margins, tight-supply warnings",
+    "agreement_count": 1
+  },
+  {
+    "entity": "JAIF",
+    "domain": "jaif.or.jp",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Japan Atomic Industrial Forum: fleet operating status summaries, Atoms in Japan news",
+    "agreement_count": 1
+  },
+  {
+    "entity": "FEPC",
+    "domain": "fepc.or.jp",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Federation of Electric Power Companies of Japan: fleet-wide statements and statistics",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Kansai Electric",
+    "domain": "kepco.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Takahama 1-4, Ohi 3-4, Mihama 3: the largest operating nuclear fleet in Japan; inspection and trip notices",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Kyushu Electric",
+    "domain": "kyuden.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Sendai 1-2, Genkai 3-4 nuclear operating status and inspection schedule",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Shikoku Electric",
+    "domain": "yonden.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Ikata 3 nuclear operating status and inspections",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Chugoku Electric",
+    "domain": "energia.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Shimane 2 nuclear operating status; Shimane 3 under review",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Tohoku Electric",
+    "domain": "tohoku-epco.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Onagawa 2 nuclear operating status; Higashidori review",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Hokkaido Electric",
+    "domain": "hepco.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Tomari 1-3 nuclear restart path",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Hokuriku Electric",
+    "domain": "rikuden.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Shika 1-2 nuclear review and post-earthquake checks",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Chubu Electric",
+    "domain": "chuden.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Hamaoka 3-5 nuclear review",
+    "agreement_count": 1
+  },
+  {
+    "entity": "JAPC",
+    "domain": "japc.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Japan Atomic Power Company: Tokai 2 safety works, Tsuruga 2 after review rejection",
+    "agreement_count": 1
+  },
+  {
+    "entity": "JNFL",
+    "domain": "jnfl.co.jp",
+    "type": "official",
+    "category": "infrastructure",
+    "notes": "Japan Nuclear Fuel Ltd: Rokkasho reprocessing completion schedule, enrichment, spent-fuel receipt",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Atomic Energy Commission",
+    "domain": "aec.go.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Cabinet Office Atomic Energy Commission (原子力委員会): national nuclear policy, white paper",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Niigata Prefecture",
+    "domain": "pref.niigata.lg.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Host prefecture consent for Kashiwazaki-Kariwa restarts; prefectural safety committee",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Fukui Prefecture",
+    "domain": "pref.fukui.lg.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Host prefecture for the Wakasa-bay plants (Takahama, Ohi, Mihama, Tsuruga)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Ibaraki Prefecture",
+    "domain": "pref.ibaraki.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Host prefecture for Tokai 2: evacuation planning and consent",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Courts in Japan",
+    "domain": "courts.go.jp",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Court rulings, including injunctions on reactor operation",
+    "agreement_count": 1
+  },
+  {
+    "entity": "World Nuclear Association",
+    "domain": "world-nuclear.org",
+    "type": "official",
+    "category": "industry_body",
+    "notes": "Japan country profile; reactor fleet reference (Tier 2 framing)",
+    "agreement_count": 1
   }
 ]

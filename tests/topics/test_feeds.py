@@ -147,6 +147,38 @@ def test_the_ons_feed_does_not_reach_another_country():
 # ---- export ----------------------------------------------------------------
 
 
+# ---- Japan nuclear (#55) ------------------------------------------------------
+
+# Filed exactly as `source_crawler/seeds/japan_nuclear_official.py` files it.
+HJKS_META = {
+    "source_id": "jepx_hjks_nuclear_outages",
+    "commodity": "nuclear_power",
+    "region": "JP",
+    "tags": ["jepx", "hjks", "japan", "nuclear", "data_feed"],
+}
+
+
+def test_the_outage_register_reaches_a_japanese_nuclear_topic():
+    """The parse leg writes `nuclear power` or `nuclear energy`; the seed files `nuclear_power`."""
+    for spelling in ("nuclear power", "nuclear energy", "nuclear"):
+        facets = {"commodity": [spelling, "electricity"], "geo": ["Japan"]}
+        assert matches(HJKS_META, facets) is True, spelling
+
+
+def test_nuclear_outages_do_not_reach_a_japanese_lng_topic():
+    """Reactor outages move LNG demand, but that link is the analyst's to draw."""
+    assert matches(HJKS_META, {"commodity": ["LNG"], "geo": ["Japan"]}) is False
+
+
+def test_nuclear_is_not_a_spelling_of_electricity():
+    """Joining them would hand an outage table to every Japanese power question."""
+    assert matches(HJKS_META, {"commodity": ["electricity"], "geo": ["Japan"]}) is False
+
+
+def test_the_outage_register_does_not_reach_another_countrys_nuclear_topic():
+    assert matches(HJKS_META, {"commodity": ["nuclear power"], "geo": ["Korea"]}) is False
+
+
 def test_export_writes_the_matching_feed_with_its_provenance(tmp_path):
     state = tmp_path / "state"
     _write_feed(state, "ppac_gas_sectoral_consumption", PPAC_META)

@@ -2,7 +2,7 @@
 
 _Canonical list of spec ticket numbers. Update this file whenever you **create**, **move**, or **retire** a numbered ticket._
 
-**Next available number:** `#54` (assign to the next new ticket; then bump this line)
+**Next available number:** `#56` (#54 is the refresh primary-source fix on `feat/refresh-primary-sources-54`, no spec file) (assign to the next new ticket; then bump this line)
 
 ---
 
@@ -29,6 +29,7 @@ list carried seven shipped or retired tickets and omitted #42. #51 shipped 2026-
 
 | # | File | Status | Blocks / unblocks |
 |---|------|--------|---------------------|
+| 55 | `docs/specs/active/japan_nuclear_fleet_55.md` | in progress | **Customer ask: Japanese nuclear fleet, monitored daily on test2.** Playbook 58, register 629 -> 651, a new feed from the JEPX HJKS outage register (every nuclear stop and derating, daily), `nuclear` commodity synonyms, a feed-refresh script for cron. `tepco.co.jp` refused (403 from laptop and VPS) |
 | 45 | `docs/specs/active/india_gas_country_pilot_45.md` | in progress | **First customer topic — demo approved 2026-09-10.** Second run delivered, PPAC cited from the feed, monitoring live, shared link out. Remaining: a second cycle and the operator review. Template for country #2 |
 | 53 | `docs/specs/active/brazil_power_country_pilot_53.md` | onboarded, no run | **Second country topic, chosen by us not asked for.** Playbook 57, register 622 -> 629, four ONS daily series seeded, topic string measured (10/10 Brazil primaries, no China/SEA contamination). Found and fixed the feed-routing synonym gap on both axes. Blocked on test2 existing, and on a recent-tail window for chronological feeds |
 | 52 | `docs/specs/active/three_slot_business_comparison_52.md` | planned | prod vs test1 vs test2 on business value. **Item 1 done 2026-09-18** — test2 rebuilt at test1's commit with the same 141/9519 corpus, `md5`-verified on ids and summaries across all three slots. Needs #23, #41, #43 |

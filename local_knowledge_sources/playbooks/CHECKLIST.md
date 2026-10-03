@@ -1,4 +1,4 @@
-# Playbooks CHECKLIST (56 = A6+B7+C12+D8+E6+F8+G6+H3)
+# Playbooks CHECKLIST (58 = A6+B7+C12+D8+E6+F8+G8+H3)
 
 ## A Global (6)
 - [x] crude_oil_global.md
@@ -59,13 +59,15 @@
 - [x] nord_stream_alternatives_eu.md
 - [x] turkmenistan_uzbekistan_gas_cn.md
 
-## G Importers (6)
+## G Importers & country power (8)
 - [x] china_oil_gas_imports.md
 - [x] india_discounted_crude.md
 - [x] india_gas_demand.md  <!-- #45 — authored 2026-08-20; ingest pending -->
 - [x] japan_korea_lng_demand.md
 - [x] europe_gas_storage_ttf.md
 - [x] southeast_asia_lng_imports.md
+- [x] brazil_power_hydro_thermal.md  <!-- #53 — authored 2026-09-18 -->
+- [x] japan_nuclear_reactor_fleet.md  <!-- #55 — authored 2026-10-03; ingest pending -->
 
 ## H Conflict (3)
 - [x] yemen_houthi_red_sea.md

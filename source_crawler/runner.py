@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Literal
 
 from .adapters import (  # noqa: F401 — register adapters
+    hjks_outages as _hjks_outages,
     jodi_dataset as _jodi_dataset,
     opec_assetdb as _opec_assetdb,
     static_file as _static_file,

@@ -113,6 +113,9 @@ COMMODITY_SYNONYMS: tuple[frozenset[str], ...] = (
     frozenset({"lng", "liquefied_natural_gas"}),
     frozenset({"gas", "natural_gas"}),
     frozenset({"crude", "crude_oil"}),
+    # One good, four spellings. Not joined to `power`: a nuclear outage table is
+    # not evidence for a question about electricity in general (#55).
+    frozenset({"nuclear", "nuclear_power", "nuclear_energy", "nuclear_electricity"}),
 )
 
 
