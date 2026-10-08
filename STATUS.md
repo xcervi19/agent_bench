@@ -17,7 +17,7 @@ India demo.** The rule is in `AGENT.md` too, because it governs every session:
 | Slot | Commit | Role now |
 |---|---|---|
 | **test1** — `agent-test1.particletico.com` | tag **`test1-stable-2026-09-10`** (`c772df6`) | **Frozen.** The approved India demo, presented again from here. Read it freely; change nothing |
-| **test2** — `agent-test2.particletico.com` | branch **`feat/japan-nuclear-topic-55`** (`7b7a0e1` = #53 + #54 + #55 on top of test1's tag) | **Where development goes.** Rebuilt 2026-09-18 (schema `0013`, corpus 141/9519, `ivfflat.probes=10`); redeployed 2026-10-03 for #55. Hosts the Brazil topic and the **monitored Japan nuclear topic** |
+| **test2** — `agent-test2.particletico.com` | branch **`feat/japan-nuclear-topic-55`** (`89ff552` = #53 + #54 + #55 on top of test1's tag; verified on the box 2026-10-04) | **Where development goes.** Rebuilt 2026-09-18 (schema `0013`, corpus 141/9519, `ivfflat.probes=10`); redeployed 2026-10-03 for #55. Hosts the Brazil topic and the **monitored Japan nuclear topic** |
 | **prod** — `agent.particletico.com` | `de67d92` | Untouched since 2026-08-11. Holds the 141/9519 RAG corpus |
 
 Approval is per change, not standing: an earlier "yes" does not cover the next deploy, and
@@ -150,6 +150,40 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 ## In Progress
 
+### Refresh keeps official sources (#54) — shipped to test2, **not on test1**
+
+Full write-up: `docs/specs/active/refresh_primary_sources_54.md`. The short version,
+because it changes how every update is read:
+
+- **Refresh was finding official sources and throwing them away.** `Phase R3` filtered
+  by source tier in step 3 but assigned `source_class` in step 6, so the age window ran
+  blind. `drops.too_old` fired **7-16 times per cycle** and **eight of nine** India
+  cycles came back `authoritative: 0`. Of 649 hits search returned for that topic, 573
+  were dropped — **209 of them on a whitelisted official domain**.
+- **The deliver leg never had the bug**, which is why its runs report 53-64 % primary
+  against refresh's 0 %. The fix is refresh matching a design that already worked, not a
+  new one.
+- **Shipped:** R3 reordered to classify before filtering; primaries never dropped for
+  age (`freshness: "standing"`); the relevance floor lowered to 0.35 and **not applied
+  to primaries** — the source the customer valued most was one we had ranked low;
+  authority in the ordering; R2's three-hit cut made authority-aware so primaries are
+  not discarded before R3 sees them. Plus `restamp_recency_hints()`, because the India
+  plan written 2026-09-09 was still asking for `latest 2026-09` in October.
+- **First cycle under it** (Japan, 2026-10-04): `too_old: 1`, **4/8 authoritative**, all
+  four primaries `standing`. One cycle on one topic is the fix behaving as designed on
+  first contact, **not** a measured effect size — the controlled before/after needs the
+  same topic run both ways and belongs to #52.
+- **Authority is only a tiebreaker at equal relevance.** In that cycle four primaries
+  still sort below four higher-scoring news items. Making publisher class dominate is a
+  bigger change and rests on one preference stated once by one desk — check it against
+  the buyer first (#23).
+
+**test1 is still on `c772df6` and has none of this.** Its cycles keep dropping primaries
+on age, and its stored plan keeps asking for `latest 2026-09` — two months stale and
+worsening daily. A `PATCH /monitor` re-stamping the 19 queries fixes the hint today with
+no deploy; deploying the branch fixes both but is a pull plus rebuild on a frozen slot.
+**Neither is done, both need the product owner.**
+
 ### Japan nuclear fleet (#55) — FIRST RUN on test2, 2026-10-03, monitored daily
 
 - **Customer ask.** Topic **`0a354872`** on `7b7a0e1`, service-key owned like Brazil (no user account sees it yet). String as measured in the spec.
@@ -170,6 +204,15 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 - **`evidence_count: 5` with 4 unreadable** — the same shape as India's first run (5 of 149). Deliver starts seconds after plan and the fetch queue has barely moved; `deliver_corpus_wait_sec` exists but this topic's queue was still thin. Not new, and not fixed here.
 - **Two operational snags, both cost a run.** `state_test2/` was owned by **root** while test1's is `1001:1001`, so the first attempt died on `PermissionError: /state/news` before spending anything — the topic was cancelled and recreated. The likely cause is the `git stash push -u` during the rebuild sweeping the untracked state dir away, after which `mkdir -p` recreated it as root. **Chown the state dir after any stash or fresh slot setup.**
 - **Next step:** a second cycle and monitoring are **not** enabled. Enabling them is a spend decision (~$3/cycle) and belongs to the owner.
+- **The four ONS feeds are going stale, and the cron does not cover them.** Measured on
+  test2 2026-10-04: `collected_at` on all four still reads **2026-09-23**, eleven days
+  old, while the Japan register re-crawls every 6 h. The crontab holds one line and it
+  names `japan_nuclear_official` only. These are **daily** series with a ~2-day lag, and
+  that cadence was this topic's whole argument — a second cycle against eleven-day-old
+  reservoir data would measure the staleness, not the method. Add a
+  `slot_refresh_feeds.sh test2 brazil_power_official` line before any Brazil refresh.
+  They are not yet flagged `stale` (that is 45 days, 2026-11-07), which is exactly why
+  this is easy to miss.
 
 ### test2 slot — rebuilt as a copy of test1, 2026-09-18
 - **Why:** test2 was the development slot in name only. Code sat on `main` @ `de67d92` with a **staged-delete index** (`git status` showed `auth.py`, `sources/`, `evidence_export.py` and more as deleted), the database stood at **`0004_newsfind_monitoring`** — nine migrations behind — and the corpus was **0 documents / 0 events**. `/v1/public/topics` returned **404**: the build predated the public router. Nothing could be developed on it and nothing could be compared with it.

@@ -215,6 +215,30 @@ Each slot = git worktree + isolated DB/RAG/state + **shared** `~/agent_bench/cla
 
 Test slots run **minimal stack** only: `postgres`, `rag_adhoc`, `claude_agent` (`infra/docker-compose.slot-minimal.yml`).
 
+### What a `git pull` on a slot does and does not change
+
+Two different things ship by two different routes, so "the slot is on the right commit"
+is only half an answer. Checked on the running containers 2026-10-04:
+
+| What | How it reaches the slot | Needs |
+|---|---|---|
+| Agent prompts — `claude_agent_fe/.claude/commands/*.md` | **bind mount**, per slot (`~/agent_bench_test1/claude_agent_fe` -> `/workspace/claude_agent_fe`) | a `git pull`; takes effect on the next run |
+| Python — `apps/`, `source_crawler/` | **baked into the image** | a `git pull` **and** `up -d --build` |
+
+So a pull alone makes a prompt change live and leaves a code change inert, with
+`git rev-parse HEAD` reporting success either way. Verify a code change against the
+container, not the checkout:
+
+```bash
+docker exec test2-claude_agent-1 grep -c restamp_recency_hints \
+  /app/apps/claude_agent/topics/refresh.py        # 2 = the image has #54
+```
+
+`claude_home` **is** shared across all slots (`~/agent_bench/claude_home` ->
+`/home/app/.claude`), but it holds no `commands/`, so prompts stay per slot and editing
+one slot's prompts cannot leak into another's. If anything is ever added there, that
+stops being true — and test1 is frozen.
+
 ```bash
 scripts/devops/vps_setup_test_slot.sh test1 main
 scripts/devops/vps_setup_test_slot.sh test2 feature/my-branch
