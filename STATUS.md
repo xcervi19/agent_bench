@@ -169,10 +169,17 @@ because it changes how every update is read:
   authority in the ordering; R2's three-hit cut made authority-aware so primaries are
   not discarded before R3 sees them. Plus `restamp_recency_hints()`, because the India
   plan written 2026-09-09 was still asking for `latest 2026-09` in October.
-- **First cycle under it** (Japan, 2026-10-04): `too_old: 1`, **4/8 authoritative**, all
-  four primaries `standing`. One cycle on one topic is the fix behaving as designed on
-  first contact, **not** a measured effect size — the controlled before/after needs the
-  same topic run both ways and belongs to #52.
+- **Five cycles under it** (Japan, 2026-10-04 .. 10-08): **22 new sources, 15 of them
+  authoritative — 68.2 %.** India's last five cycles on the old code produced the same
+  22 new sources with **1** authoritative among them (4.5 %), `drops.too_old` firing
+  7–16 times every cycle against a mean of 3.6 here.
+- **Two claims the numbers do not support, stated so nobody repeats them.** `too_old`
+  did **not** go to zero — cycle 5 fired 11, inside India's old range, while still
+  keeping its one official source; what changed is that the filter no longer takes
+  primaries with it. And the variance is wide (1–9 new sources, 0–100 % authoritative,
+  one cycle still `entirely_secondary`), so the aggregate is a real n=5 result while the
+  per-cycle ratio is not a number to quote. Still not a controlled comparison either —
+  different country and cadence; that experiment is #52's and needs an unfrozen slot.
 - **Authority is only a tiebreaker at equal relevance.** In that cycle four primaries
   still sort below four higher-scoring news items. Making publisher class dominate is a
   bigger change and rests on one preference stated once by one desk — check it against
@@ -191,7 +198,7 @@ no deploy; deploying the branch fixes both but is a pull plus rebuild on a froze
 - **Routing held on the real facets:** `playbook_refs` = `japan_nuclear_reactor_fleet.md` + `japan_korea_lng_demand.md`, 34 targets, **no Brazil** — the residual risk recorded in the spec did not fire, because the parse leg left `commodity` empty.
 - **`feeds_count: 1`** — the HJKS register reached the analyst (matched on region alone, since `commodity` is empty). **Source mix 11/15 authoritative (73.3 %)**, above India's 64 % and Brazil's 61 %. `evidence_count: 8`, 1 unreadable.
 - **What it found:** Ohi 3 (unplanned since 08-08) and Mihama 3 (since 09-18) with no return date, cited to HJKS; Kashiwazaki-Kariwa 6 in commercial operation since April; Chubu withdrawing Hamaoka 3/4 applications after a seismic-data manipulation finding; Genkai 3 / Takahama 3 returns on 10-29 / 11-10.
-- **Monitoring:** `schedule_enabled`, every **24 h**, `max_age_hours: 168`, first refresh **2026-10-04 16:19 UTC**. The HJKS feed is re-crawled every 6 h by cron (`slot_refresh_feeds.sh`), last at 16:17 UTC before each refresh. **Cost: ~$3 per cycle, ~$20/week** — one `PATCH /monitor` moves it to weekly.
+- **Monitoring:** `schedule_enabled`, every **24 h**, `max_age_hours: 168`, first refresh **2026-10-04 16:19 UTC**. The HJKS feed is re-crawled every 6 h by cron (`slot_refresh_feeds.sh`), last at 16:17 UTC before each refresh. **Cost: $3.62 per cycle over the first five** (range $2.93–$4.61, $18.11 total), **~$25/week** — the ~$3 first read here came from cycle 1 alone. One `PATCH /monitor` moves it to weekly.
 
 ### Brazil power (#53) — FIRST RUN on test2, 2026-09-23
 

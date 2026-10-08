@@ -1,6 +1,6 @@
 # Refresh keeps official sources — classify before filtering (#54)
 
-**Status:** shipped to test2 2026-10-03 (`8c924ce`); first measured cycle 2026-10-04. **Not on test1**
+**Status:** shipped to test2 2026-10-03 (`8c924ce`); five cycles measured 2026-10-04 .. 10-08. **Not on test1**
 **Lane:** Product quality — *why the daily update stopped carrying the sources the customer valued*
 **Depends on:** nothing — a prompt reorder plus one pure helper
 **Related:** #45 (the topic that exposed it), #46 (yield counted in primaries), #23 (authority vs relevance in the rubric), #49 (discovery lane), #55 (first topic monitored under the fix)
@@ -79,29 +79,58 @@ All of it in `newsfind-refresh.md` plus one helper, no schema change:
    plan, which is the owner's and changes through `PATCH /monitor`. Six tests;
    suite 451 → 457.
 
-## First measurement — Japan (#55), refresh cycle 1, 2026-10-04
+## First measurement — Japan (#55), five cycles, 2026-10-04 .. 10-08
 
-The first monitored topic to run entirely under this fix:
+The first topic monitored entirely under this fix. Daily, 15 queries, `max_age_hours: 168`.
 
-```
-drops      {"already_seen": 0, "too_old": 1, "low_relevance": 0, "intra_batch_dup": 0}
-source_mix {"total": 8, "authoritative": 4, "whitelisted": 4, "ratio": 0.5,
-            "entirely_secondary": false}
-```
+| Cycle | Date | New | Authoritative | `drops.too_old` | Cost |
+|---|---|---|---|---|---|
+| 1 | 10-04 | 8 | 4 (50 %) | 1 | $2.93 |
+| 2 | 10-05 | 3 | 1 (33 %) | 3 | $4.61 |
+| 3 | 10-06 | 9 | **9 (100 %)** | 0 | $3.67 |
+| 4 | 10-07 | 1 | **0** — `entirely_secondary` | 3 | $3.77 |
+| 5 | 10-08 | 1 | 1 (100 %) | 11 | $3.13 |
+| | **total** | **22** | **15 = 68.2 %** | 18 (mean 3.6) | $18.11 |
 
-Against India's refresh cycles on the old code (`too_old` 7–16 per cycle,
-`authoritative` 0 in eight of nine, `entirely_secondary` true four times in five).
-Four of the eight new sources are `primary_official` — NRA, Energia, Kyuden, OCCTO —
-and **all four carry `freshness: "standing"`**, which is exactly the exemption the
-old ordering could not reach. Two of them scored 0.55 and 0.45 on relevance, below
-the old 0.40 floor's neighbourhood and well below the four news items that outrank
-them.
+Against the topic that exposed the bug, on the old code — India's last five cycles
+(14–18, 2026-09-22 .. 09-26) produced **the same 22 new sources and 1 authoritative
+among them, 4.5 %**, with `drops.too_old` firing 7–16 times every cycle and
+`entirely_secondary: true` on four of the five.
 
-**What this is not.** One cycle, one topic, a different country and a different
-publication cadence from the topic that exposed the bug. It is not a controlled
-before/after — that needs the same topic run both ways, and the topic that exposed
-it sits on a frozen slot. Treat it as the fix behaving as designed on first contact,
-not as a measured effect size. The controlled comparison belongs to #52.
+**22 new sources either way; 15 official against 1.** That is the result, and the
+matched denominator is luck rather than design — it just makes the composition easy
+to read.
+
+### Two things this does not support
+
+**`too_old` did not go to zero, and the ticket should not claim it did.** It averages
+3.6 per cycle against India's 7–16, but cycle 5 fired **11** — inside India's old
+range — while still keeping its one official source. So the filter goes on dropping
+things; what changed is that it no longer takes primaries with it. The counter does
+not record a class, so "the 11 were all secondary" is inference from the kept mix,
+not a measurement. If a cycle ever pairs a high `too_old` with `authoritative: 0`,
+that is the signal this regressed, and it is worth watching for rather than assuming
+away.
+
+**The variance is larger than the effect is precise.** Five cycles ran from 1 to 9
+new sources and from 0 % to 100 % authoritative, and one came back
+`entirely_secondary` — rarer than India's four-in-five, not eliminated. The aggregate
+is a real n=5 result; the per-cycle ratio is not a stable number and should not be
+quoted as one. #41's caveat applies unchanged: one arm cannot separate a build
+difference from the news cycle.
+
+**Still not a controlled comparison.** Different country, different publication
+cadence, different register and corpus. As a before/after of *what a daily update
+actually carries* it is the strongest evidence available; as a measured effect size
+of this code change it is not, and that experiment — the same topic run both ways —
+belongs to #52 and needs a slot that is not frozen.
+
+### Cost, since the aggregate changes it
+
+$3.62 per cycle on average (range $2.93–$4.61), **~$25/week**, against the ~$3 and
+~$20/week recorded in `STATUS.md` from cycle 1 alone. Still trivial against the
+pricing in the go-to-market plan; worth correcting because it is a number that gets
+quoted.
 
 ## Known limitation, deliberately left
 
