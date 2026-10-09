@@ -1,6 +1,6 @@
 # India coal — mining, rail, prices and power-plant stocks (#56)
 
-**Status:** in progress — onboarded locally 2026-10-09; deploy to test2 pending
+**Status:** in progress — deployed to test2 and first report delivered 2026-10-09 (topic `009ff1c4`); publish and monitoring pending the owner
 **Lane:** Product / business value — *a customer's ask, the fourth country topic*
 **Depends on:** #53 (feed channel delivering), #54 (refresh keeps official sources), #55 (the method, last repeated)
 **Related:** #45 (India gas — same country, the substitute fuel), #46 (the five gates), #22 (scheduler), #47 (routing contamination)
@@ -131,16 +131,58 @@ the top match either way; check `playbook_refs` on the first plan. The router fi
   `imports.coal.gov.in`, `easterncoal.nic.in`, `industry.gov.au`. Cloudflare challenge:
   `bcclweb.in`, `globalcoal.com`. None registered.
 
+## First run on test2 — 2026-10-09
+
+Topic **`009ff1c4-42d6-4d43-8ee6-e07af34299b4`** on `cbf76c6`. Plan 370 s / $1.37,
+deliver 552 s / $3.65 — **$5.02**. `facets_degraded: false`.
+
+- **All four feeds reached the analyst and all four are cited** (`feeds_count: 4`,
+  s01–s04): CEA daily stock, CIL production/offtake, CIL e-auction, Ministry of Coal.
+  The report's spine — 87 critical plants on 10-08, CIL +9.2 % / +12.5 %, the 94 %
+  e-auction premium, domestic-coal plants at 31 % of normative against 60 % for
+  imported-coal plants, Torangallu at 0 % — is read from them.
+- **Source mix 4/15 authoritative (26.7 %)** — the 4 are the feeds; the other 11 are
+  5 specialist outlets, 5 aggregators (four of them stock-quote pages: groww, zerodha,
+  tickertape, scanx) and 1 newsletter.
+- **Why no searched primary, answered from `search_queries` / `search_documents`, not
+  guessed.** The 9 domain-filtered queries each returned ~10 hits, and the official
+  documents behind them were **fetched**: coal.gov.in 9, NTPC 9, ESDM 10, cea.nic.in 7,
+  DGCI&S 7, CERC 6, Tradestat 3. They were the wrong years — Ministry of Coal monthly
+  reports from 2022–2024, CEA stock PDFs from 2020, DGCI&S reviews from 2021, CERC
+  orders from 2022–2023. The analyst discarded them as stale, correctly, and said so
+  under Risks. It is #45's PPAC finding again: **the index serves the regulator's old
+  files; the current ones come only through the feed.** #46's three-way table puts this
+  in row 3 (fetched, not cited) with the cause being age, not selection.
+- **Routing:** the `source_discover` stage, which routes on facets, listed
+  `brazil_power_hydro_thermal.md` and `china_oil_gas_imports.md` — the residual risk
+  above fired — but the plan's 22 source targets carry only the coal and gas playbooks,
+  and no query went to a Brazilian or Chinese domain.
+- **Plan:** 13 queries, 9 domain-filtered, 4 in Hindi.
+
+**Two defects in the report, for the review:**
+
+1. **Rake loading contradicts the feed it had.** The report says CIL rake loading
+   "roughly doubled from 19 to 41/day", cited to a stock-quote aggregator. The Ministry
+   of Coal feed (s04) gives **304.7 rakes/day in August against a plan of 374**. Whatever
+   19→41 measures, it is not that, and the primary was in hand.
+2. **The stock trend is missing.** The CEA feed's headline — 20.62 Mt at 33 % of
+   normative, receipts below burn on all seven days — is not in the report; it counts
+   critical plants from news instead. Nor is the Ministry's August output −3.8 % against
+   despatch +5.5 %.
+
+Both are the analyst preferring news over a feed it cited. The fix belongs in the
+deliver prompt (a feed figure outranks a secondary one on the same quantity) and in a
+`blocked_domains` list for stock-quote pages, which carry no primary content for any topic.
+
 ## Build items, in order
 
 1. ~~Playbook, register, adapter, seed, synonyms, tests~~ — done 2026-10-09 (suite 479 passed).
-2. **Verify from the VPS:** the 22 domains and the four feeds, especially `coalindia.in`.
-   SSH to the VPS refused connections on 2026-10-09 from ~13:00 CEST; HTTPS answered.
-3. **Deploy to test2:** pull this branch, `up -d --build claude_agent` (the synonym change
-   is Python in the image), chown the state dir, `slot_refresh_feeds.sh test2
-   india_coal_official`, and a daily cron line after CEA posts (the 10-08 report was
-   generated 10-09 15:04 IST).
-4. **Create the topic, deliver, read the source mix** — `feeds_count` should be 4; check
-   `playbook_refs` for Brazil.
-5. **Monitoring** — daily, like Japan (~$3–4 a cycle); a spend decision for the owner.
+2. ~~Verify from the VPS~~ — done; see "Access limits".
+3. ~~Deploy to test2~~ — branch delivered as a git bundle (GitHub push refused the
+   local credentials), image rebuilt, four feeds published, cron `30 11 * * *`.
+4. ~~Create the topic, deliver, read the source mix~~ — see "First run".
+5. **Publish (live) and daily monitoring** — not done: both calls were refused by the
+   agent's permission layer and are the owner's to run (`POST /publish {"mode":"live"}`,
+   `POST /monitor {"max_age_hours":168,"schedule_enabled":true,"schedule_interval_hours":24}`).
+5b. **Fix the two report defects** above — deliver prompt + stock-quote `blocked_domains`.
 6. **Two cycles of pile, then the operator review** (#46 Gate 5).

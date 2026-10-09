@@ -191,12 +191,14 @@ worsening daily. A `PATCH /monitor` re-stamping the 19 queries fixes the hint to
 no deploy; deploying the branch fixes both but is a pull plus rebuild on a frozen slot.
 **Neither is done, both need the product owner.**
 
-### India coal (#56) — onboarded 2026-10-09, deploy to test2 pending
+### India coal (#56) — FIRST RUN on test2, 2026-10-09 (topic `009ff1c4`)
 
 - **Customer ask:** Indian coal — mining, transport, prices, stocks; a pre-sales demo where primary sources are the point.
 - **Built:** playbook 59 `india_coal_mining_stocks.md`; register 651 → 669 (Ministry of Coal, Coal India + 4 subsidiaries, SCCL, Coal Controller, PIB, NTPC, IEX, CERC, DGCI&S, …); seed `india_coal_official` with **four feeds** — CEA Daily Coal Stock Report (new adapter `cea_coal_stock`, daily, a week of reports, 191/191 plant rows), Ministry of Coal monthly statistics, CIL production/offtake, CIL e-auction premium. `coal` synonym group. Suite 479 passed.
 - **What the feeds already say:** plant stock 20.62 Mt (33 % of normative) on 10-08, receipts below burn all week, 87 plants critical, 8 newly; August output −3.8 % y/y with despatch +5.5 %; CIL rake loading 81.5 % of plan; e-auction premium 94 % in September vs 54 % for the half-year.
-- **Blocked:** SSH to the VPS refused connections from ~13:00 CEST 2026-10-09 (HTTPS fine), so nothing is deployed or verified from the VPS yet. `coalindia.in` answered 403 from the VPS in the one probe that ran.
+- **Deployed and run:** test2 on `cbf76c6` (git bundle — GitHub push refused the local credentials), image rebuilt, feeds published, cron `30 11 * * *`. CIL's two filings are a separate seed `india_coal_cil` crawled off the VPS, because `coalindia.in` answers 403 there.
+- **First report: $5.02, `feeds_count: 4`, all four feeds cited.** Source mix 4/15 authoritative — the feeds; the domain-filtered searches *did* fetch official documents (coal.gov.in, CEA, NTPC, DGCI&S, CERC…) but from 2020–2024, and the analyst rightly dropped them. Two defects: rake loading "19→41/day" from a stock-quote page contradicts the Ministry feed's 304.7/day; the CEA stock trend is not in the report. See the spec.
+- **Not done, needs the owner:** publish (live) and daily monitoring — both refused by the agent's permission layer.
 
 ### Japan nuclear fleet (#55) — FIRST RUN on test2, 2026-10-03, monitored daily
 
