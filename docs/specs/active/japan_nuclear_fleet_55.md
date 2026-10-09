@@ -103,3 +103,82 @@ so it is #47's to decide. Check `playbook_refs` on the first plan.
    left `commodity` empty, so no `power` token and no Brazil playbook.
 5. **Re-check `tepco.co.jp`** from a Japanese vantage point, or find the path that answers.
 6. **Two cycles of pile, then the operator review** (#46 Gate 5).
+
+## Trader-demo readiness — review 2026-10-09
+
+**Verdict:** the topic shows that the method works (official sources, a live feed,
+a daily watch that finds real things), but it is not yet a finished product for a
+trader. Show it live and talk it through; do not send the link on its own until items
+7 and 8 are done. Read from the public link
+(`/app/shared/0a354872-bfed-4318-8d10-e17c35097ea1`, live, 5 cycles 10-04..10-08).
+
+**Strong enough to show:** 11/15 authoritative sources (73.3 %), cited to HJKS, NRA,
+KEPCO, OCCTO. In five cycles the monitoring found things the first report did not
+have: Ohi-3's root cause and its move into inspection, Shimane-2 back in commercial
+operation, a temperature anomaly at Takahama-1, three separate faults at Mihama-3
+this year. A quiet cycle says it is quiet, and a weakened thesis says it is weakened.
+
+### Open items, in order
+
+7. **Mihama-3 contradicts itself — the first thing a trader would catch.**
+   The standing report says a manual shutdown on **09-18** for a corroded secondary
+   pipe (a 14×4 mm hole, a cover fitted upside down) [s01,s11]. Cycle 5 (10-08) says a
+   manual shutdown on **09-17** for a water leak near a high-pressure feedwater-heater
+   valve, cause undetermined. It calls this "not previously surfaced" and "a third
+   Kansai unit" outside operation, which it is not. Cycle 3 had already cited KEPCO's
+   Mihama-3 filings.
+   *Proposed fix:* (a) check by hand against KEPCO's release and HJKS whether this is
+   one event or two, and correct the text the reader sees. (b) Structural fix: give
+   refresh an **entity/event ledger** (unit + event type + date) built from the
+   standing report and earlier deltas. A hit on a unit already in the ledger is then
+   classed as *update / conflict / duplicate* instead of "new". Where two sources give
+   different dates or causes, the delta should say so ("sources disagree")
+   rather than pick one. Belongs with #54's open "content-digest revisits".
+
+8. **The report promises numbers it does not contain.** "Risks & blind spots" says
+   "the LNG-displacement math in this report assumes…", but the report does no such
+   calculation. It also gives no GW offline and no effect on LNG/JKM. That is the
+   question a trader brings to Japanese nuclear.
+   *Proposed fix:* add a **fleet-state block** to the Japan playbook and the deliver
+   prompt: units operating / in inspection / in unplanned outage, with GW, computed
+   from HJKS + NRA. Then a rough conversion of GW offline to LNG demand
+   (≈ 0.13–0.15 Mt LNG/month per GW, to be confirmed with the operator), labelled as
+   an estimate. And a grounding rule: the report must not refer to a calculation it
+   does not show (a check for #51).
+
+9. **The standing report does not take in what the cycles find.** The public page
+   shows the deliver report from 10-03 ("no return date as of October 2"). Ohi-3 in
+   inspection, Shimane-2 and Takahama-1 exist only in the delta timeline. A reader who
+   opens the link sees the state from a week ago at the top. By design: the public
+   router serves `public_deliver_run_id`.
+   *Proposed fix:* the cheaper option is a **"What changed since"** block above the
+   report on the public page, built from the summaries of the last N deltas (frontend
+   only, no extra Claude spend). The more expensive one is a periodic
+   **re-consolidation** of the standing report (e.g. weekly, one deliver-sized run
+   ≈ $3.4) that writes the deltas into the main text. Pick together with #50.
+
+10. **`report.json` on the public route is not valid JSON, and it carries another
+    topic's id.** `GET /v1/public/topics/0a354872…/report` → `JSONDecodeError` at char
+    5915 (an unescaped `"regulatory setback"` inside `summary_md`). The file's
+    `topic_id` is `d5067cb1-8240-4546-8416-7698507d7274`, not `0a354872…`. The UI reads
+    `report.md`, so the page renders, but any API consumer or eval reading the JSON
+    breaks.
+    *Proposed fix:* deliver should produce `report.json` through `json.dumps` from a
+    structured result, never written as text by the model. Validate it before saving
+    (on failure, regenerate or fall back to `report.md`). The backend should overwrite
+    `topic_id` with the real id instead of trusting the model. Check India and Brazil
+    for the same defect.
+
+11. **Cosmetics that undermine trust.** Ohi-3's root cause is reported as new in both
+    cycle 1 and cycle 2. Cycle 1 (10-04) says the unit "entered" inspection on 10-05,
+    a past tense for a future date. The Takahama-1 watch item (65 °C, a 77 °C
+    shutdown limit) is not followed up by any later cycle.
+    *Proposed fix:* item 7's ledger covers the duplicates. The prompt should keep
+    announced and completed events apart (`scheduled` vs `occurred`). Open watch
+    items should go into the next cycle's queries as explicit follow-ups, until they
+    are resolved or past their window.
+
+12. **Expert review and the TEPCO source** — items 5 and 6 above still hold. The
+    operator review (#46 Gate 5) is the step that turns this list into priorities
+    from the trader's side. Ask the trader directly whether item 8 (GW → LNG) is
+    the main value for them.
