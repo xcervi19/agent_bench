@@ -192,6 +192,21 @@ steps from the slot directory on the VPS. test2 refreshes the JEPX HJKS nuclear 
 from root's crontab every six hours (`17 */6 * * *`, log `~/logs/test2_feeds.log`) — the
 register changes the hour a reactor trips, and the crawl spends no LLM tokens.
 
+**India coal (#56):** `india_coal_official` (CEA daily coal stock + Ministry of Coal monthly)
+runs from test2's crontab daily at 11:30 UTC (`30 11 * * *`, same log), after CEA posts the
+previous day's report. Coal India's two filings are the separate seed `india_coal_cil`,
+because `coalindia.in` answers **403 to the VPS**: crawl and extract them on the operator's
+machine, then copy the text to the slot and publish:
+
+```bash
+python -m source_crawler crawl --seed india_coal_cil && python -m source_crawler extract
+scp -r artifacts/collected_text/cil_production_offtake artifacts/collected_text/cil_swma_eauction \
+  root@79.143.179.212:~/agent_bench_test2/artifacts/collected_text/
+# then on the VPS: chown -R 1001:1001 artifacts, and the publish step above
+```
+
+Monthly, after CIL files on the 1st.
+
 Deliver and refresh then pass `feeds_dir` to the analyst for any topic whose
 facets match the feed's `commodity` + `region`. Check what a slot holds:
 

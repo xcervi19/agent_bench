@@ -134,7 +134,7 @@ utility and the direction a week earlier.
 on 2026-10-09 while answering 200 from the operator's machine; CIL's filings themselves are
 served from a CloudFront host. `pib.gov.in` and `powermin.gov.in` answer 403 to scripted
 fetches; search results from them still carry titles and snippets, and PIB pages were read
-in the India gas run. `ntpc.co.in` sits behind a bot check on deeper pages.
+in the India gas run. `ntpc.co.in` sits behind a bot check. Re-checked from the VPS the same day: `coalindia.in` and `mahanadicoal.in` 403, `nclcil.in` and `cercind.gov.in` no response, `ntpc.co.in` captcha — search reaches them, our fetcher does not. Ministry of Coal, CEA/NPP, Coal Controller, PIB, SCCL, WCL, IEX, Tradestat, DGCI&S, mjunction, MSTC, Ports and IMD answered 200.
 
 ## Official Social Media
 

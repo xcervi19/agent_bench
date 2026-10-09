@@ -115,10 +115,16 @@ the top match either way; check `playbook_refs` on the first plan. The router fi
 
 ## Access limits found, and recorded rather than worked around
 
-- `coalindia.in` answered **403 from the VPS** (200 from the operator's machine). The
-  two CIL feeds discover their file through that landing page, so on the slot they may
-  fail; the files themselves sit on CloudFront. Verify on the VPS before relying on
-  them — the other two feeds do not depend on it.
+- `coalindia.in` answers **403 from the VPS** (200 from the operator's machine;
+  confirmed on both landing pages 2026-10-09), and a failed source fails the whole
+  `crawl` — so on the slot's cron it would have taken the daily CEA feed down too.
+  The two CIL filings are therefore their own seed, **`india_coal_cil`**, crawled
+  where `coalindia.in` answers and copied to the slot (see `docs/ops/commands.md`).
+  The files themselves are on CloudFront and download from the VPS; only the page
+  that names them is refused.
+- Also from the VPS: `mahanadicoal.in` 403, `nclcil.in` and `cercind.gov.in` no
+  response, `ntpc.co.in` captcha. Registered anyway — search returns them — with the
+  limit in their notes.
 - `pib.gov.in`, `powermin.gov.in`, `commerce.gov.in` answer 403 to scripted fetches;
   PIB is registered anyway because search returns its pages and the India gas run read one.
 - No response: `grid-india.in` (as on #45), `indianrailways.gov.in`, `ipa.gov.in`,

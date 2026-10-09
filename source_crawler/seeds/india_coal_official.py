@@ -80,6 +80,17 @@ INDIA_COAL_OFFICIAL_SOURCES: list[SourceConfig] = [
         },
         **_FEED_LABELS,
     ),
+]
+
+
+# Coal India's landing pages answer 403 to the VPS (measured 2026-10-09; 200 from
+# the operator's machine), and one failed source fails the whole crawl — which
+# would take the daily CEA feed down with it on the slot's cron. So CIL's two
+# monthly filings are their own seed, crawled from wherever coalindia.in answers
+# and published to the slot from there (docs/ops/commands.md). The files
+# themselves sit on CloudFront and download from anywhere; only the page that
+# names them is refused.
+INDIA_COAL_CIL_SOURCES: list[SourceConfig] = [
     SourceConfig(
         source_id="cil_production_offtake",
         adapter="landing_link",
