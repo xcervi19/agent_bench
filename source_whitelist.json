@@ -4900,7 +4900,7 @@
     "domain": "cea.nic.in",
     "type": "official",
     "category": "government_regulator",
-    "notes": "Monthly generation by fuel including gas-based; installed capacity, plant load factors, demand peaks",
+    "notes": "Monthly generation by fuel including gas-based; installed capacity, plant load factors, demand peaks; Fuel Management Division Daily Coal Stock Report — every coal plant's stock vs normative, critical flags (#56)",
     "agreement_count": 1
   },
   {
@@ -4908,7 +4908,7 @@
     "domain": "powermin.gov.in",
     "type": "official",
     "category": "government_regulator",
-    "notes": "Power policy, dispatch schemes and demand-side measures affecting gas-fired generation",
+    "notes": "Power policy, dispatch schemes and demand-side measures affecting gas-fired generation; coal blending advisories and Section 11 directions to imported-coal plants (#56)",
     "agreement_count": 1
   },
   {
@@ -4916,7 +4916,7 @@
     "domain": "npp.gov.in",
     "type": "official",
     "category": "government_regulator",
-    "notes": "Daily and monthly power generation, capacity and demand dashboards",
+    "notes": "Daily and monthly power generation, capacity and demand dashboards; hosts CEA's Daily Coal Stock Report files, crawled daily as a feed (#56)",
     "agreement_count": 1
   },
   {
@@ -5205,6 +5205,150 @@
     "type": "official",
     "category": "industry_body",
     "notes": "Japan country profile; reactor fleet reference (Tier 2 framing)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Ministry of Coal",
+    "domain": "coal.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Monthly Statistics at a glance (production, despatch by sector, rakes/day, imports) crawled monthly as a feed; notified prices, block auctions, press releases (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Coal India",
+    "domain": "coalindia.in",
+    "type": "official",
+    "category": "noc",
+    "notes": "~72 % of Indian output; monthly provisional production/offtake and SWMA e-auction premium filings (crawled monthly). 403 from the VPS on 2026-10-09, 200 from the operator's machine (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Coal Controller's Organisation",
+    "domain": "coalcontroller.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Statutory coal statistics; provisional coal statistics; captive and commercial mine output (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Press Information Bureau (India)",
+    "domain": "pib.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Government press releases; Ministry of Coal/Railways/Power monthly production, despatch, rake loading. 403 to scripted fetch, readable via search (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Mahanadi Coalfields (MCL)",
+    "domain": "mahanadicoal.in",
+    "type": "official",
+    "category": "noc",
+    "notes": "Largest CIL subsidiary (Odisha, Talcher/Ib Valley): output, loading, monsoon disruption (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Northern Coalfields (NCL)",
+    "domain": "nclcil.in",
+    "type": "official",
+    "category": "noc",
+    "notes": "Singrauli coalfield; supplies UP/MP pithead plants (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "South Eastern Coalfields (SECL)",
+    "domain": "secl-cil.in",
+    "type": "official",
+    "category": "noc",
+    "notes": "Chhattisgarh mega-mines (Gevra, Kusmunda): output and evacuation (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Western Coalfields (WCL)",
+    "domain": "westerncoal.in",
+    "type": "official",
+    "category": "noc",
+    "notes": "Maharashtra/MP output for western plants (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Singareni Collieries (SCCL)",
+    "domain": "scclmines.com",
+    "type": "official",
+    "category": "noc",
+    "notes": "Telangana producer: output and despatch (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "NTPC",
+    "domain": "ntpc.co.in",
+    "type": "official",
+    "category": "noc",
+    "notes": "Largest coal consumer; plant stocks, captive mines, import tenders. Bot check on deeper pages (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Indian Energy Exchange (IEX)",
+    "domain": "iexindia.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Day-ahead and real-time power prices — where coal shortage becomes a price (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Central Electricity Regulatory Commission (CERC)",
+    "domain": "cercind.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Power-market monitoring reports; price-cap orders (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "DGCI&S Tradestat",
+    "domain": "tradestat.commerce.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Official import statistics by HS code (2701 coal) and origin (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "DGCI&S",
+    "domain": "dgciskol.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Foreign trade statistics releases (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "mjunction",
+    "domain": "mjunction.in",
+    "type": "official",
+    "category": "exchange",
+    "notes": "CIL/SCCL coal e-auction platform; monthly coal import estimates cited by press (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "MSTC",
+    "domain": "mstcecommerce.com",
+    "type": "official",
+    "category": "exchange",
+    "notes": "Government e-auction platform; commercial coal-block auction results (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "Ministry of Ports, Shipping and Waterways",
+    "domain": "shipmin.gov.in",
+    "type": "official",
+    "category": "government_regulator",
+    "notes": "Major-port coal handling; coastal shipping of coal (#56)",
+    "agreement_count": 1
+  },
+  {
+    "entity": "India Meteorological Department",
+    "domain": "mausam.imd.gov.in",
+    "type": "official",
+    "category": "weather",
+    "notes": "Monsoon over the mining belt; heatwaves driving power demand (#56)",
     "agreement_count": 1
   }
 ]

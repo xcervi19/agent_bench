@@ -179,6 +179,42 @@ def test_the_outage_register_does_not_reach_another_countrys_nuclear_topic():
     assert matches(HJKS_META, {"commodity": ["nuclear power"], "geo": ["Korea"]}) is False
 
 
+# ---- India coal (#56) ---------------------------------------------------------
+
+# Filed exactly as `source_crawler/seeds/india_coal_official.py` files it.
+CEA_COAL_META = {
+    "source_id": "cea_daily_coal_stock",
+    "commodity": "coal",
+    "region": "IN",
+    "tags": ["cea", "npp", "india", "coal", "coal_stocks", "data_feed"],
+}
+
+
+def test_the_coal_stock_report_reaches_an_indian_coal_topic():
+    """The parse leg writes `thermal coal` or `steam coal` as readily as `coal`."""
+    for spelling in ("coal", "thermal coal", "steam coal", "non-coking coal"):
+        facets = {"commodity": [spelling, "electricity"], "geo": ["India"]}
+        assert matches(CEA_COAL_META, facets) is True, spelling
+
+
+def test_coal_stocks_do_not_reach_the_indian_gas_topic():
+    """Coal shortages push gas-fired dispatch, but that link is the analyst's to draw."""
+    assert matches(CEA_COAL_META, INDIA_GAS) is False
+
+
+def test_gas_tables_do_not_reach_an_indian_coal_topic():
+    assert matches(PPAC_META, {"commodity": ["thermal coal"], "geo": ["India"]}) is False
+
+
+def test_coking_coal_is_not_a_spelling_of_thermal_coal():
+    """Steel's coal is a different good; a power-station stock table says nothing about it."""
+    assert matches(CEA_COAL_META, {"commodity": ["coking coal"], "geo": ["India"]}) is False
+
+
+def test_the_coal_stock_report_does_not_reach_another_countrys_coal_topic():
+    assert matches(CEA_COAL_META, {"commodity": ["thermal coal"], "geo": ["Indonesia"]}) is False
+
+
 def test_export_writes_the_matching_feed_with_its_provenance(tmp_path):
     state = tmp_path / "state"
     _write_feed(state, "ppac_gas_sectoral_consumption", PPAC_META)

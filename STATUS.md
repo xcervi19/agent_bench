@@ -191,6 +191,13 @@ worsening daily. A `PATCH /monitor` re-stamping the 19 queries fixes the hint to
 no deploy; deploying the branch fixes both but is a pull plus rebuild on a frozen slot.
 **Neither is done, both need the product owner.**
 
+### India coal (#56) — onboarded 2026-10-09, deploy to test2 pending
+
+- **Customer ask:** Indian coal — mining, transport, prices, stocks; a pre-sales demo where primary sources are the point.
+- **Built:** playbook 59 `india_coal_mining_stocks.md`; register 651 → 669 (Ministry of Coal, Coal India + 4 subsidiaries, SCCL, Coal Controller, PIB, NTPC, IEX, CERC, DGCI&S, …); seed `india_coal_official` with **four feeds** — CEA Daily Coal Stock Report (new adapter `cea_coal_stock`, daily, a week of reports, 191/191 plant rows), Ministry of Coal monthly statistics, CIL production/offtake, CIL e-auction premium. `coal` synonym group. Suite 479 passed.
+- **What the feeds already say:** plant stock 20.62 Mt (33 % of normative) on 10-08, receipts below burn all week, 87 plants critical, 8 newly; August output −3.8 % y/y with despatch +5.5 %; CIL rake loading 81.5 % of plan; e-auction premium 94 % in September vs 54 % for the half-year.
+- **Blocked:** SSH to the VPS refused connections from ~13:00 CEST 2026-10-09 (HTTPS fine), so nothing is deployed or verified from the VPS yet. `coalindia.in` answered 403 from the VPS in the one probe that ran.
+
 ### Japan nuclear fleet (#55) — FIRST RUN on test2, 2026-10-03, monitored daily
 
 - **Customer ask.** Topic **`0a354872`** on `7b7a0e1`, service-key owned like Brazil (no user account sees it yet). String as measured in the spec.

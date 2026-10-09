@@ -116,6 +116,9 @@ COMMODITY_SYNONYMS: tuple[frozenset[str], ...] = (
     # One good, four spellings. Not joined to `power`: a nuclear outage table is
     # not evidence for a question about electricity in general (#55).
     frozenset({"nuclear", "nuclear_power", "nuclear_energy", "nuclear_electricity"}),
+    # Power-station coal goes by three names. Not joined to `power` for the same
+    # reason as nuclear, nor to `coking_coal`, which is a different good (#56).
+    frozenset({"coal", "thermal_coal", "steam_coal", "non_coking_coal"}),
 )
 
 
