@@ -1,6 +1,6 @@
 # India coal — mining, rail, prices and power-plant stocks (#56)
 
-**Status:** in progress — deployed to test2 and first report delivered 2026-10-09 (topic `009ff1c4`); publish and monitoring pending the owner
+**Status:** in progress — deployed to test2 and first report delivered 2026-10-09 (topic `009ff1c4`); published live and monitored daily from 2026-10-10
 **Lane:** Product / business value — *a customer's ask, the fourth country topic*
 **Depends on:** #53 (feed channel delivering), #54 (refresh keeps official sources), #55 (the method, last repeated)
 **Related:** #45 (India gas — same country, the substitute fuel), #46 (the five gates), #22 (scheduler), #47 (routing contamination)
@@ -181,8 +181,8 @@ deliver prompt (a feed figure outranks a secondary one on the same quantity) and
 3. ~~Deploy to test2~~ — branch delivered as a git bundle (GitHub push refused the
    local credentials), image rebuilt, four feeds published, cron `30 11 * * *`.
 4. ~~Create the topic, deliver, read the source mix~~ — see "First run".
-5. **Publish (live) and daily monitoring** — not done: both calls were refused by the
-   agent's permission layer and are the owner's to run (`POST /publish {"mode":"live"}`,
-   `POST /monitor {"max_age_hours":168,"schedule_enabled":true,"schedule_interval_hours":24}`).
+5. ~~Publish (live) and daily monitoring~~ — run by the owner 2026-10-10 09:49 UTC
+   (`POST /publish {"mode":"live"}`, `POST /monitor {"max_age_hours":168,
+   "schedule_enabled":true,"schedule_interval_hours":24}`); first cycle 2026-10-11 09:50 UTC.
 5b. **Fix the two report defects** above — deliver prompt + stock-quote `blocked_domains`.
 6. **Two cycles of pile, then the operator review** (#46 Gate 5).

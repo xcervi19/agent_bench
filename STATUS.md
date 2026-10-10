@@ -17,7 +17,7 @@ India demo.** The rule is in `AGENT.md` too, because it governs every session:
 | Slot | Commit | Role now |
 |---|---|---|
 | **test1** — `agent-test1.particletico.com` | tag **`test1-stable-2026-09-10`** (`c772df6`) | **Frozen.** The approved India demo, presented again from here. Read it freely; change nothing |
-| **test2** — `agent-test2.particletico.com` | branch **`feat/japan-nuclear-topic-55`** (`89ff552` = #53 + #54 + #55 on top of test1's tag; verified on the box 2026-10-04) | **Where development goes.** Rebuilt 2026-09-18 (schema `0013`, corpus 141/9519, `ivfflat.probes=10`); redeployed 2026-10-03 for #55. Hosts the Brazil topic and the **monitored Japan nuclear topic** |
+| **test2** — `agent-test2.particletico.com` | branch **`feat/india-coal-topic-56`** (`3b46030` = #53 + #54 + #55 + #56, 17 commits on top of test1's tag; verified on the box 2026-10-10) | **Where development goes.** Rebuilt 2026-09-18 (schema `0013`, corpus 141/9519, `ivfflat.probes=10`); redeployed 2026-10-03 for #55 and 2026-10-09 for #56. Hosts the Brazil topic and the **monitored Japan nuclear and India coal topics**. Its branch contains test1's and prod's commits whole (nothing on either is missing from it) — the furthest line forward. **Not on GitHub yet:** push refused the local credentials; delivered to the VPS as a git bundle |
 | **prod** — `agent.particletico.com` | `de67d92` | Untouched since 2026-08-11. Holds the 141/9519 RAG corpus |
 
 Approval is per change, not standing: an earlier "yes" does not cover the next deploy, and
@@ -198,7 +198,7 @@ no deploy; deploying the branch fixes both but is a pull plus rebuild on a froze
 - **What the feeds already say:** plant stock 20.62 Mt (33 % of normative) on 10-08, receipts below burn all week, 87 plants critical, 8 newly; August output −3.8 % y/y with despatch +5.5 %; CIL rake loading 81.5 % of plan; e-auction premium 94 % in September vs 54 % for the half-year.
 - **Deployed and run:** test2 on `cbf76c6` (git bundle — GitHub push refused the local credentials), image rebuilt, feeds published, cron `30 11 * * *`. CIL's two filings are a separate seed `india_coal_cil` crawled off the VPS, because `coalindia.in` answers 403 there.
 - **First report: $5.02, `feeds_count: 4`, all four feeds cited.** Source mix 4/15 authoritative — the feeds; the domain-filtered searches *did* fetch official documents (coal.gov.in, CEA, NTPC, DGCI&S, CERC…) but from 2020–2024, and the analyst rightly dropped them. Two defects: rake loading "19→41/day" from a stock-quote page contradicts the Ministry feed's 304.7/day; the CEA stock trend is not in the report. See the spec.
-- **Not done, needs the owner:** publish (live) and daily monitoring — both refused by the agent's permission layer.
+- **Published and monitored (owner-approved, 2026-10-10 09:49 UTC):** live share at `https://agent-test2.particletico.com/app/shared/009ff1c4-42d6-4d43-8ee6-e07af34299b4`; refresh every 24 h, `max_age_hours: 168`, first cycle 2026-10-11 09:50 UTC. ~$3–4 a cycle.
 
 ### Japan nuclear fleet (#55) — FIRST RUN on test2, 2026-10-03, monitored daily
 
