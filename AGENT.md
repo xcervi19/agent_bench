@@ -5,30 +5,16 @@ Monorepo for **Newsfind topic intelligence** — Claude Code pipeline, RAG, and 
 Legacy **Signal Gather** (CrewAI RSS/signals stack) lives on branch
 `archive/signal_gather-platform` — see `docs/archive/README.md`.
 
-## ⛔ test1 is frozen — do not deploy to it
+## Slots — one commit on all three; test1's freeze ended 2026-10-11
 
-**As of 2026-09-10, no change reaches test1 without the product owner's explicit
-approval, per instance.** The India demo is running there, the first customer has
-seen it and approved it, and it will be presented again. Stability on that slot is
-the product commitment; nothing else on this list outranks it.
+test1 was frozen from 2026-09-10 for the first customer's India demo. **The product owner
+ended the freeze on 2026-10-11**; prod, test1 and test2 now run the same code (`ba24924` on
+`main`). Development still goes to **test2** first (`~/agent_bench_test2`,
+`agent-test2.particletico.com`) and reaches prod and test1 only when the owner says so.
 
-| | |
-|---|---|
-| Frozen state | tag `test1-stable-2026-09-10` → commit `c772df6` — what the box actually runs. Check with `git rev-parse --short 'test1-stable-2026-09-10^{commit}'`; without `^{commit}` you get the tag object's SHA and a false mismatch |
-| Where work happens instead | **test2** (`~/agent_bench_test2`, `agent-test2.particletico.com`) |
-| What still runs on test1 | the India topic's monitoring cycle — the product working, not a change |
-
-**Approval is per change, not standing.** "You approved a deploy last week" is not
-approval for this one; neither is a fix being obviously correct, urgent, or small. If
-a defect on test1 looks serious enough to warrant an exception, say so and ask — do
-not deploy and report afterwards.
-
-This covers anything that alters what test1 serves or how: `git pull` in
-`~/agent_bench_test1`, an image rebuild or restart, an edit to its `.env`, a
-migration against `agentic_test1`, a change to the bind-mounted `claude_agent_fe/`
-prompts, or publishing/unpublishing its shared topics. Reading test1 — logs,
-artifacts, database queries, the public share link — is always fine and is how you
-check the two slots against each other.
+Rollback anchors are on GitHub as `backup/prod-main-2026-10-11` and
+`backup/test1-india-pilot-2026-10-11`, with database dumps in `~/backups/` on the VPS —
+see `STATUS.md` → *SLOT POLICY*.
 
 ## Applications
 

@@ -7,43 +7,33 @@ _Update this file as work progresses. The agent reads it every session to unders
 
 ---
 
-## ⛔ SLOT POLICY — test1 is frozen, work happens on test2
+## SLOT POLICY — all three slots on one commit; test1's freeze ended 2026-10-11
 
-**Set by the product owner 2026-09-10, after the first customer's positive feedback on the
-India demo.** The rule is in `AGENT.md` too, because it governs every session:
-
-> No change reaches test1 without the product owner's explicit approval, per instance.
+**test1's freeze (set 2026-09-10) was ended by the product owner on 2026-10-11**, and prod
+and test1 were brought up to the line test2 had proven. All three slots now run
+**`ba24924`** (`main`), schema `0013`. Development still goes to test2 first.
 
 | Slot | Commit | Role now |
 |---|---|---|
-| **test1** — `agent-test1.particletico.com` | tag **`test1-stable-2026-09-10`** (`c772df6`) | **Frozen.** The approved India demo, presented again from here. Read it freely; change nothing |
-| **test2** — `agent-test2.particletico.com` | branch **`feat/india-coal-topic-56`** (`3b46030` = #53 + #54 + #55 + #56, 17 commits on top of test1's tag; verified on the box 2026-10-10) | **Where development goes.** Rebuilt 2026-09-18 (schema `0013`, corpus 141/9519, `ivfflat.probes=10`); redeployed 2026-10-03 for #55 and 2026-10-09 for #56. Hosts the Brazil topic and the **monitored Japan nuclear and India coal topics**. Its branch contains test1's and prod's commits whole (nothing on either is missing from it) — the furthest line forward. **Not on GitHub yet:** push refused the local credentials; delivered to the VPS as a git bundle |
-| **prod** — `agent.particletico.com` | `de67d92` | Untouched since 2026-08-11. Holds the 141/9519 RAG corpus |
+| **prod** — `agent.particletico.com` | `main` @ **`ba24924`** (from `de67d92`, 2026-10-11) | Migrated `0011 → 0013`; corpus 141/9519 and all 8 topics intact; public router now live (`/v1/public/topics` 200). `CLAUDE_AGENT_SCHEDULER_ENABLED=false`, unchanged |
+| **test1** — `agent-test1.particletico.com` | detached @ **`ba24924`** (from `c772df6`, 2026-10-11) | **No longer frozen.** India gas demo and its shared link unchanged; its refresh now runs with #54, so cycles keep official sources |
+| **test2** — `agent-test2.particletico.com` | `feat/india-coal-topic-56` @ `3b46030` (code-identical to `ba24924`, which adds docs only) | **Where development goes.** Brazil, monitored Japan nuclear and India coal topics |
 
-Approval is per change, not standing: an earlier "yes" does not cover the next deploy, and
-neither does a fix being small, urgent, or obviously right. If something on test1 looks bad
-enough to warrant an exception, ask — do not deploy and report afterwards.
+**Rollback anchors, on GitHub** (`xcervi19/agent_bench`):
 
-Frozen covers anything that alters what test1 serves: `git pull` there, a rebuild or
-restart, an `.env` edit, a migration on `agentic_test1`, an edit to the bind-mounted
-`claude_agent_fe/` prompts, or publishing/unpublishing its shared topics. **Not** frozen:
-the India topic's own monitoring cycle, which is the product working rather than a change —
-it runs every 24 h at roughly $2.94 a cycle, ~$20/week, and one `PATCH /monitor` makes it
-weekly if that is not worth it.
+| What ran before 2026-10-11 | Branch | Database dump on the VPS |
+|---|---|---|
+| prod | `backup/prod-main-2026-10-11` → `de67d92` | `~/backups/agentic_prod_20261011_pre_ba24924.dump` (schema `0011`) |
+| test1 | `backup/test1-india-pilot-2026-10-11` → `c772df6` (also tag `test1-stable-2026-09-10`) | `~/backups/agentic_test1_20261011_pre_ba24924.dump` |
 
-**Verify before assuming** — and note the `^{commit}`, which is not optional:
+`.env` copies sit beside the dumps (`~/backups/prod.env.20261011`, `test1.env.20261011`).
+Rolling prod back means restoring the dump as well as the code: `0012`/`0013` changed the
+schema, and the old image does not know the new columns.
 
-```bash
-git rev-parse --short 'test1-stable-2026-09-10^{commit}'          # c772df6
-ssh … 'cd ~/agent_bench_test1 && git rev-parse --short HEAD'      # c772df6
-```
-
-Without `^{commit}` the first command prints the **annotated tag object's** SHA (`2f48fe8`),
-which matches nothing on the box and reads exactly like a drifted slot. Checked 2026-09-10:
-the two agree.
-The application still does not report its own build (`GET /v1/agent/info` returns no commit
-SHA), so this comparison is the only check there is — the same half-an-anchor problem the
-previous rollback section recorded twice, now against a slot that must not move.
+**Deploy order, for every slot:** build, then `alembic upgrade`, then `up -d` — migrations are
+baked into the `rag_adhoc` image, so an upgrade run on the old image sees only old migrations.
+`git push` goes through the `xcervi19` account (`gh auth switch -u xcervi19`); the
+`karel-cervicek_SFR` account has no access to the repository.
 
 ### The old rollback anchor is retired
 
@@ -150,7 +140,7 @@ _Order for completing the **shipped V1 application** (Newsfind + UI + eval). Rec
 
 ## In Progress
 
-### Refresh keeps official sources (#54) — shipped to test2, **not on test1**
+### Refresh keeps official sources (#54) — shipped to test2, then to test1 and prod 2026-10-11
 
 Full write-up: `docs/specs/active/refresh_primary_sources_54.md`. The short version,
 because it changes how every update is read:
@@ -185,11 +175,10 @@ because it changes how every update is read:
   bigger change and rests on one preference stated once by one desk — check it against
   the buyer first (#23).
 
-**test1 is still on `c772df6` and has none of this.** Its cycles keep dropping primaries
-on age, and its stored plan keeps asking for `latest 2026-09` — two months stale and
-worsening daily. A `PATCH /monitor` re-stamping the 19 queries fixes the hint today with
-no deploy; deploying the branch fixes both but is a pull plus rebuild on a frozen slot.
-**Neither is done, both need the product owner.**
+**Deployed to test1 and prod 2026-10-11** (`ba24924`). Until then test1's cycles dropped
+primaries on age and its stored plan asked for `latest 2026-09`; the runtime re-stamp now
+fixes the hint, and test1's next India cycle (2026-10-11 21:59 UTC) is the first to run with
+the fix — read its source mix against the cycles before it.
 
 ### India coal (#56) — FIRST RUN on test2, 2026-10-09 (topic `009ff1c4`)
 
